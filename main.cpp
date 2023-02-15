@@ -6,9 +6,15 @@
 #include <iomanip>
 #include <vector>
 #include "raylib.h"
+#include "colisiones.h"
 
 int WINDOW_WIDTH  = 720;
 int WINDOW_HEIGHT = 720;
+
+Texture2D Popo_sprite;
+Texture2D Popo_walk[3];
+Texture2D Popo_jump_up;
+Texture2D Popo_jump_down;
 
 /*
 class Sprite {
@@ -42,6 +48,8 @@ public:
 };
 */
 
+Rectangle techo{200, WINDOW_HEIGHT - 200, 100, 50};
+Rectangle suelo{0, WINDOW_HEIGHT - 67, WINDOW_WIDTH, 67};
 
 class Projectile {
 private:
@@ -94,6 +102,9 @@ public:
     Vector2 position;
     Texture2D sprite, snowball;
     Sound jump;
+    int count = 0;
+    int count2 = 0;
+    int step_interval = 0;
 
     Object(float speed, Vector2 position, Texture2D sprite, Sound jump, Texture2D snowball) : position(position), sprite(sprite) {
         this->snowball = snowball;
@@ -103,7 +114,7 @@ public:
         this->jump = jump;
         src = {0, 0, (float)sprite.width, (float)sprite.height};
         dst = {position.x, position.y, sprite.width*3.0f, sprite.height*3.0f};
-        sense = -1;
+        sense = 1;
         snowball_cooldown = 0;
     }
 
@@ -158,43 +169,108 @@ public:
         } else {
             if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
                 sense = 1;
-                if (src.width > 0) {
-                    src.width *= -1;
+                count2 += 5 * speed * GetFrameTime();
+                if (count2 > step_interval){
+                    sprite = Popo_walk[count];
+                    src.height = Popo_walk[count].height;
+                    src.width = Popo_walk[count].width * sense;
+                    dst.height = Popo_walk[count].height*3;
+                    dst.width = Popo_walk[count].width*3;
+                    count = (count + 1) % 3;
+                    count2 = 0;
                 }
+                //if (src.width > 0) {
+                //    src.width *= -1;
+                //}
                 if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
                     dst.x += sense * (speed + 80) * GetFrameTime();
+                    step_interval = 50;
                 } else {
                     dst.x += sense * speed * GetFrameTime();
+                    step_interval = 100;
                 }
             } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
                 sense = -1;
-                if (src.width < 0) {
-                    src.width *= -1;
+                count2 += 5 * speed * GetFrameTime();
+                if (count2 > step_interval){
+                    sprite = Popo_walk[count];
+                    src.height = Popo_walk[count].height;
+                    src.width = Popo_walk[count].width * sense;
+                    dst.height = Popo_walk[count].height*3;
+                    dst.width = Popo_walk[count].width*3;
+                    count = (count + 1) % 3;
+                    count2 = 0;
                 }
+                //if (src.width < 0) {
+                //    src.width *= -1;
+                //}
                 if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
                     dst.x += sense * (speed + 80) * GetFrameTime();
+                    step_interval = 50;
                 } else {
                     dst.x += sense * speed * GetFrameTime();
+                    step_interval = 100;
                 }
+            } else {
+                count = 0;  
+                count2 = 0;
+                step_interval = 0;
+                sprite = Popo_sprite;
+                src.height = Popo_sprite.height;
+                src.width = Popo_sprite.width * sense;
+                dst.height = Popo_sprite.height*3;
+                dst.width = Popo_sprite.width*3;
             }
 
             if (!jumping && IsKeyPressed(KEY_SPACE)) {
                 PlaySound(jump);
                 jumping = true;
                 jump_direction = true;
+                sprite = Popo_jump_up;
+                src.height = Popo_jump_up.height;
+                src.width = Popo_jump_up.width * sense;
+                dst.height = Popo_jump_up.height*3;
+                dst.width = Popo_jump_up.width*3;
             } else if (jumping) {
+                sprite = Popo_jump_up;
+                src.height = Popo_jump_up.height;
+                src.width = Popo_jump_up.width * sense;
+                dst.height = Popo_jump_up.height*3;
+                dst.width = Popo_jump_up.width*3;
                 float offset = (speed*3) * GetFrameTime();
                 if (jump_height <= max_jump_height && jump_direction == true) {
                     jump_height += offset;
-                    dst.y -= offset;
+
+                    if (CollisionHelper::Collides(dst, techo)) jump_direction = false;
+                    else dst.y -= offset;
+
                 } else {
+                    sprite = Popo_jump_down;
+                    src.height = Popo_jump_down.height;
+                    src.width = Popo_jump_down.width * sense;
+                    dst.height = Popo_jump_down.height*3;
+                    dst.width = Popo_jump_down.width*3;
                     jump_direction = false;
-                    if (jump_height > 0) {
+                    if (jump_height - offset > 0) {
                         jump_height -= offset;
                         dst.y += offset;
-                    } else {
+                    }
+                    //if (!CollisionHelper::Collides(dst, suelo))
+                    //{
+                    //    jump_height -= offset;
+                    //    dst.y += offset;
+                    //}
+                    else
+                    {
                         jump_height = 0;
+                        dst.y = WINDOW_HEIGHT - Popo_sprite.height*2.0f - 91;
+                        //dst.y = suelo.y;
                         jumping = false;
+                        sprite = Popo_sprite;
+                        src.height = Popo_sprite.height;
+                        src.width = Popo_sprite.width * sense;
+                        dst.height = Popo_sprite.height*3;
+                        dst.width = Popo_sprite.width*3;
                     }
                 }
             }
@@ -232,7 +308,13 @@ void game() {
     Texture2D Pause_frame = LoadTexture("NES - Ice Climber - Sprites/04-Small-frame.png");
     float paused_showtime = 0.75;
     bool show = true;
-    Texture2D Popo_sprite = LoadTexture("NES - Ice Climber - Sprites/02-Popo-Idle.png");
+    Popo_sprite = LoadTexture("NES - Ice Climber - Sprites/02-Popo-Idle.png");
+    
+    Popo_walk[0] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-1.png");
+    Popo_walk[1] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-2.png");
+    Popo_walk[2] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-3.png");
+    Popo_jump_up = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-JUMP-UP.png");
+    Popo_jump_down = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-JUMP-DOWN.png");
     Texture2D Mountain_sprite = LoadTexture("NES - Ice Climber - Sprites/01-Mountain.png");
     Rectangle src{0, (float)(Mountain_sprite.height - Mountain_sprite.width), (float)Mountain_sprite.width, (float)Mountain_sprite.width};
     Rectangle dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
@@ -240,7 +322,7 @@ void game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     Object Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, Popo_sprite, jump, Snowball);
     Font NES = LoadFont("NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
-
+    
     PlayMusicStream(music);
     bool paused = false;
     while(!WindowShouldClose()) {
@@ -274,10 +356,17 @@ void game() {
         }
         
         DrawTexturePro(Mountain_sprite, src, dst, Vector2{0,0}, 0, WHITE);
+        DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
+        //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
         EndDrawing();
     }
     UnloadFont(NES);
     UnloadTexture(Popo_sprite);
+    UnloadTexture(Popo_walk[0]);
+    UnloadTexture(Popo_walk[1]);
+    UnloadTexture(Popo_walk[2]);
+    UnloadTexture(Popo_jump_up);
+    UnloadTexture(Popo_jump_down);
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Snowball);
     UnloadMusicStream(music);  // Unload music stream buffers from RAM
