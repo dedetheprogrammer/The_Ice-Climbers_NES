@@ -367,6 +367,11 @@ int main() {
                 PlayMusicStream(ts_music);
             }
         }
+        if (IsKeyPressed(KEY_ENTER)) {
+            StopMusicStream(ts_music);
+            game();
+            PlayMusicStream(ts_music);
+        }
     }
 
     // Title screen.
