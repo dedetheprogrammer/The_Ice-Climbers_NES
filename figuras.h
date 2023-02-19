@@ -1,28 +1,34 @@
 #pragma once
 
 #include "mates.h"
+
 #include <vector>
-#include "raylib.h"
 
 struct Circle
 {
-	Vector2 center;
+	float x;
+	float y;
 	float radius;
 
-	Circle(Vector2 c, float r) : center(c), radius(r) {}
+	Circle() = default;
+	Circle(Vector2 c, float r) : x(c.x), y(c.y), radius(r) {}
+	Circle(float x, float y, float r) : x(x), y(y), radius(r) {}
 	~Circle() = default;
 };
 
 struct Polygon
 {
+	float x;
+	float y;
 	std::vector<Vector2> corners;
-	Vector2 center;
 	std::vector<Vector2> normals;
 	Rectangle AABB;
 
+	Polygon() = default;
 	Polygon(Rectangle rec)
 	{
-		center = { rec.x + rec.width / 2, rec.y + rec.height / 2 };
+		x = rec.x + rec.width / 2;
+		y = rec.y + rec.height / 2;
 		// add the vertices
 		corners.push_back({ rec.x, rec.y });							// p0 ---- p3
 		corners.push_back({ rec.x, rec.y + rec.height });				// |        |
@@ -36,7 +42,8 @@ struct Polygon
 	Polygon(Vector2 c, std::vector<Vector2> v)
 	{
 		// Store the center and corners
-		center = c;
+		x = c.x;
+		y = c.y;
 		corners = v;
 
 		// Determine the normal vectors for the sides of the shape
@@ -77,7 +84,7 @@ struct Polygon
 	void rotate(float radians)
 	{
 		// Normalize the rotation to the complete circle
-		radians = std::fmod(std::abs(radians), 2.0f * M_PI);
+		radians = std::fmod(std::abs(radians), 2.0f * PI);
 		// Pre-calculate cosine and sin of the given angle in radians
 		float cos = std::cos(radians);
 		float sin = std::sin(radians);
@@ -89,13 +96,13 @@ struct Polygon
 		{
 			// Shifting the pivot point to the origin
 			// and the given points accordingly
-			float x_shift = corner.x - center.x;
-			float y_shift = corner.y - center.y;
+			float x_shift = corner.x - x;
+			float y_shift = corner.y - y;
 
 			// Calculating the rotated point co-ordinates
 			// and shifting it back
-			corner.x = (x_shift * cos - y_shift * sin) + center.x;
-			corner.y = (x_shift * sin - y_shift * cos) + center.y;
+			corner.x = (x_shift * cos - y_shift * sin) + x;
+			corner.y = (x_shift * sin - y_shift * cos) + y;
 
 			// Keep track of the bounds of the AABB rectangle
 			topLeft.y = std::max(topLeft.y, corner.y);
@@ -113,6 +120,18 @@ struct Polygon
 			// Normals can be rotated around origin, so no shift is needed
 			normal.x = normal.x * cos - normal.y * sin;
 			normal.y = normal.x * sin - normal.y * cos;
+		}
+	}
+	void DrawOutline(Color color)
+	{
+		DrawRectangleRec(AABB, DARKGRAY);
+		Vector2 xy = { x, y };
+
+		uint32_t size = corners.size();
+		DrawLineV(xy + corners[size - 1], xy + corners[0], color);
+		for (uint32_t i = 1; i < size; i++)
+		{
+			DrawLineV(xy + corners[i - 1], xy + corners[i], color);
 		}
 	}
 };

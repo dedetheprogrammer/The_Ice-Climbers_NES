@@ -1,7 +1,8 @@
 #pragma once
+
 #include "raylib.h"
+
 #include <cmath>
-#define M_PI 3.14159265358979323846f
 
 Vector2 operator-(Vector2 v1, Vector2 v2)
 {
