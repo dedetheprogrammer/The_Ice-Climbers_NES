@@ -44,25 +44,27 @@ private:
     //...
 public:
     // Propiedades hardcodeadas.
-    bool isRight;      // Indica si esta mirando a la derecha o no.
+    bool isRight;      // Telling us if the object is facing to the right.
+    bool isJumping;    // Telling us if the object is jumping.
     float speed;       // GameObject speed.
     Vector2 position;  // GameObject position.
     Animator animator; // Animator component.
 
     GameObject(float speed, Vector2 position, Animator animator) {
         isRight = true;
+        isJumping = false;
         this->speed    = speed;
         this->position = position; 
         this->animator = animator;
     }
 
     void Move() {
-        // Move to the right:
+        // Horizontal movement:
         int move = GetAxis("Horizontal");
         if (!move) {
-            animator["Idle"];
+            if (!isJumping) animator["Idle"];
         } else {
-            animator["Walk"];
+            if (!isJumping) animator["Walk"];
             if ((move < 0 && isRight) || (move > 0 && !isRight)) {
                 isRight = !isRight;
                 animator.Flip();
@@ -70,6 +72,7 @@ public:
         }
         position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
 
+        // Jump:
         /*
         if (!jumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
             PlaySound(jump);
@@ -139,12 +142,61 @@ public:
 
 };
 
+class AudioSource {
+private:
+    //...
+public:
+
+    AudioSource() {}
+
+
+    void Play() {
+
+    }
+
+};
+
+class SoundType : public AudioSource {
+private:
+    Sound source;
+public:
+    SoundType (const char *fileName) {
+        source = LoadSound(fileName);
+    }
+
+    void Unload() {
+        UnloadSound(source);
+    }
+};
+
+class MusicType : public AudioSource {
+private:
+    Music source;
+public:
+    MusicType (const char *fileName, bool loop) {
+        source = LoadMusicStream(fileName);
+        source.looping = loop;
+        PlayMusicStream(source);
+    }
+
+    //void Init() {
+    //    PlayMusicStream(source);
+    //}
+
+    void Play() {
+        UpdateMusicStream(source);
+    }
+
+    void Unload() {
+        UnloadMusicStream(source);
+    }
+};
+
 void game() {
 
     // Audio. Source/Sound player component?
-    Sound jump  = LoadSound("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav");
-    Music music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/03-Play-BGM.mp3");
-    music.looping = true;
+    SoundType Jump("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav");
+    MusicType BGM("Assets/NES - Ice Climber - Sound Effects/03-Play-BGM.mp3", true);
     
     // Textures. Sprite component?
     Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
@@ -153,7 +205,7 @@ void game() {
     Texture2D Popo_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png");
 
     // Animations & Animator component.
-    Animator Popo_animations(
+    Animator PopoAnimator(
         "Idle", 
         {
             {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 16, 24, 3, 0.2)},
@@ -173,12 +225,11 @@ void game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     // GameObject.
-    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, Popo_animations);
+    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
 
-    PlayMusicStream(music);
     bool paused = false;
     while(!WindowShouldClose()) {
-        UpdateMusicStream(music);
+        BGM.Play();
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsGamepadAvailable(0)) {
@@ -217,10 +268,9 @@ void game() {
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     UnloadTexture(Snowball);
-    Popo_animations.animations["Idle"].Unload();
-    Popo_animations.animations["Walk"].Unload();
-    UnloadMusicStream(music);  // Unload music stream buffers from RAM
-    UnloadSound(jump);  // Unload music stream buffers from RAM
+    PopoAnimator.Unload();
+    BGM.Unload();
+    Jump.Unload();
 
 }
 

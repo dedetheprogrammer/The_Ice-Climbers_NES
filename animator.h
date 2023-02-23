@@ -4,16 +4,8 @@
 
 #include <string>
 #include <unordered_map>
+#include "component.h"
 #include "raylib.h"
-
-class Component {
-private:
-    //...
-public:
-    enum COMPONENT_ENUM { ANIMATOR };
-    // Un poco de spoiler de lo que se viene...
-    Component() {}
-};
 
 class Animation {
 private:
@@ -130,6 +122,12 @@ public:
 
     void Play(Vector2 position) {
         animations[current_animation].Play(position);
+    }
+
+    void Unload() {
+        for (auto& animation : animations) {
+            animation.second.Unload();
+        }
     }
 
     void operator[ ](std::string animation) {
