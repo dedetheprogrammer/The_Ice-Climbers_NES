@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -14,6 +15,8 @@
 // Dimensiones de la ventana.
 int WINDOW_WIDTH  = 720;
 int WINDOW_HEIGHT = 720;
+
+
 
 Font NES;
 
@@ -46,31 +49,119 @@ public:
     // Propiedades hardcodeadas.
     bool isRight;      // Telling us if the object is facing to the right.
     bool isJumping;    // Telling us if the object is jumping.
+    bool isFalling;    // Telling us if the object is falling.
+    bool isHitting;    // Telling us if the object is hitting.
+    bool isHittingPhase1;    // Telling us if the object is falling.
+    bool isHittingPhase2;    // Telling us if the object is falling.
+    bool isHittingPhase3;    // Telling us if the object is falling.
     float speed;       // GameObject speed.
     Vector2 position;  // GameObject position.
     Animator animator; // Animator component.
+    Rectangle hitbox;
+
+    float jump_limit;  // Max height the object can reach by jumping
+    float current_jump_height;  // Current jump height of the object
+    int count = 0;
 
     GameObject(float speed, Vector2 position, Animator animator) {
         isRight = true;
         isJumping = false;
+        isFalling = false;
+        isHitting = false;
+        isHittingPhase1 = false;
+        isHittingPhase2 = false;
+        isHittingPhase3 = false;
         this->speed    = speed;
-        this->position = position; 
+        this->position = position;
         this->animator = animator;
+        this->jump_limit = 150;
     }
 
     void Move() {
         // Horizontal movement:
         int move = GetAxis("Horizontal");
         if (!move) {
-            if (!isJumping) animator["Idle"];
-        } else {
-            if (!isJumping) animator["Walk"];
+            if (!isJumping && !isFalling && !isHitting) animator["Idle"];
+        } else if(!isHitting){
+            if (!isJumping && !isFalling) animator["Walk"];
             if ((move < 0 && isRight) || (move > 0 && !isRight)) {
                 isRight = !isRight;
                 animator.Flip();
             }
         }
-        position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
+
+        if(!isJumping && !isFalling && !isHitting && (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP) || IsKeyDown(KEY_SPACE))) {
+            isJumping = true;
+            animator["Jump"];
+            current_jump_height = 0;
+        }
+
+        if(!isJumping && !isFalling && IsKeyDown(KEY_E)){
+            isHitting = true;
+        }
+
+        if(isJumping) {
+            if(current_jump_height == jump_limit) {
+                animator["Fall"];
+                isJumping = !isJumping;
+                isFalling = !isFalling;
+            } else {
+                float next_jump = speed * GetFrameTime();
+                if(current_jump_height + next_jump  >= jump_limit) {
+                    float last_jump = jump_limit - current_jump_height;
+                    position.y -= last_jump;
+                    current_jump_height = jump_limit;
+                } else  {
+                    current_jump_height += next_jump;
+                    position.y -= next_jump;
+                }
+            }
+        }
+
+        if(isFalling){
+            if(position.y > WINDOW_HEIGHT) {
+                std::cout << "Caido" << std::endl;
+            }
+            float next_fall = speed * GetFrameTime();
+            
+            position.y += speed * GetFrameTime();
+        }
+
+        if(isHitting){
+            count++;
+            if(!isHittingPhase1 && !isHittingPhase2 && !isHittingPhase3) {
+                isHittingPhase1 = true;
+                position.y -= 15;
+                animator["Fall"];
+                count = 0;
+            }else if(isHittingPhase1 && count >= 3){
+                count = 0;
+                position.y += 15;
+                animator["Hit_2"];
+                isHittingPhase1 = false;
+                isHittingPhase2 = true;
+            }else if (isHittingPhase2 && count >= 3){
+                count = 0;
+                position.y -= 3;
+                animator["Hit_3"];
+                isHittingPhase2 = false;
+                isHittingPhase3 = true;
+            }else if(isHittingPhase3 && count >= 3){
+                count = 0;
+                position.y += 3;
+                isHittingPhase3 = false;
+                if(!IsKeyDown(KEY_E)){
+                    isHitting = false;
+                    animator["Idle"];
+                }else{
+                    position.y -= 15;
+                    animator["Fall"];
+                    isHittingPhase1 = true;
+                }
+            }
+        }else{
+            position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
+        }
 
         // Jump:
         /*
@@ -209,7 +300,11 @@ void game() {
         "Idle", 
         {
             {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 16, 24, 3, 0.2)},
-            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 16, 24, 3, 0.135)}
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 16, 24, 3, 0.135)},
+            {"Jump", Animation("Assets/NES - Ice Climber - Sprites/06-Popo-Jump.png", 20, 24, 3, 0.135)},
+            {"Fall", Animation("Assets/NES - Ice Climber - Sprites/07-Popo-Fall.png", 15, 29, 3, 0.135)},
+            {"Hit_2", Animation("Assets/NES - Ice Climber - Sprites/08-Popo-Hit_2.png", 21, 24, 3, 0.135)},
+            {"Hit_3", Animation("Assets/NES - Ice Climber - Sprites/09-Popo-Hit_3.png", 21, 25, 3, 0.135)}
         }
     );
 
