@@ -1,328 +1,180 @@
 #include <cmath>
-#include <iostream>
-#include <random>
-#include <string>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <memory>
+#include <random>
+#include <sstream>
 #include <vector>
-#include "raylib.h"
-#include "colisiones.h"
 
+#include "animator.h"
+#include "colisiones.h"
+#include "raylib.h"
+
+
+// Dimensiones de la ventana.
 int WINDOW_WIDTH  = 720;
 int WINDOW_HEIGHT = 720;
 
-Texture2D Popo_sprite;
-Texture2D Popo_walk[3];
-Texture2D Popo_jump_up;
-Texture2D Popo_jump_down;
+Font NES;
 
-/*
-class Sprite {
+// Movimiento.
+int GetAxis(std::string axis) {
+    if (axis == "Horizontal") {
+        bool left_key  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
+        bool right_key = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT); 
+        if (left_key && right_key) return 0;
+        else if (left_key) return -1;
+        else if (right_key) return 1;
+    } else if (axis == "Vertical") {
+        bool down_key = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
+        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP); 
+        if (down_key && up_key) return 0;
+        if (down_key) return -1;
+        else if (up_key) return 1;
+    }
+    return 0;
+}
+
+// Test de coliisiones.
+//Rectangle techo{200, WINDOW_HEIGHT - 200, 100, 50};
+//Rectangle suelo{0, WINDOW_HEIGHT - 67, WINDOW_WIDTH, 67};
+
+class GameObject {
 private:
-    Rectangle src; // Rectangle that selects the region of the sprite.
-    Rectangle dst; // Rectangle that shows the region with the transformations.
+    //...
 public:
+    // Propiedades hardcodeadas.
+    bool isRight;      // Indica si esta mirando a la derecha o no.
+    float speed;       // GameObject speed.
+    Vector2 position;  // GameObject position.
+    Animator animator; // Animator component.
 
-    Texture2D sprite;
-
-    Sprite(const char *fileName) {
-        sprite = LoadTexture(fileName);
-        src = dst = {0,0,(float)sprite.width,(float)sprite.height};
-    }
-
-    Sprite(const char *fileName, float scale) {
-        sprite = LoadTexture(fileName);
-        src = {0,0,(float)sprite.width, (float)sprite.height};
-        dst = {0,0,sprite.width*scale, sprite.height*scale};
-    }
-
-    Sprite(const char* fileName, float scale, Vector2 dest) {
-        sprite = LoadTexture(fileName);
-        src = {0,0,(float)sprite.width, (float)sprite.height};
-        dst = {dest.x, dest.y, sprite.width*scale, sprite.height*scale};  
-    }
-
-    void Draw() {
-        DrawTexturePro(sprite, src, dst, Vector2{0,0}, 0, WHITE);
-    }
-};
-*/
-
-Rectangle techo{200, WINDOW_HEIGHT - 200, 100, 50};
-Rectangle suelo{0, WINDOW_HEIGHT - 67, WINDOW_WIDTH, 67};
-
-class Projectile {
-private:
-    Rectangle src;
-    Rectangle dst;
-    float distance;
-public:
-    Texture2D sprite;
-    float speed;
-    Projectile(float speed, Vector2 position, Texture2D sprite) : speed(speed) {
-        this->sprite = sprite;
-        src = {0, 0, (float)sprite.width, (float)sprite.height};
-        dst = {position.x, position.y, sprite.width*2.5f, sprite.height*2.5f};
-        distance = 0;
-    }
-
-    bool Move() {
-        if (dst.x + dst.width < 0 || dst.x > GetScreenWidth() || distance >= 100) {
-            distance = 0;
-            return false;
-        }
-        float offset = speed * GetFrameTime();
-        distance += std::abs(offset);
-        dst.x += offset;
-        return true;
-        
-    }
-
-    void Draw() {
-        DrawTexturePro(sprite, src, dst, Vector2{0,0}, 0, WHITE);
-    }
-
-};
-
-class Object {
-private:
-    // ...
-    Rectangle src;
-    Rectangle dst;
-    bool jumping;
-    bool jump_direction;
-    float jump_height;
-    float max_jump_height = 150;
-    int sense;
-public:
-
-    float snowball_cooldown;
-    std::vector<Projectile> snowballs;
-    float speed;
-    Vector2 position;
-    Texture2D sprite, snowball;
-    Sound jump;
-    int count = 0;
-    int count2 = 0;
-    int step_interval = 0;
-
-    Object(float speed, Vector2 position, Texture2D sprite, Sound jump, Texture2D snowball) : position(position), sprite(sprite) {
-        this->snowball = snowball;
-        this->speed = speed;
-        jumping = false;
-        jump_height = 0;
-        this->jump = jump;
-        src = {0, 0, (float)sprite.width, (float)sprite.height};
-        dst = {position.x, position.y, sprite.width*3.0f, sprite.height*3.0f};
-        sense = 1;
-        snowball_cooldown = 0;
+    GameObject(float speed, Vector2 position, Animator animator) {
+        isRight = true;
+        this->speed    = speed;
+        this->position = position; 
+        this->animator = animator;
     }
 
     void Move() {
-        
-        if (IsGamepadAvailable(0)) {
-            float x_move = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
-            if (x_move > 0) {
-                sense =  1;
-                if (src.width > 0) {
-                    src.width *= -1;
-                }
-            } else if (x_move < 0) {
-                sense = -1;
-                if (src.width < 0) {
-                    src.width *= -1;
-                }
-            }
-            if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_THUMB)) {
-                dst.x += x_move * (speed + 80) * GetFrameTime();
-            } else {
-                dst.x += x_move * speed * GetFrameTime();
-            }
-            if (!jumping && IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                PlaySound(jump);
-                jumping = true;
-                jump_direction = true;
-            } else if (jumping) {
-                float offset = (speed*3) * GetFrameTime();
-                if (jump_height <= max_jump_height && jump_direction == true) {
-                    jump_height += offset;
-                    dst.y -= offset;
-                } else {
-                    jump_direction = false;
-                    if (jump_height > 0) {
-                        jump_height -= offset;
-                        dst.y += offset;
-                    } else {
-                        jump_height = 0;
-                        jumping = false;
-                    }
-                }
-            }
-            if (snowball_cooldown <= 0 && snowballs.size() < 3 && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                snowball_cooldown = 0.6;
-                if (sense > 0) {
-                    snowballs.push_back(Projectile(200, Vector2{dst.x + dst.width + 5, dst.y + 30}, snowball));
-                } else if (sense < 0) {
-                    snowballs.push_back(Projectile(-200, Vector2{dst.x - snowball.width - 5, dst.y + 30}, snowball));
-                }
-            }
+        // Move to the right:
+        int move = GetAxis("Horizontal");
+        if (!move) {
+            animator["Idle"];
         } else {
-            if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
-                sense = 1;
-                count2 += 5 * speed * GetFrameTime();
-                if (count2 > step_interval){
-                    sprite = Popo_walk[count];
-                    src.height = Popo_walk[count].height;
-                    src.width = Popo_walk[count].width * sense;
-                    dst.height = Popo_walk[count].height*3;
-                    dst.width = Popo_walk[count].width*3;
-                    count = (count + 1) % 3;
-                    count2 = 0;
-                }
-                //if (src.width > 0) {
-                //    src.width *= -1;
-                //}
-                if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
-                    dst.x += sense * (speed + 80) * GetFrameTime();
-                    step_interval = 50;
-                } else {
-                    dst.x += sense * speed * GetFrameTime();
-                    step_interval = 100;
-                }
-            } else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
-                sense = -1;
-                count2 += 5 * speed * GetFrameTime();
-                if (count2 > step_interval){
-                    sprite = Popo_walk[count];
-                    src.height = Popo_walk[count].height;
-                    src.width = Popo_walk[count].width * sense;
-                    dst.height = Popo_walk[count].height*3;
-                    dst.width = Popo_walk[count].width*3;
-                    count = (count + 1) % 3;
-                    count2 = 0;
-                }
-                //if (src.width < 0) {
-                //    src.width *= -1;
-                //}
-                if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
-                    dst.x += sense * (speed + 80) * GetFrameTime();
-                    step_interval = 50;
-                } else {
-                    dst.x += sense * speed * GetFrameTime();
-                    step_interval = 100;
-                }
-            } else {
-                count = 0;  
-                count2 = 0;
-                step_interval = 0;
-                sprite = Popo_sprite;
-                src.height = Popo_sprite.height;
-                src.width = Popo_sprite.width * sense;
-                dst.height = Popo_sprite.height*3;
-                dst.width = Popo_sprite.width*3;
+            animator["Walk"];
+            if ((move < 0 && isRight) || (move > 0 && !isRight)) {
+                isRight = !isRight;
+                animator.Flip();
             }
+        }
+        position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
 
-            if (!jumping && IsKeyPressed(KEY_SPACE)) {
-                PlaySound(jump);
-                jumping = true;
-                jump_direction = true;
-                sprite = Popo_jump_up;
-                src.height = Popo_jump_up.height;
-                src.width = Popo_jump_up.width * sense;
-                dst.height = Popo_jump_up.height*3;
-                dst.width = Popo_jump_up.width*3;
-            } else if (jumping) {
-                sprite = Popo_jump_up;
-                src.height = Popo_jump_up.height;
-                src.width = Popo_jump_up.width * sense;
-                dst.height = Popo_jump_up.height*3;
-                dst.width = Popo_jump_up.width*3;
-                float offset = (speed*3) * GetFrameTime();
-                if (jump_height <= max_jump_height && jump_direction == true) {
-                    jump_height += offset;
+        /*
+        if (!jumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
+            PlaySound(jump);
+            jumping = true;
+            jump_direction = true;
+            sprite = Popo_jump_up;
+            src.height = Popo_jump_up.height;
+            src.width = Popo_jump_up.width * sense;
+            dst.height = Popo_jump_up.height*3;
+            dst.width = Popo_jump_up.width*3;
+        } else if (jumping) {
+            sprite = Popo_jump_up;
+            src.height = Popo_jump_up.height;
+            src.width = Popo_jump_up.width * sense;
+            dst.height = Popo_jump_up.height*3;
+            dst.width = Popo_jump_up.width*3;
+            float offset = (speed*3) * GetFrameTime();
+            if (jump_height <= max_jump_height && jump_direction == true) {
+                jump_height += offset;
 
-                    if (CollisionHelper::Collides(dst, techo)) jump_direction = false;
-                    else dst.y -= offset;
+                if (CollisionHelper::Collides(dst, techo)) jump_direction = false;
+                else dst.y -= offset;
 
-                } else {
-                    sprite = Popo_jump_down;
-                    src.height = Popo_jump_down.height;
-                    src.width = Popo_jump_down.width * sense;
-                    dst.height = Popo_jump_down.height*3;
-                    dst.width = Popo_jump_down.width*3;
-                    jump_direction = false;
-                    if (jump_height - offset > 0) {
-                        jump_height -= offset;
-                        dst.y += offset;
-                    }
-                    //if (!CollisionHelper::Collides(dst, suelo))
-                    //{
-                    //    jump_height -= offset;
-                    //    dst.y += offset;
-                    //}
-                    else
-                    {
-                        jump_height = 0;
-                        dst.y = WINDOW_HEIGHT - Popo_sprite.height*2.0f - 91;
-                        //dst.y = suelo.y;
-                        jumping = false;
-                        sprite = Popo_sprite;
-                        src.height = Popo_sprite.height;
-                        src.width = Popo_sprite.width * sense;
-                        dst.height = Popo_sprite.height*3;
-                        dst.width = Popo_sprite.width*3;
-                    }
+            } else {
+                sprite = Popo_jump_down;
+                src.height = Popo_jump_down.height;
+                src.width = Popo_jump_down.width * sense;
+                dst.height = Popo_jump_down.height*3;
+                dst.width = Popo_jump_down.width*3;
+                jump_direction = false;
+                if (jump_height - offset > 0) {
+                    jump_height -= offset;
+                    dst.y += offset;
+                }
+                //if (!CollisionHelper::Collides(dst, suelo))
+                //{
+                //    jump_height -= offset;
+                //    dst.y += offset;
+                //}
+                else
+                {
+                    jump_height = 0;
+                    dst.y = WINDOW_HEIGHT - Popo_sprite.height*2.0f - 91;
+                    //dst.y = suelo.y;
+                    jumping = false;
+                    sprite = Popo_sprite;
+                    src.height = Popo_sprite.height;
+                    src.width = Popo_sprite.width * sense;
+                    dst.height = Popo_sprite.height*3;
+                    dst.width = Popo_sprite.width*3;
                 }
             }
         }
-        for (auto it = snowballs.begin(); it != snowballs.end(); /*it++*/) {
-            if(!it->Move()) {
-                it = snowballs.erase(it);
-            } else {
-                it++;
-            }
-        }
-        snowball_cooldown -= GetFrameTime();
+        */
     }
 
     void Draw() {
-        if (dst.x + dst.width < 0) {
-            dst.x = GetScreenWidth();
+        /*
+        if (position.x + position.width < 0) {
+            position.x = GetScreenWidth();
         } if (dst.x > GetScreenWidth()) {
-            dst.x = -dst.width;
+            position.x = -position.width;
         }
-        DrawTexturePro(sprite, src, dst, Vector2{0,0}, 0, WHITE);
-        for (auto& s : snowballs) {
-            s.Draw();
-        }
+        */
+        animator.Play(Vector2{position.x, position.y});
     }
 
 };
 
 void game() {
 
-    Sound jump  = LoadSound("NES - Ice Climber - Sound Effects/09-Jump.wav");
-    Music music = LoadMusicStream("NES - Ice Climber - Sound Effects/03-Play-BGM.ogg");
+    // Audio. Source/Sound player component?
+    Sound jump  = LoadSound("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav");
+    Music music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/03-Play-BGM.mp3");
     music.looping = true;
-    Texture2D Snowball = LoadTexture("NES - Ice Climber - Sprites/03-Snowball.png");
-    Texture2D Pause_frame = LoadTexture("NES - Ice Climber - Sprites/04-Small-frame.png");
-    float paused_showtime = 0.75;
-    bool show = true;
-    Popo_sprite = LoadTexture("NES - Ice Climber - Sprites/02-Popo-Idle.png");
     
-    Popo_walk[0] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-1.png");
-    Popo_walk[1] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-2.png");
-    Popo_walk[2] = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-WALK-3.png");
-    Popo_jump_up = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-JUMP-UP.png");
-    Popo_jump_down = LoadTexture("NES - Ice Climber - Sprites/ICE-CLIMBER-POPO-JUMP-DOWN.png");
-    Texture2D Mountain_sprite = LoadTexture("NES - Ice Climber - Sprites/01-Mountain.png");
+    // Textures. Sprite component?
+    Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
+    Texture2D Pause_frame = LoadTexture("Assets/NES - Ice Climber - Sprites/04-Small-frame.png");
+    Texture2D Mountain_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Mountain.png");
+    Texture2D Popo_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png");
+
+    // Animations & Animator component.
+    Animator Popo_animations(
+        "Idle", 
+        {
+            {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 16, 24, 3, 0.2)},
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 16, 24, 3, 0.135)}
+        }
+    );
+
+    // Rectangles = Sprites component?
+    // Mountain background:
     Rectangle src{0, (float)(Mountain_sprite.height - Mountain_sprite.width), (float)Mountain_sprite.width, (float)Mountain_sprite.width};
     Rectangle dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+    
+    // PAUSE frame:
+    float paused_showtime = 0.75;
+    bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
-    Object Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, Popo_sprite, jump, Snowball);
-    Font NES = LoadFont("NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
     
+    // GameObject.
+    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, Popo_animations);
+
     PlayMusicStream(music);
     bool paused = false;
     while(!WindowShouldClose()) {
@@ -356,19 +208,17 @@ void game() {
         }
         
         DrawTexturePro(Mountain_sprite, src, dst, Vector2{0,0}, 0, WHITE);
-        DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
+        //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
         //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
+        //Popo_animations.animations["Walk"].Play(Vector2{350,581});
         EndDrawing();
     }
-    UnloadFont(NES);
     UnloadTexture(Popo_sprite);
-    UnloadTexture(Popo_walk[0]);
-    UnloadTexture(Popo_walk[1]);
-    UnloadTexture(Popo_walk[2]);
-    UnloadTexture(Popo_jump_up);
-    UnloadTexture(Popo_jump_down);
     UnloadTexture(Mountain_sprite);
+    UnloadTexture(Pause_frame);
     UnloadTexture(Snowball);
+    Popo_animations.animations["Idle"].Unload();
+    Popo_animations.animations["Walk"].Unload();
     UnloadMusicStream(music);  // Unload music stream buffers from RAM
     UnloadSound(jump);  // Unload music stream buffers from RAM
 
@@ -380,12 +230,12 @@ int main() {
     InitWindow(WINDOW_WIDTH,WINDOW_HEIGHT,"COÑO");
     InitAudioDevice(); // Initialize audio device.
 
-    Font NES = LoadFont("NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
+    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
 
     // Title screen.
     // ---- Sprite
-    Texture2D ts_bg = LoadTexture("NES - Ice Climber - Sprites/01-Title-screen.png");
-    Texture2D ts_hammer = LoadTexture("NES - Ice Climber - Sprites/05-Menu-hammer.png");
+    Texture2D ts_bg = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Title-screen.png");
+    Texture2D ts_hammer = LoadTexture("Assets/NES - Ice Climber - Sprites/05-Menu-hammer.png");
     Rectangle ts_src{0, 0, (float)ts_bg.width, (float)ts_bg.height};
     Rectangle ts_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     Rectangle ts_hammer_src{0, 0, (float)ts_hammer.width, (float)ts_hammer.height};
@@ -393,18 +243,16 @@ int main() {
     float option_change_timer = 0;
     Rectangle ts_hammer_dst_0{161, 388, ts_hammer.width*3.0f, ts_hammer.height*3.0f};
     Rectangle ts_hammer_dst_1{161, 438, ts_hammer.width*3.0f, ts_hammer.height*3.0f};
-    //Rectangle ts_hammer_dst_2{161, 488, ts_hammer.width*3.0f, ts_hammer.height*3.0f};
     int mountain = 0, mountains = 32;
 
     // ---- Music
-    Music ts_music = LoadMusicStream("NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
     ts_music.looping = true;
     bool play_music = false;
 
     PlayMusicStream(ts_music);
 
     SetTargetFPS(30);
-    bool JOYSTICK_USED = false;
     while(!WindowShouldClose()) {
         if (IsKeyPressed(KEY_M)) {
             play_music = !play_music;
@@ -467,7 +315,6 @@ int main() {
     UnloadFont(NES);
     UnloadTexture(ts_bg);
     UnloadMusicStream(ts_music);
-
     CloseAudioDevice();
     CloseWindow();
 
