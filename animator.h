@@ -96,6 +96,10 @@ public:
     void Unload() {
         UnloadTexture(spritesheet);
     }
+
+    bool isOut(Vector2 position) {
+        return (position.x > GetScreenWidth() || position.x + single_frame_width <= 0);
+    }
     
 };
 
@@ -133,6 +137,10 @@ public:
     void operator[ ](std::string animation) {
         if (animation != current_animation) animations[animation].Stop();
         current_animation = animation;
+    }
+
+    bool isOut(Vector2 position) {
+        return animations[current_animation].isOut(position);
     }
 };
 

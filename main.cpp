@@ -6,6 +6,7 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include <ctime>
 
 #include "animator.h"
 #include "colisiones.h"
@@ -163,6 +164,8 @@ public:
             position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
         }
 
+        
+
         // Jump:
         /*
         if (!jumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
@@ -233,6 +236,105 @@ public:
 
 };
 
+class IAObject {
+private:
+    //...
+public:
+    // Propiedades hardcodeadas.
+    bool isRight;      // Telling us if the object is facing to the right.
+    float speed;       // GameObject speed.
+    Vector2 position;  // GameObject position.
+    Animator animator; // Animator component.
+
+    IAObject() {}
+
+    IAObject(float speed, Vector2 position, Animator animator) {
+        isRight = true;
+        this->speed    = speed;
+        this->position = position;
+        this->animator = animator;
+    }
+
+    void Move() {
+        // Horizontal movement:
+        auto move = (isRight) ? 1 : -1;
+        position.x += (move * speed * GetFrameTime());
+    }
+
+    void Draw() {
+        animator.Play(position);
+    }
+
+    void Flip() {
+        animator.Flip();
+        isRight = !isRight;
+        position.x += GetScreenWidth() + 16;
+    }
+
+    bool isOut() {
+        return animator.isOut(position);
+    }
+
+    Vector2 getPosition() {
+        return position;
+    }
+
+    void setPosition(Vector2 position) {
+        this->position = position;
+    }
+};
+
+class CreatureIA {
+private:
+    //...
+public:
+    IAObject Topi;
+    Vector2 initialPos;
+    float ratio;
+    std::mt19937 mt;
+    std::uniform_real_distribution<> rand;
+    std::uniform_int_distribution<> side;
+    bool isPlaying;
+
+    CreatureIA(IAObject Topi, float ratio, int seed) {
+        this->Topi = Topi;
+        initialPos = Topi.getPosition();
+        this->ratio = ratio;
+        std::mt19937 mt(seed);
+        std::uniform_real_distribution<> rand(0.0,100.0);
+        std::uniform_int_distribution<> side(0,1);
+        this->mt = mt;
+        this->rand = rand;
+        this->side = side;
+        isPlaying = true;
+    }
+
+    void Play() {
+        if(!isPlaying) {
+            if(rand(mt) <= ratio) {
+                isPlaying = !isPlaying;
+                if(side(mt)) {
+                    Topi.Flip();
+                }
+                Topi.Move();
+                Topi.Draw();
+            }
+        } else {
+            if(Topi.isOut()) { 
+                isPlaying = !isPlaying;
+                Topi.setPosition(initialPos);
+            } else {
+                Topi.Move();
+                Topi.Draw();
+            }
+        }
+    }
+    
+    void Draw() {
+        Topi.Draw();
+    }
+};
+
 class AudioSource {
 private:
     //...
@@ -285,6 +387,10 @@ public:
 
 void game() {
 
+    
+    std::mt19937 mtSuper(time(0));
+    std::uniform_int_distribution<> randSuper(0, INT_MAX);
+
     // Audio. Source/Sound player component?
     SoundType Jump("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav");
     MusicType BGM("Assets/NES - Ice Climber - Sound Effects/03-Play-BGM.mp3", true);
@@ -294,17 +400,33 @@ void game() {
     Texture2D Pause_frame = LoadTexture("Assets/NES - Ice Climber - Sprites/04-Small-frame.png");
     Texture2D Mountain_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Mountain.png");
     Texture2D Popo_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png");
+    Texture2D Topi_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/13-Topi-Walk.png");
+    Texture2D Joseph_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/15-Joseph-Idle.png");
+
 
     // Animations & Animator component.
     Animator PopoAnimator(
         "Idle", 
         {
-            {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 16, 24, 3, 0.2)},
-            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 16, 24, 3, 0.135)},
-            {"Jump", Animation("Assets/NES - Ice Climber - Sprites/06-Popo-Jump.png", 20, 24, 3, 0.135)},
-            {"Fall", Animation("Assets/NES - Ice Climber - Sprites/07-Popo-Fall.png", 15, 29, 3, 0.135)},
-            {"Hit_2", Animation("Assets/NES - Ice Climber - Sprites/08-Popo-Hit_2.png", 21, 24, 3, 0.135)},
-            {"Hit_3", Animation("Assets/NES - Ice Climber - Sprites/09-Popo-Hit_3.png", 21, 25, 3, 0.135)}
+            {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 21, 29, 3, 0.2)},
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 21, 29, 3, 0.135)},
+            {"Jump", Animation("Assets/NES - Ice Climber - Sprites/06-Popo-Jump.png", 21, 29, 3, 0.135)},
+            {"Fall", Animation("Assets/NES - Ice Climber - Sprites/07-Popo-Fall.png", 21, 29, 3, 0.135)},
+            {"Hit", Animation("Assets/NES - Ice Climber - Sprites/06-Popo-Hit.png", 21, 29, 3, 0.135)}
+        }
+    );
+    
+    Animator TopiAnimator(
+        "Walk", 
+        {
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/13-Topi-Walk.png", 16, 16, 3, 0.2)}
+        }
+    );
+    
+    Animator JosephAnimator(
+        "Walk", 
+        {
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/14-JosephJowis-Walk.png", 16, 31, 3, 0.2)}
         }
     );
 
@@ -320,7 +442,13 @@ void game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     // GameObject.
-    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
+    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-96}, PopoAnimator);
+    IAObject Topi(100, Vector2{-16,(WINDOW_HEIGHT - Topi_sprite.height*2.0f)-83}, TopiAnimator);
+    IAObject Joseph(100, Vector2{-16,(WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-98}, JosephAnimator);
+
+
+    CreatureIA TIA(Topi, 5.0, randSuper(mtSuper));
+    CreatureIA JIA(Joseph, 5.0, randSuper(mtSuper));
 
     bool paused = false;
     while(!WindowShouldClose()) {
@@ -331,12 +459,15 @@ void game() {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;
             }
-        }
+        } else if (IsKeyDown(KEY_P)) { paused = !paused; }
         if (!paused) {
             Popo.Move();
             Popo.Draw();
+            TIA.Play();
+            JIA.Play();
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
+            JIA.Draw();
             if (show) {
                 if (paused_showtime <= 0) {
                     paused_showtime = 0.75;
