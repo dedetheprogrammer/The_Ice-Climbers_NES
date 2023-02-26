@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "animator.h"
+#include "audioplayer.h"
 #include "colisiones.h"
 #include "raylib.h"
 
-
 // Dimensiones de la ventana.
-int WINDOW_WIDTH  = 720;
-int WINDOW_HEIGHT = 720;
+int WINDOW_WIDTH  = 900; // 240px
+int WINDOW_HEIGHT = 600; // 160px
 
 Font NES;
 
@@ -35,188 +35,185 @@ int GetAxis(std::string axis) {
     return 0;
 }
 
-// Test de coliisiones.
+// Test de colisiones.
 //Rectangle techo{200, WINDOW_HEIGHT - 200, 100, 50};
 //Rectangle suelo{0, WINDOW_HEIGHT - 67, WINDOW_WIDTH, 67};
+
+enum WINDOW_BEHAVOR { COLLISION = 0x01, TRAVERSE = 0x02, IGNORE = 0x04 };
+bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
+    return false;
+}
 
 class GameObject {
 private:
     //...
 public:
     // Propiedades hardcodeadas.
-    bool isRight;      // Telling us if the object is facing to the right.
-    bool isJumping;    // Telling us if the object is jumping.
-    float speed;       // GameObject speed.
-    Vector2 position;  // GameObject position.
-    Animator animator; // Animator component.
+    int isRight;             // Telling us if the object is facing to the right.
+    //bool isAttacking;        // Telling us if the object is attacking.
+    float movement_speed;    // GameObject movement speed.
+    // Braking:
+    float braking_dist;      // Braking distance.
+    float max_braking_dist;  // Max. braking distance.
+    float braking_force;     // Coefficient to lowering the current speed.
+    // Jumping:
+    int isJumping;          // Telling us if the object is jumping. (0) if not, (-1) if going up and (1) if falling.
+    float jumping_dist;     // Jumping distance.
+    float max_jumping_dist; // Max. jumping distance.
+    float jumping_force;    // Coefficient to highering the current height.
+    Vector2 position;       // GameObject position.
+    // Components:
+    Animator animator;       // Animator component.
+    Audioplayer audioplayer; // Audioplayer component.
 
-    GameObject(float speed, Vector2 position, Animator animator) {
-        isRight = true;
+    GameObject(float movement_speed, Vector2 position, Animator animator, Audioplayer audioplayer) {
+        isRight = 1;
         isJumping = false;
-        this->speed    = speed;
+        //isAttacking = false;
+        this->movement_speed = movement_speed;
+        // Braking:
+        braking_dist = 0;
+        max_braking_dist = 10;
+        this->braking_force = 40;
+        // Jumping:
+        jumping_dist = 0;
+        max_jumping_dist = 150;
+        this->jumping_force = 300;
         this->position = position; 
         this->animator = animator;
+        this->audioplayer = audioplayer;
     }
 
     void Move() {
+
+        // Delta time:
+        float deltaTime = GetFrameTime();
+
         // Horizontal movement:
-        int move = GetAxis("Horizontal");
-        if (!move) {
-            if (!isJumping) animator["Idle"];
-        } else {
-            if (!isJumping) animator["Walk"];
-            if ((move < 0 && isRight) || (move > 0 && !isRight)) {
-                isRight = !isRight;
-                animator.Flip();
-            }
-        }
-        position.x += (move * (speed + (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT) ? 80 : 0)) * GetFrameTime());
-
-        // Jump:
-        /*
-        if (!jumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
-            PlaySound(jump);
-            jumping = true;
-            jump_direction = true;
-            sprite = Popo_jump_up;
-            src.height = Popo_jump_up.height;
-            src.width = Popo_jump_up.width * sense;
-            dst.height = Popo_jump_up.height*3;
-            dst.width = Popo_jump_up.width*3;
-        } else if (jumping) {
-            sprite = Popo_jump_up;
-            src.height = Popo_jump_up.height;
-            src.width = Popo_jump_up.width * sense;
-            dst.height = Popo_jump_up.height*3;
-            dst.width = Popo_jump_up.width*3;
-            float offset = (speed*3) * GetFrameTime();
-            if (jump_height <= max_jump_height && jump_direction == true) {
-                jump_height += offset;
-
-                if (CollisionHelper::Collides(dst, techo)) jump_direction = false;
-                else dst.y -= offset;
-
+        int move = 0;
+        if (animator.HasFinished("Attack")) {
+            move = GetAxis("Horizontal");
+            if (!move) {
+                if (!animator.Trigger("Walk", "Brake") || !animator.Trigger("Jump","Brake")) {
+                    if (!isJumping) {
+                        if (braking_dist <= 3) {
+                            braking_dist = 0;
+                            animator["Idle"];
+                        } else {
+                            braking_dist -= braking_force * deltaTime;
+                            std::cout << "Braking dist: " << braking_dist << "\n";
+                            position.x += (isRight * braking_dist);
+                        }
+                    }
+                }
             } else {
-                sprite = Popo_jump_down;
-                src.height = Popo_jump_down.height;
-                src.width = Popo_jump_down.width * sense;
-                dst.height = Popo_jump_down.height*3;
-                dst.width = Popo_jump_down.width*3;
-                jump_direction = false;
-                if (jump_height - offset > 0) {
-                    jump_height -= offset;
-                    dst.y += offset;
+                if (!isJumping) animator["Walk"];
+                if (!animator.InState("Walk")) {
+                    braking_dist = 0;
                 }
-                //if (!CollisionHelper::Collides(dst, suelo))
-                //{
-                //    jump_height -= offset;
-                //    dst.y += offset;
-                //}
-                else
-                {
-                    jump_height = 0;
-                    dst.y = WINDOW_HEIGHT - Popo_sprite.height*2.0f - 91;
-                    //dst.y = suelo.y;
-                    jumping = false;
-                    sprite = Popo_sprite;
-                    src.height = Popo_sprite.height;
-                    src.width = Popo_sprite.width * sense;
-                    dst.height = Popo_sprite.height*3;
-                    dst.width = Popo_sprite.width*3;
+                if ((move < 0 && isRight == 1) || (move > 0 && isRight == -1)) {
+                    braking_dist = 0;
+                    isRight *= -1;
+                    animator.Flip();
                 }
             }
+
+            // Vertical movement (jump):
+            if (!isJumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
+                isJumping = -1;
+                audioplayer["Jump"];
+                animator["Jump"];
+            }
+            float jumping_movement = isJumping * jumping_force * deltaTime;
+            float jumping_offset = max_jumping_dist - std::abs(jumping_dist);
+            if (std::abs(jumping_movement) > jumping_offset) {
+                jumping_movement = isJumping * jumping_offset;
+            }
+            if (isJumping == -1) {
+                if (jumping_dist > -max_jumping_dist) {
+                    jumping_dist += jumping_movement;
+                } else {
+                    jumping_dist = 0;
+                    isJumping = 1;
+                }
+            } else if (isJumping == 1) {
+                if (jumping_dist < max_jumping_dist) {
+                    jumping_dist += jumping_movement;
+                } else {
+                    jumping_dist = 0;
+                    isJumping = 0;
+                }
+            }
+
+            // Position actualization:
+            auto dims = animator.GetDimensions();
+            if ((position.x + dims.first) < -dims.first) {
+                position.x = GetScreenWidth();
+            } else if (position.x > (GetScreenWidth() + dims.first)) {
+                position.x = -dims.first*2;
+            } else {
+                if (!isJumping && IsKeyPressed(KEY_E)) {
+                    animator["Attack"];
+                    braking_dist = 0;
+                } else {
+                    float movement_dist;
+                    if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+                        max_braking_dist = 15;
+                        movement_dist    = (move * (movement_speed+80) * deltaTime);
+                    } else {
+                        max_braking_dist = 10;
+                        if (braking_dist > max_braking_dist) braking_dist = max_braking_dist;
+                        movement_dist    = (move * movement_speed * deltaTime);
+                    }
+                    if (braking_dist < max_braking_dist) braking_dist += std::abs(movement_dist);
+                    position.x += movement_dist;
+                }
+            }
+            position.y += jumping_movement;
         }
-        */
     }
 
     void Draw() {
-        /*
-        if (position.x + position.width < 0) {
-            position.x = GetScreenWidth();
-        } if (dst.x > GetScreenWidth()) {
-            position.x = -position.width;
-        }
-        */
         animator.Play(Vector2{position.x, position.y});
     }
 
 };
 
-class AudioSource {
-private:
-    //...
-public:
-
-    AudioSource() {}
-
-
-    void Play() {
-
-    }
-
-};
-
-class SoundType : public AudioSource {
-private:
-    Sound source;
-public:
-    SoundType (const char *fileName) {
-        source = LoadSound(fileName);
-    }
-
-    void Unload() {
-        UnloadSound(source);
-    }
-};
-
-class MusicType : public AudioSource {
-private:
-    Music source;
-public:
-    MusicType (const char *fileName, bool loop) {
-        source = LoadMusicStream(fileName);
-        source.looping = loop;
-        PlayMusicStream(source);
-    }
-
-    //void Init() {
-    //    PlayMusicStream(source);
-    //}
-
-    void Play() {
-        UpdateMusicStream(source);
-    }
-
-    void Unload() {
-        UnloadMusicStream(source);
-    }
-};
-
 void game() {
 
     // Audio. Source/Sound player component?
-    SoundType Jump("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav");
-    MusicType BGM("Assets/NES - Ice Climber - Sound Effects/03-Play-BGM.mp3", true);
+    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     
     // Textures. Sprite component?
-    Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
+    //Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
     Texture2D Pause_frame = LoadTexture("Assets/NES - Ice Climber - Sprites/04-Small-frame.png");
-    Texture2D Mountain_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Mountain.png");
-    Texture2D Popo_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png");
+    Texture2D Mountain_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/Mountain - Background 01.png");
+    Texture2D Popo_sprite = LoadTexture("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 01 - Idle.png");
 
     // Animations & Animator component.
     Animator PopoAnimator(
         "Idle", 
         {
-            {"Idle", Animation("Assets/NES - Ice Climber - Sprites/02-Popo-Idle.png", 16, 24, 3, 0.2)},
-            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/03-Popo-Walk.png", 16, 24, 3, 0.135)}
+            {"Idle", Animation("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
+            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
+            {"Brake", Animation("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
+            {"Jump", Animation("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
+            {"Attack", Animation("Assets/NES - Ice Climber - Sprites/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+        }
+    );
+
+    // Sounds & Audioplayer component.
+    Audioplayer PopoFX(
+        {
+            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
         }
     );
 
     // Rectangles = Sprites component?
     // Mountain background:
-    Rectangle src{0, (float)(Mountain_sprite.height - Mountain_sprite.width), (float)Mountain_sprite.width, (float)Mountain_sprite.width};
-    Rectangle dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
+    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
+    Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
     float paused_showtime = 0.75;
@@ -225,17 +222,31 @@ void game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     // GameObject.
-    GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
+    //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
+    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator, PopoFX);
 
+
+    PopoAnimator["Attack"];
+    bool play_music = false;
     bool paused = false;
+    BGM.Init();
     while(!WindowShouldClose()) {
-        BGM.Play();
         BeginDrawing();
         ClearBackground(BLACK);
+        if (IsKeyPressed(KEY_M)) {
+            play_music = !play_music;
+        }
+        if (play_music) {
+            BGM.Play();
+        }
+    
+        DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;
             }
+        } else if (IsKeyPressed(KEY_BACKSPACE)){
+            paused = !paused;
         }
         if (!paused) {
             Popo.Move();
@@ -257,53 +268,76 @@ void game() {
             }
             paused_showtime -= GetFrameTime();
         }
-        
-        DrawTexturePro(Mountain_sprite, src, dst, Vector2{0,0}, 0, WHITE);
+        DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
         //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
-        //Popo_animations.animations["Walk"].Play(Vector2{350,581});
+        PopoAnimator.Play(Vector2{350,580});
         EndDrawing();
     }
     UnloadTexture(Popo_sprite);
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
-    UnloadTexture(Snowball);
+    //UnloadTexture(Snowball);
     PopoAnimator.Unload();
+    PopoFX.Unload();
     BGM.Unload();
-    Jump.Unload();
-
 }
 
 int main() {
 
-    std::ostringstream s;
+    //std::ostringstream s;
     InitWindow(WINDOW_WIDTH,WINDOW_HEIGHT,"COÑO");
     InitAudioDevice(); // Initialize audio device.
 
     NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
-
-    // Title screen.
-    // ---- Sprite
-    Texture2D ts_bg = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Title-screen.png");
-    Texture2D ts_hammer = LoadTexture("Assets/NES - Ice Climber - Sprites/05-Menu-hammer.png");
-    Rectangle ts_src{0, 0, (float)ts_bg.width, (float)ts_bg.height};
-    Rectangle ts_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    Rectangle ts_hammer_src{0, 0, (float)ts_hammer.width, (float)ts_hammer.height};
-    int option = 0, options = 2;
-    float option_change_timer = 0;
-    Rectangle ts_hammer_dst_0{161, 388, ts_hammer.width*3.0f, ts_hammer.height*3.0f};
-    Rectangle ts_hammer_dst_1{161, 438, ts_hammer.width*3.0f, ts_hammer.height*3.0f};
-    int mountain = 0, mountains = 32;
-
     // ---- Music
     Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
     ts_music.looping = true;
     bool play_music = false;
-
     PlayMusicStream(ts_music);
+    SetTargetFPS(60);
 
-    SetTargetFPS(30);
+    // Title screen.
+    // ---- Sprite
+    Texture2D ts_bg = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Title-screen.png");
+    Rectangle ts_src{0, 0, (float)ts_bg.width, (float)ts_bg.height};
+    Rectangle ts_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+
+    Texture2D PinesFore = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Pines - 01.png");
+    float PinesForeHeight = (WINDOW_WIDTH * PinesFore.height)/(float)(PinesFore.width);
+    Rectangle PinesForeSrc{0, 0, (float)PinesFore.width, (float)PinesFore.height};
+    Rectangle PinesForeDst{0, WINDOW_HEIGHT - PinesForeHeight, (float)WINDOW_WIDTH, PinesForeHeight};
+    float PinesForeSpeed = 0.6;
+    Texture2D PinesMid = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Pines - 02.png");
+    float PinesMidHeight = (WINDOW_WIDTH * PinesMid.height)/(float)(PinesMid.width);
+    Rectangle PinesMidSrc{0, 0, (float)PinesMid.width, (float)PinesMid.height};
+    Rectangle PinesMidDst{0, WINDOW_HEIGHT - PinesMidHeight, (float)WINDOW_WIDTH, PinesMidHeight};
+    float PinesMidSpeed = 0.3;
+    Texture2D Mountain = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Mountain - 03.png");
+    float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
+    Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
+    Rectangle MountainDst{0, WINDOW_HEIGHT - (MountainHeight * 0.75), (float)WINDOW_WIDTH * 0.75, MountainHeight * 0.75};
+    float MountainSpeed = 0.1;
+    Texture2D Fields = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Fields - 04.png");
+    float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
+    Rectangle FieldsSrc{0, 0, (float)Fields.width, (float)Fields.height};
+    Rectangle FieldsDst{0, WINDOW_HEIGHT - FieldsHeight, (float)WINDOW_WIDTH, FieldsHeight};
+    Texture2D Snow = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Snow - 05.png");
+    Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
+    Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+    float SnowSpeed = 0.1;
+    //Rectangle ts_pines_01_src0{0,0,(float)ts_pines_01.width,(float)ts_pines_01.height};
+    //Rectangle ts_pines_01_src1{0,0,0,0};
+    
+    //float ts_pines_01_height = (WINDOW_WIDTH * ts_pines_01.height)/(float)(ts_pines_01.width);
+    //Rectangle ts_pines_01_dst0{0,WINDOW_HEIGHT - ts_pines_01_height,(float)WINDOW_WIDTH, ts_pines_01_height};
+    //Rectangle ts_pines_01_dst1{0,WINDOW_HEIGHT - ts_pines_01_height,(float)WINDOW_WIDTH, ts_pines_01_height};
+    float scrollingFore = 0;
+
     while(!WindowShouldClose()) {
+
+        if (scrollingFore <= -PinesFore.width * 2) scrollingFore = 0;
+
         if (IsKeyPressed(KEY_M)) {
             play_music = !play_music;
         }
@@ -311,49 +345,26 @@ int main() {
             UpdateMusicStream(ts_music);
         }
         BeginDrawing();
-        DrawTexturePro(ts_bg, ts_src, ts_dst, Vector2{0,0}, 0, WHITE);
-        if (IsGamepadAvailable(0)) {
-            if (option_change_timer <= 0) {
-                option_change_timer = 0.12;
-                int move = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);
-                if (move < 0) {
-                    option = (((option-1)%options) + options) % options;
-                } else if (move > 0) {
-                    option = (option+1)%options;
-                }
-            }
-            if (IsGamepadButtonPressed(0,GAMEPAD_BUTTON_LEFT_FACE_UP)) {
-                option = (((option-1)%options) + options) % options;
-            }
-            if (IsGamepadButtonPressed(0,GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
-                option = (option+1)%options;
-            }
-            if (IsGamepadButtonPressed(0,GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
-                mountain = (((mountain-1)%mountains) + mountains) % mountains;
-            }
-            if (IsGamepadButtonPressed(0,GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
-                mountain = (mountain+1)%mountains;
-            }
-        }
-        if (option == 0) {
-            DrawTexturePro(ts_hammer, ts_hammer_src, ts_hammer_dst_0, Vector2{0,0}, 0, WHITE);
-        } else if (option == 1) {
-            DrawTexturePro(ts_hammer, ts_hammer_src, ts_hammer_dst_1, Vector2{0,0}, 0, WHITE);
-        }
+        ClearBackground(BLACK);
+        //DrawTexturePro(ts_bg, ts_src, ts_dst, Vector2{0,0}, 0, WHITE);
+        //DrawTextureEx(PinesFore, (Vector2){ scrollingFore, 70 }, 0, 2, WHITE);
+        //DrawTextureEx(PinesFore, (Vector2){ PinesFore.width*2 + scrollingFore, 70 }, 0, 2, WHITE);
+
+        DrawTexturePro(Fields, FieldsSrc, FieldsDst, Vector2{0,0}, 0, WHITE);
+        MountainDst.x -= MountainSpeed;
+        if (MountainDst.x + MountainDst.width < 0) MountainDst.x = GetScreenWidth();
+        DrawTexturePro(Mountain, MountainSrc, MountainDst, Vector2{0,0}, 0, WHITE);
+        SnowSrc.x -= SnowSpeed;
+        SnowSrc.y -= SnowSpeed;
+        DrawTexturePro(Snow, SnowSrc, SnowDst, Vector2{0,0}, 0, WHITE);
+        PinesMidSrc.x += PinesMidSpeed;
+        DrawTexturePro(PinesMid, PinesMidSrc, PinesMidDst, Vector2{0,0}, 0, WHITE);
+        PinesForeSrc.x += PinesForeSpeed;
+        DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
+
+
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        s << std::setw(2) << std::setfill('0') << mountain+1;
-        //DrawTextPro(NES, "PAUSED", Vector2{WINDOW_WIDTH/2.0f-55, WINDOW_HEIGHT/2.0f}, Vector2{0,0}, 0, 30, 1.5, WHITE);
-        DrawTextPro(NES, s.str().c_str(), Vector2{427, 485}, Vector2{0,0}, 0, 30, 4, Color{168,228,252,255});
-        s.str("");
         EndDrawing();
-        option_change_timer -= GetFrameTime();
-        if (IsGamepadAvailable(0)) {
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                StopMusicStream(ts_music);
-                game();
-                PlayMusicStream(ts_music);
-            }
-        }
         if (IsKeyPressed(KEY_ENTER)) {
             StopMusicStream(ts_music);
             game();
