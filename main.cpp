@@ -305,6 +305,7 @@ int main() {
 
     Texture2D PinesFore = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Pines - 01.png");
     float PinesForeHeight = (WINDOW_WIDTH * PinesFore.height)/(float)(PinesFore.width);
+    float scrollingFore = 0;
     Rectangle PinesForeSrc{0, 0, (float)PinesFore.width, (float)PinesFore.height};
     Rectangle PinesForeDst{0, WINDOW_HEIGHT - PinesForeHeight, (float)WINDOW_WIDTH, PinesForeHeight};
     float PinesForeSpeed = 0.6;
@@ -316,7 +317,7 @@ int main() {
     Texture2D Mountain = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Mountain - 03.png");
     float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
     Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
-    Rectangle MountainDst{0, WINDOW_HEIGHT - (MountainHeight * 0.75), (float)WINDOW_WIDTH * 0.75, MountainHeight * 0.75};
+    Rectangle MountainDst{0, WINDOW_HEIGHT - (MountainHeight * 0.75f), WINDOW_WIDTH * 0.75f, MountainHeight * 0.75f};
     float MountainSpeed = 0.1;
     Texture2D Fields = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Fields - 04.png");
     float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
@@ -326,14 +327,22 @@ int main() {
     Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
     Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     float SnowSpeed = 0.1;
-    //Rectangle ts_pines_01_src0{0,0,(float)ts_pines_01.width,(float)ts_pines_01.height};
-    //Rectangle ts_pines_01_src1{0,0,0,0};
-    
-    //float ts_pines_01_height = (WINDOW_WIDTH * ts_pines_01.height)/(float)(ts_pines_01.width);
-    //Rectangle ts_pines_01_dst0{0,WINDOW_HEIGHT - ts_pines_01_height,(float)WINDOW_WIDTH, ts_pines_01_height};
-    //Rectangle ts_pines_01_dst1{0,WINDOW_HEIGHT - ts_pines_01_height,(float)WINDOW_WIDTH, ts_pines_01_height};
-    float scrollingFore = 0;
-
+    Texture2D Letter = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - Letter - 06.png");
+    float LetterWidthPos = (WINDOW_WIDTH - (Letter.width*2.5f))/2.0f;
+    Rectangle LetterSrc{0, 0, (float)Letter.width,  (float)Letter.height};
+    Rectangle LetterDst{LetterWidthPos, 30, Letter.width * 2.5f, Letter.height * 2.5f};
+    Texture2D ObscureLayer = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - 07 - Obscure layer.png"); 
+    Rectangle ObscureLayerSrc{0, 0, (float)ObscureLayer.width,  (float)ObscureLayer.height};
+    Rectangle ObscureLayerDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+    //Texture2D SelectionHammer = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - 08 - Selection hammer.png"); 
+    //Rectangle SelectionHammerSrc{0, 0, (float)SelectionHammer.width, (float)SelectionHammer.height};
+    //Rectangle SelectionHammerDst{LetterWidthPos + 80, 282, SelectionHammer.width*1.5f, SelectionHammer.height*1.5f};
+    Animation SelectionHammer("Assets/NES - Ice Climber - Sprites/Titlescreen - 08 - Selection hammer Animation.png", 40, 24, 1.5, 0.5, true);
+    Texture2D ObscureSelection = LoadTexture("Assets/NES - Ice Climber - Sprites/Titlescreen - 09 - Obscure Selection.png"); 
+    Rectangle ObscureSelectionSrc{0, 0, (float)ObscureSelection.width, (float)ObscureSelection.height};
+    Rectangle ObscureSelectionDst{LetterWidthPos + 75, 277, ObscureSelection.width*3.15f, ObscureSelection.height*1.5f};
+ 
+    bool settings = false;
     while(!WindowShouldClose()) {
 
         if (scrollingFore <= -PinesFore.width * 2) scrollingFore = 0;
@@ -362,8 +371,24 @@ int main() {
         PinesForeSrc.x += PinesForeSpeed;
         DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
 
+        if (IsKeyPressed(KEY_S)) {
+            settings = !settings;
+        }
+        if (!settings) {
+            DrawTexturePro(ObscureSelection, ObscureSelectionSrc, ObscureSelectionDst, Vector2{0,0}, 0, WHITE);
+            DrawTexturePro(Letter, LetterSrc, LetterDst, Vector2{0,0}, 0, WHITE);
+            SelectionHammer.Play({LetterWidthPos + 80, 282});
+            DrawTextEx(NES, "ARCADE MODE",  {LetterWidthPos + 150, 282}, 35, 2, WHITE);
+            DrawTextEx(NES, "BRAWL MODE",   {LetterWidthPos + 150, 329}, 35, 2, WHITE);
+            DrawTextEx(NES, "ENDLESS MODE", {LetterWidthPos + 150, 376}, 35, 2, WHITE);
+            DrawTextEx(NES, "SETTINGS",     {LetterWidthPos + 150, 423}, 35, 2, WHITE);
+            DrawTextEx(NES, "EXIT",         {LetterWidthPos + 150, 470}, 35, 2, WHITE);
+            DrawTextEx(NES, "(C) 2023 NINTENDO", {LetterWidthPos + 80, 550}, 35, 2, WHITE);
+            DrawTextEx(NES, "Press [M] to mute",  {10, 10}, 20, 2, WHITE);
+        } else {
+            DrawTexturePro(ObscureLayer, ObscureLayerSrc, ObscureLayerDst, Vector2{0,0}, 0, WHITE);
+        }
 
-        DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         EndDrawing();
         if (IsKeyPressed(KEY_ENTER)) {
             StopMusicStream(ts_music);
