@@ -209,7 +209,7 @@ int main() {
     std::random_device rd;
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> D(0, (float)WINDOW_WIDTH);
-    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
+    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES.otf");
 
     // ---- Music
     Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
@@ -218,11 +218,6 @@ int main() {
 
     // Initial trailer --------------------------------------------------------
     int state = 0, shown = 0;
-    float rayliblogo_fade = 0;
-    float rayliblogo_fade_add = 0.4;
-    Texture2D RaylibLogo = LoadTexture("Assets/SPRITES/Raylib_logo.png");
-    Rectangle RaylibLogoSrc{0, 0, (float)RaylibLogo.width, (float)RaylibLogo.height};
-    Rectangle RaylibLogoDst{(WINDOW_WIDTH - RaylibLogo.width*0.3f)/2.0f, (WINDOW_HEIGHT - RaylibLogo.height*0.3f)/2.0f, RaylibLogo.width*0.3f, RaylibLogo.height*0.3f};
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -274,7 +269,15 @@ int main() {
     Texture2D Sign = LoadTexture("Assets/SPRITES/Titlescreen_06_Sign.png");
     Rectangle SignSrc{0, 0, (float)Sign.width,  (float)Sign.height};
     Rectangle SignDst{(WINDOW_WIDTH - Sign.width*2.5f)/2.0f, -Sign.height * 2.5f, Sign.width * 2.5f, Sign.height * 2.5f};
-    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen_06_OldSign.png");
+
+    Texture2D OldBackground = LoadTexture("Assets/SPRITES/Titlescreen_Old_01_Background.png");
+    Rectangle OldBackgroundSrc{0, 0, (float)OldBackground.width,  (float)OldBackground.height};
+    Rectangle OldBackgroundDst{0, 0, (float)WINDOW_WIDTH, WINDOW_HEIGHT - 90.0f};
+    float water_speed = 5;
+    Texture2D OldWater = LoadTexture("Assets/SPRITES/Titlescreen_Old_02_Water.png");
+    Rectangle OldWaterSrc{0, 0, (float)OldWater.width,  (float)OldWater.height};
+    Rectangle OldWaterDst{0,  WINDOW_HEIGHT - 90.0f, (float)WINDOW_WIDTH, 90.0f};
+    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen_Old_03_Sign.png");
     Rectangle OldSignSrc{0, 0, (float)OldSign.width,  (float)OldSign.height};
     Rectangle OldSignDst{(WINDOW_WIDTH - OldSign.width*2.5f)/2.0f, -OldSign.height * 2.5f, OldSign.width * 2.5f, OldSign.height * 2.5f};
     bool show_background = false;
@@ -296,8 +299,8 @@ int main() {
     Animation OptionHammer("Assets/SPRITES/UI_Hammer_Spritesheet.png", 40, 24, 1.5, 0.5, true);
     Texture2D OldOptionHammer = LoadTexture("Assets/SPRITES/UI_Old_Hammer.png");
     Rectangle OldOptionHammerSrc{0, 0, (float)OldOptionHammer.width, (float)OldOptionHammer.height};
-    Texture2D Returnkey = LoadTexture("Assets/SPRITES/Keys/return.png");
-    Rectangle ReturnkeySrc{0, 0, (float)Returnkey.width, (float)Returnkey.height};
+    Texture2D Enterkey = LoadTexture("Assets/SPRITES/Keys/enter.png");
+    Rectangle EnterkeySrc{0, 0, (float)Enterkey.width, (float)Enterkey.height};
     Texture2D Spacekey  = LoadTexture("Assets/SPRITES/Keys/space.png");
     Rectangle SpacekeySrc{0, 0, (float)Spacekey.width, (float)Spacekey.height};
 
@@ -321,18 +324,24 @@ int main() {
         float deltaTime = GetFrameTime();
 
         // Background:
-        if (!std::get<bool>(ini["Graphics"]["OldFashioned"]) && show_background) {
-            DrawTexturePro(Fields, FieldsSrc, FieldsDst, {0,0}, 0, WHITE);
-            MountainDst.x -= MountainSpeed;
-            if (MountainDst.x + MountainDst.width < 0) MountainDst.x = GetScreenWidth();
-            DrawTexturePro(Mountain, MountainSrc, MountainDst, {0,0}, 0, WHITE);
-            SnowSrc.x -= SnowSpeed;
-            SnowSrc.y -= SnowSpeed;
-            DrawTexturePro(Snow, SnowSrc, SnowDst, {0,0}, 0, WHITE);
-            MidPinesSrc.x += MidPinesSpeed;
-            DrawTexturePro(MidPines, MidPinesSrc, MidPinesDst, {0,0}, 0, WHITE);
-            ForePinesSrc.x += ForePinesSpeed;
-            DrawTexturePro(ForePines, ForePinesSrc, ForePinesDst, {0,0}, 0, WHITE);
+        if (show_background) {
+            if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                DrawTexturePro(Fields, FieldsSrc, FieldsDst, {0,0}, 0, WHITE);
+                MountainDst.x -= MountainSpeed;
+                if (MountainDst.x + MountainDst.width < 0) MountainDst.x = GetScreenWidth();
+                DrawTexturePro(Mountain, MountainSrc, MountainDst, {0,0}, 0, WHITE);
+                SnowSrc.x += SnowSpeed;
+                SnowSrc.y -= SnowSpeed;
+                DrawTexturePro(Snow, SnowSrc, SnowDst, {0,0}, 0, WHITE);
+                MidPinesSrc.x += MidPinesSpeed;
+                DrawTexturePro(MidPines, MidPinesSrc, MidPinesDst, {0,0}, 0, WHITE);
+                ForePinesSrc.x += ForePinesSpeed;
+                DrawTexturePro(ForePines, ForePinesSrc, ForePinesDst, {0,0}, 0, WHITE);
+            } else {
+                DrawTexturePro(OldBackground, OldBackgroundSrc, OldBackgroundDst, {0,0}, 0, WHITE);
+                OldWaterSrc.x += water_speed * deltaTime;
+                DrawTexturePro(OldWater, OldWaterSrc, OldWaterDst, {0,0}, 0, WHITE);
+            }
         }
 
         if (play_music) {
@@ -343,24 +352,6 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
         if (state == 0) {
-            DrawTexturePro(RaylibLogo, RaylibLogoSrc, RaylibLogoDst, {0,0}, 0, Fade(WHITE, rayliblogo_fade));
-            if (!shown) {
-                if (rayliblogo_fade <= 1.0f) {
-                    rayliblogo_fade += rayliblogo_fade_add * deltaTime;
-                } else {
-                    shown = 1;
-                }
-            } else if (rayliblogo_fade >= 0.0f) {
-                rayliblogo_fade -= rayliblogo_fade_add * deltaTime;
-            } else {
-                state = 1;
-                shown = 0;
-            }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
-                state = 1;
-                shown = 0;
-            }
-        } else if (state == 1) {
             DrawTexturePro(NintendoLogo, NintendoLogoSrc, NintendoLogoDst, {0,0}, 0, Fade(WHITE, nintendologo_fade));
             if (!shown) {
                 if (nintendologo_fade <= 1.0f) {
@@ -371,14 +362,14 @@ int main() {
             } else if (nintendologo_fade >= 0.0f) {
                 nintendologo_fade -= nintendologo_fade_add * deltaTime;
             } else {
-                state = 2;
+                state = 1;
                 shown = 0;
             }
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
-                state = 2;
+                state = 1;
                 shown = 0;
             }
-        } else if (state == 2) {
+        } else if (state == 1) {
             DrawTexturePro(TeamLogo, TeamLogoSrc, TeamLogoDst, {0,0}, 0, Fade(WHITE, teamlogo_fade));
             if (!shown) {
                 if (teamlogo_fade <= 1.0f) {
@@ -389,14 +380,14 @@ int main() {
             } else if (teamlogo_fade >= 0.0f) {
                 teamlogo_fade -= teamlogo_fade_add * deltaTime;
             } else {
-                state = 3;
+                state = 2;
                 shown = 0;
             }
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
-                state = 3;
+                state = 2;
                 shown = 0;
             }
-        } else if (state == 3) {
+        } else if (state == 2) {
             if (full_black_fade <= 0.9) {
                 if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
                     DrawTexturePro(Sign, SignSrc, SignDst, {0,0}, 0, WHITE);
@@ -448,7 +439,15 @@ int main() {
                 full_black_fade -= full_black_fade_add * deltaTime;
             } else {
                 if (pstart.Trigger(deltaTime)) {
-                    DrawTextEx(NES, "PRESS <ENTER> TO START", {(WINDOW_WIDTH - text_measures.x)/2.0f, WINDOW_HEIGHT - 120.0f}, 35, 2, BLUE);
+                    if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                        auto aux = MeasureTextEx(NES, "PRESS", 35, 5);
+                        DrawTextEx(NES, "PRESS", {WINDOW_WIDTH/2.0f - aux.x - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.f}, 35,2, BLUE);
+                        DrawTexturePro(Enterkey, EnterkeySrc, {WINDOW_WIDTH/2.0f - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.0f, Enterkey.width * 1.7f, Enterkey.height * 1.7f}, {0,0}, 0, WHITE);
+                        DrawTextEx(NES, "TO START", { WINDOW_WIDTH/2.0f + 30, WINDOW_HEIGHT - 120.f}, 35, 2, BLUE);
+
+                    } else {
+                        DrawTextEx(NES, "PRESS <ENTER> TO START", {(WINDOW_WIDTH - text_measures.x)/2.0f, WINDOW_HEIGHT - 200.0f}, 35, 2, BLUE);
+                    }
                 }
                 if (!first_enter && IsKeyPressed(KEY_ENTER)) {
                     state = -1;
@@ -461,11 +460,11 @@ int main() {
                 }
             }
         } else {
+            DrawTexturePro(Transparent, TransparentSrc, {0, WINDOW_HEIGHT - 45.0f, (float)WINDOW_WIDTH, 45.0f}, {0,0}, 0, WHITE);
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"]) && show_background) {
                 DrawTexturePro(Transparent, TransparentSrc, TransparentDst, {0,0}, 0, WHITE);
                 DrawRectangle(464, menu_start, 1, menu_height - 20, LIGHTGRAY);
-                DrawTexturePro(Transparent, TransparentSrc, {0, WINDOW_HEIGHT - 45.0f, (float)WINDOW_WIDTH, 45.0f}, {0,0}, 0, WHITE);
-                DrawTexturePro(Returnkey, ReturnkeySrc, {WINDOW_WIDTH - 180.0f, WINDOW_HEIGHT - 32.0f, Returnkey.width * 0.9f, Returnkey.height * 0.9f}, {0,0}, 0, WHITE);
+                DrawTexturePro(Enterkey, EnterkeySrc, {WINDOW_WIDTH - 180.0f, WINDOW_HEIGHT - 32.0f, Enterkey.width * 0.9f, Enterkey.height * 0.9f}, {0,0}, 0, WHITE);
             } else {
                 DrawTextEx(NES, "<ENTER>", {WINDOW_WIDTH - 195.0f, WINDOW_HEIGHT - 28.0f}, 13, 1, WHITE);
             }
@@ -765,7 +764,6 @@ int main() {
         EndDrawing();
     }
     OptionHammer.Unload();
-    UnloadTexture(RaylibLogo);
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
     UnloadTexture(Sign);
@@ -781,7 +779,7 @@ int main() {
     UnloadTexture(Cross);
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
-    UnloadTexture(Returnkey);
+    UnloadTexture(Enterkey);
     UnloadFont(NES);
     UnloadMusicStream(ts_music);
     CloseAudioDevice();
