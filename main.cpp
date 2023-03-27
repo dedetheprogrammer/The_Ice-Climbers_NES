@@ -1,12 +1,4 @@
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <sstream>
-#include <variant>
-#include <vector>
+#include "settings.h"
 #include "test.h"
 
 //-----------------------------------------------------------------------------
@@ -35,167 +27,133 @@ public:
     }
 };
 
-//-----------------------------------------------------------------------------
-// Game settings
-// ----------------------------------------------------------------------------
-using Config = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<int, float, bool>>>;
-Config ini;
-std::unordered_map<std::string, std::string> types {
-    {"OldFashioned", "bool"},
-    {"ScreenWidth", "int"},
-    {"ScreenHeight", "int"},
-    {"DisplayMode", "int"},
-    {"Vsync", "bool"},
-    {"FPSLimit", "int"},
-    {"MusicVolume", "float"},
-    {"EffectsVolume", "float"}
-};
-// -- GRAPHICS
-const bool DEFAULT_OLD_STYLE       = false;
-// ---- DISPLAY MODE
-const int DEFAULT_DISPLAY_MODE     = 0;
-int DISPLAY_MODE_OPTION            = 0;
-enum DISPLAY_MODE_ENUM { WINDOWED = 0, WINDOWED_FULLSCREEN, FULLSCREEN };
-std::string to_string(DISPLAY_MODE_ENUM dme) {
-    if (dme == WINDOWED) {
-        return "WINDOWED";
-    } else if (dme == WINDOWED_FULLSCREEN) {
-        return "FULLWINDOWED";
-    } else if (dme == FULLSCREEN) {
-        return "FULLSCREEN";
-    } else {
-        return "WHAT THE FUCK JUST HAPPENED HERE.";
-    }
-}
-// ---- SCREEN SIZE
-const int DEFAULT_SCREEN_WIDTH     = 900;
-const int DEFAULT_SCREEN_HEIGHT    = 600;
-int RESOLUTION_OPTION              = 0;
-std::vector<std::pair<int, int>> RESOLUTION_OPTIONS {
-    {640, 480}, {800, 600}, {900, 600}, {1024, 768}, {1280, 720}, {1920, 1080}
-};
-// ---- VSYNC
-const bool DEFAULT_VSYNC           = false;
-// ---- FPS LIMIT
-const int DEFAULT_FPS_LIMIT        = 30;
-int FPS_LIMIT_OPTION               = 0;
-std::vector<int> FPS_LIMIT_OPTIONS { 15, 30, 60 };
+void game() {
 
-// -- MUSIC/AUDIO:
-const float DEFAULT_MUSIC_VOLUME   = 1.0f;
-const float DEFAULT_EFFECTS_VOLUME = 1.0f;
-// Crear sistema que verifique nombres no reconocidos.
-// Crear sistema que verifique valores sin sentido.
+    // Audio. Source/Sound player component?
+    //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
+    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
+    // Textures. Sprite component?
+    //Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
+    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
+    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
+    Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png");
 
-int& WINDOW_WIDTH    = std::get<int>(ini["Graphics"]["ScreenWidth"]);  // 240px
-int& WINDOW_HEIGHT   = std::get<int>(ini["Graphics"]["ScreenHeight"]); // 160px
-float MUSIC_VOLUME   = 1.0f;
-float EFFECTS_VOLUME = 1.0f;
-
-void default_config() {
-    // Graphics settings:
-    ini["Graphics"]["OldFashioned"] = DEFAULT_OLD_STYLE;
-    ini["Graphics"]["ScreenWidth"]  = DEFAULT_SCREEN_WIDTH;
-    ini["Graphics"]["ScreenHeight"] = DEFAULT_SCREEN_HEIGHT;
-    ini["Graphics"]["DisplayMode"]  = DEFAULT_DISPLAY_MODE;
-    ini["Graphics"]["Vsync"]        = DEFAULT_VSYNC;
-    ini["Graphics"]["FPSLimit"]     = DEFAULT_FPS_LIMIT;
-    // Audio settings:
-    ini["Audio"]["MusicVolume"]     = DEFAULT_MUSIC_VOLUME;
-    ini["Audio"]["EffectsVolume"]   = DEFAULT_EFFECTS_VOLUME;
-    // Controles no implementados.
-}
-
-void save_config() {
-    std::ofstream os("settings.ini");
-    os << "; Probando probando...\n";
-    os << "[Graphics]"
-        << "\nOldFashioned="  << std::get<bool>(ini["Graphics"]["OldFashioned"])
-        << "\nScreenWidth="   << std::get<int>(ini["Graphics"]["ScreenWidth"])
-        << "\nScreenHeight="  << std::get<int>(ini["Graphics"]["ScreenHeight"])
-        << "\nDisplayMode="   << std::get<int>(ini["Graphics"]["DisplayMode"]) // 0: Full screen, 1: Full screen with borders, 2: Windowed.
-        << "\nVsync="         << std::get<bool>(ini["Graphics"]["Vsync"])
-        << "\nFPSLimit="      << std::get<int>(ini["Graphics"]["FPSLimit"]) << std::endl;
-    os << "[Audio]" 
-        << "\nMusicVolume="   << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["MusicVolume"])
-        << "\nEffectsVolume=" << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["EffectsVolume"]) << std::endl;
-    os << "; [Controls]";
-    os.close();
-}
-
-void init_config() {
-    std::ifstream in("settings.ini");
-    if (!in.is_open()) {
-        default_config();
-        save_config();
-    } else{
-        std::streamsize buffersize = 1024 * 1024; // 1MB.
-        std::vector<char> buffer(buffersize);
-        in.rdbuf()->pubsetbuf(buffer.data(), buffersize);
-
-        std::string section;
-        for (std::string line; std::getline(in, line); ) {
-            if (line.size() > 2 && line[0] == '[' && line.back() == ']') {
-                section = line.substr(1, line.size() - 2);
-                continue;
-            }
-
-            std::istringstream iss(line);
-            std::string key, value;
-            if (std::getline(iss >> std::ws, key, '=') && std::getline(iss >> std::ws, value)) {
-                if (types[key] == "bool") ini[section][key] = (value == "1");
-                else if (types[key] == "int") ini[section][key] = std::stoi(value);
-                else if (types[key] == "float") ini[section][key] = std::stof(value);
-            }
+    // Animations & Animator component.
+    Animator PopoAnimator(
+        "Idle", 
+        {
+            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
+            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
+            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
+            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
+            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
         }
-    }
+    );
+
+    // Sounds & Audioplayer component.
+    Audioplayer PopoFX(
+        {
+            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+        }
+    );
+
+    // Rectangles = Sprites component?
+    // Mountain background:
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
+    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
+    Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
-    //-- Graphics
-    int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
-    int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
-    DISPLAY_MODE_OPTION = std::get<int>(ini["Graphics"]["DisplayMode"]);
-    if (DISPLAY_MODE_OPTION == WINDOWED) {
-        InitWindow(aux_0, aux_1, "COÑO");
-        SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
-        if (IsWindowFullscreen()) {
-            ToggleFullscreen();
+    // PAUSE frame:
+    float paused_showtime = 0.75;
+    bool show = true;
+    Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
+    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
+    
+    // GameObject.
+    //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
+    RigidBody rigidbody(1, 9.8, {0,0}, {150,0}, {500,100});
+    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, PopoAnimator, PopoFX, rigidbody);
+
+    float current_ee_time = 0;
+    float easter_egg_time = 9.6;
+    bool doom_mode = true;
+    float old_speed = 0;
+
+
+    PopoAnimator["Attack"];
+    bool play_music = true;
+    bool paused = false;
+    BGM.Init();
+    while(!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
+        if (IsKeyPressed(KEY_M)) {
+            play_music = !play_music;
         }
-        InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "COÑO");
-        SetWindowPosition(0, 30);
-    } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
-        InitWindow(aux_0, aux_1, "COÑO");
-        if (!IsWindowFullscreen()) {
-            ToggleFullscreen();
+        if (play_music) {
+            BGM.Play();
         }
-    }
-    //---- Screen size
-    for (size_t i = 0; i < RESOLUTION_OPTIONS.size(); i++) {
-        if (RESOLUTION_OPTIONS[i].first == aux_0 && RESOLUTION_OPTIONS[i].second == aux_1) {
-            RESOLUTION_OPTION = i;
+    
+        DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
+        if (IsGamepadAvailable(0)) {
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+                paused = !paused;
+            }
+        } else if (IsKeyPressed(KEY_BACKSPACE)){
+            paused = !paused;
+        }
+        if (!paused) {
+            Popo.Move();
+            Popo.Draw();
+        } else {
+            DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
+            if (show) {
+                if (paused_showtime <= 0) {
+                    paused_showtime = 0.75;
+                    show = false;
+                } else {
+                    DrawTextPro(NES, "PAUSED", Vector2{WINDOW_WIDTH/2.0f-55, WINDOW_HEIGHT/2.0f}, Vector2{0,0}, 0, 30, 1.5, WHITE);
+                }
+            } else {
+                if (paused_showtime <= 0){
+                    paused_showtime = 0.75;
+                    show = true;
+                }
+            }
+            paused_showtime -= GetFrameTime();
+        }
+        if (IsKeyPressed(KEY_ESCAPE)) {
             break;
         }
-    }
-    //---- FPS limit
-    aux_0 = std::get<int>(ini["Graphics"]["FPSLimit"]);
-    SetTargetFPS(aux_0);
-    for (size_t i = 0; i < FPS_LIMIT_OPTIONS.size(); i++) {
-        if (FPS_LIMIT_OPTIONS[i] == aux_0) {
-            FPS_LIMIT_OPTION = i;
-            break;
+        DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
+        //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
+        //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
+        PopoAnimator.Play(Vector2{350,440});
+        if (IsKeyPressed(KEY_I)) {
+            doom_mode = !doom_mode;
+            play_music = !play_music;
+            if (!doom_mode) {
+                Popo.rigidbody.max_velocity.x = 150;
+                Popo.rigidbody.velocity.x = 0;
+            }
         }
+        if (doom_mode) {
+            if (current_ee_time >= easter_egg_time) {
+                DrawRectangle(0,0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, Fade(RED, 0.5));
+                Popo.rigidbody.max_velocity.x += 1000;
+            }
+        }
+
+        current_ee_time += GetFrameTime();
+        EndDrawing();
     }
-
-    //if (VSYNC) {
-    //    SetConfigFlags(FLAG_VSYNC_HINT);
-    //} else {
-    //    SetConfigFlags(~FLAG_VSYNC_HINT);
-    //}
-    //-- Audio:
-    InitAudioDevice(); // Initialize audio device.
-    //-- Controls:
-    SetExitKey(KEY_NULL);
-
+    UnloadTexture(Popo_sprite);
+    UnloadTexture(Mountain_sprite);
+    UnloadTexture(Pause_frame);
+    //UnloadTexture(Snowball);
+    PopoAnimator.Unload();
+    PopoFX.Unload();
+    BGM.Unload();
 }
 
 //-----------------------------------------------------------------------------
@@ -316,7 +274,6 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-
 
     while(!WindowShouldClose() && !close_window) {
 
@@ -444,7 +401,6 @@ int main() {
                         DrawTextEx(NES, "PRESS", {WINDOW_WIDTH/2.0f - aux.x - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.f}, 35,2, BLUE);
                         DrawTexturePro(Enterkey, EnterkeySrc, {WINDOW_WIDTH/2.0f - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.0f, Enterkey.width * 1.7f, Enterkey.height * 1.7f}, {0,0}, 0, WHITE);
                         DrawTextEx(NES, "TO START", { WINDOW_WIDTH/2.0f + 30, WINDOW_HEIGHT - 120.f}, 35, 2, BLUE);
-
                     } else {
                         DrawTextEx(NES, "PRESS <ENTER> TO START", {(WINDOW_WIDTH - text_measures.x)/2.0f, WINDOW_HEIGHT - 200.0f}, 35, 2, BLUE);
                     }
@@ -549,7 +505,11 @@ int main() {
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
                     case 0:
-                        std::cout << "Hola\n";
+                        if (fst_player) {
+                            StopMusicStream(ts_music);
+                            game();
+                            PlayMusicStream(ts_music);
+                        }
                         break;
                     case 1:
                         speed_run = !speed_run;
