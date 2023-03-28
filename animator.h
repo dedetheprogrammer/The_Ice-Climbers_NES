@@ -7,6 +7,12 @@
 #include "component.h"
 #include "raylib.h"
 
+const Color Blue = { 13, 77, 196, 255 };
+const Color Red = { 157, 28, 72, 255 };
+const Color Green = { 90, 205, 78, 255 };
+const Color Yellow = { 241, 241, 31, 255 };
+std::vector<Color> PlayerColor = { Blue, Red, Green, Yellow };
+
 class Animation {
 private:
 
@@ -124,6 +130,11 @@ public:
         UnloadTexture(spritesheet);
     }
     
+    void setPlayerColor(int player) {
+        auto  img = LoadImageFromTexture(spritesheet);
+        ImageColorReplace(&img, PlayerColor[0], PlayerColor[player-1]);
+        UpdateTexture(spritesheet, img.data);
+    }
 };
 
 class Animator {
@@ -167,6 +178,7 @@ public:
     bool Trigger(std::string entry_animation, std::string next_animation) {
         if (current_animation == entry_animation) {
             current_animation = next_animation;
+            std::cout << "Trigger Animation: " << current_animation << std::endl;
             return true;
         } else {
             return false;
@@ -179,9 +191,17 @@ public:
         }
     }
 
+    void setPlayerColor(int player) {
+        for(auto& [k, a] : animations)
+            a.setPlayerColor(player);
+    }
+
     void operator[ ](std::string animation) {
-        if (animation != current_animation) animations[animation].Stop();
-        current_animation = animation;
+        if (animation != current_animation) {
+            animations[animation].Stop();
+            current_animation = animation;
+            std::cout << "Animation: " << current_animation << std::endl;
+        }
     }
 };
 

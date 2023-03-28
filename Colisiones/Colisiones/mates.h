@@ -1,6 +1,6 @@
 #pragma once
 
-#include "raylib.h"
+#include "../raylib.h"
 
 #include <cmath>
 
@@ -14,14 +14,14 @@ Vector2 operator+(Vector2 v1, Vector2 v2)
 	return { v1.x + v2.x, v1.y + v2.y };
 }
 
-Vector2 operator*(Vector2 v, float s)
+Vector2 operator*(float n, Vector2 v)
 {
-	return { v.x * s, v.y * s };
+	return { n * v.x, n * v.y };
 }
 
-Vector2 operator*(float s, Vector2 v)
+Vector2 operator*(Vector2 v, float n)
 {
-	return v * s;
+	return n*v;
 }
 
 bool operator==(Vector2 v1, Vector2 v2)
@@ -43,4 +43,9 @@ Vector2 Norm(Vector2 v)
 float Dot(Vector2 v1, Vector2 v2)
 {
 	return (v1.x * v2.x) + (v1.y * v2.y);
+}
+
+Vector2 Reflect(Vector2 incidentVec, Vector2 normal)
+{
+  return incidentVec - 2.f * Dot(incidentVec, normal) * normal;
 }

@@ -15,7 +15,6 @@ struct Circle
 	Circle(float x, float y, float r) : x(x), y(y), radius(r) {}
 	~Circle() = default;
 };
-
 struct Polygon
 {
 	float x;

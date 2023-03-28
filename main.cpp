@@ -210,7 +210,19 @@ std::unordered_map<std::string, int> NanaControl {
     {"Jump", KEY_O},
     {"Attack", KEY_P},
 };
-std::vector<std::unordered_map<std::string,int>> Controls {PopoControl, NanaControl};
+std::unordered_map<std::string, int> AmamControl {
+    {"Right", KEY_RIGHT},
+    {"Left", KEY_LEFT},
+    {"Jump", KEY_UP},
+    {"Attack", KEY_KP_0},
+};
+std::unordered_map<std::string, int> fifiControl {
+    {"Right", KEY_L},
+    {"Left", KEY_J},
+    {"Jump", KEY_O},
+    {"Attack", KEY_P},
+};
+std::vector<std::unordered_map<std::string,int>> Controls {PopoControl, NanaControl, AmamControl, fifiControl};
 
 //-----------------------------------------------------------------------------
 // Menus
@@ -221,14 +233,23 @@ void game(int players) {
 
     // Audio. Source/Sound player component?
     MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
+
+    // Sounds & Audioplayer component.
+    Audioplayer PopoFX(
+        {
+            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+        }
+    );
     
     // Textures. Sprite component?
     //Texture2D Snowball = LoadTexture("Assets/OLD SPRITES/03-Snowball.png");
     Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
     Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
-    Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png");
-    Texture2D Topi_sprite = LoadTexture("Assets/OLD SPRITES/13-Topi-Walk.png");
-    Texture2D Joseph_sprite = LoadTexture("Assets/OLD SPRITES/15-Joseph-Idle.png");
+    Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png");
+    Texture2D Topi_sprite = LoadTexture("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png");
+    Texture2D Joseph_sprite = LoadTexture("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png");
+    Texture2D Nutpicker_sprite = LoadTexture("Assets/OLD SPRITES/Nutpicker - Spritesheet 02 - Stunned.png");
+    Texture2D GreenBlock_sprite = LoadTexture("Assets/OLD SPRITES/Brick - Green 01.png");
 
     // Animations & Animator component.
     Animator PopoAnimator(
@@ -239,6 +260,7 @@ void game(int players) {
             {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
             {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
             {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
         }
     );
     Animator NanaAnimator(
@@ -249,28 +271,49 @@ void game(int players) {
             {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
             {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
             {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+        }
+    );
+    Animator AmamAnimator(
+        "Idle", 
+        {
+            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
+            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
+            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
+            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
+            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
         }
     );
 
     Animator TopiAnimator(
         "Walk", 
         {
-            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/13-Topi-Walk.png", 16, 16, 3, 0.2, true)},
-            {"Back", Animation("Assets/NES - Ice Climber - Sprites/16-Topi-Back.png", 16, 16, 3, 0.2, true)}
+            {"Walk", Animation("Assets/OLD SPRITES/Topi - Spritesheet 01 - Walk.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.2, true)}
         }
     );
     
     Animator JosephAnimator(
         "Walk", 
         {
-            {"Walk", Animation("Assets/NES - Ice Climber - Sprites/14-JosephJowis-Walk.png", 16, 31, 3, 0.2, true)}
+            {"Walk", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 01 - Walk.png", 16, 31, 3, 0.2, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.2, true)}
         }
     );
     
-    // Sounds & Audioplayer component.
-    Audioplayer PopoFX(
+    Animator NutpickerAnimator(
+        "Walk", 
         {
-            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+            {"Walk", Animation("Assets/OLD SPRITES/Nutpicker - Spritesheet 01 - Fly.png", 16, 31, 3, 0.2, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Nutpicker - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.2, true)}
+        }
+    );
+    
+    Animator GreenBlockAnimator(
+        "Idle", 
+        {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Green 01.png", 8, 8, 3, 0.2, true)}
         }
     );
 
@@ -288,15 +331,19 @@ void game(int players) {
 
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
-    RigidBody rigidbody(1, 9.8, {0,0}, {150,0}, {500,100});
-    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, PopoAnimator, PopoFX, rigidbody, Controls[0]);
+    RigidBody rigidbody(1, 9.8, {0,0}, {150,100}, {500,100});
+    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
     auto GameObjects = std::vector<GameObject>();
     GameObjects.push_back(Popo);
-    if(players == 2) {
+    if(players > 1) {
         RigidBody rigidbody2(1, 9.8, {0,0}, {150,0}, {500,100});
-        GameObject Nana(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, NanaAnimator, PopoFX, rigidbody2, Controls[1]);
-    
+        GameObject Nana(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, NanaAnimator, PopoFX, rigidbody2, 2, Controls[1]);
         GameObjects.push_back(Nana);
+    }
+    if (/*players > 2*/ true) {
+        /*RigidBody rigidbody3(1, 9.8, {0,0}, {150,0}, {500,100});
+        GameObject Amam(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, AmamAnimator, PopoFX, rigidbody3, 3, Controls[2]);
+        GameObjects.push_back(Amam);*/
     }
 
     // IAs
@@ -304,12 +351,22 @@ void game(int players) {
     std::mt19937 mtSuper(time(0));
     std::uniform_int_distribution<> randSuper(0, INT_MAX);
 
-    RigidBody rigidbody3(1, 9.8, {150,0}, {300,0}, {500,100});
-    RigidBody rigidbody4(1, 9.8, {150,0}, {300,0}, {500,100});
+    RigidBody rigidbodyTopi(1, 9.8, {60,0}, {300,0}, {500,100});
+    RigidBody rigidbodyJoseph(1, 9.8, {80,0}, {300,0}, {500,100});
+    RigidBody rigidbodyNutpicker(1, 9.8, {80,0}, {300,0}, {500,100});
 
-    IAObject Topi(100, Vector2{-16,(WINDOW_HEIGHT - Topi_sprite.height*2.0f)-83}, TopiAnimator, rigidbody3, 5.0, randSuper(mtSuper));
-    IAObject Joseph(100, Vector2{-16,(WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-98}, JosephAnimator, rigidbody4, 5.0, randSuper(mtSuper));
+    Topi TopiIA(Vector2{Topi_sprite.width * (-1.0f), (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-83}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
+    Joseph JosephIA(Vector2{Joseph_sprite.width * (-1.0f), (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-98}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
+    Nutpicker NutpickerIA(Vector2{Nutpicker_sprite.width * (-1.0f), GetScreenHeight() / 4.0f}, Vector2{(float)Nutpicker_sprite.width, (float)Nutpicker_sprite.height}, NutpickerAnimator, rigidbodyNutpicker, 0.01, randSuper(mtSuper));
     
+    auto Enemies = std::vector<IAObject>();
+    Enemies.push_back(TopiIA);
+    Enemies.push_back(JosephIA);
+
+    auto GreenBlock = WorldObject(Vector2{WINDOW_WIDTH/2 - 100.0f, WINDOW_HEIGHT - 300.0f}, Vector2{float(GreenBlock_sprite.width), float(GreenBlock_sprite.height)}, GreenBlockAnimator);
+    auto Blocks = std::vector<WorldObject>();
+    Blocks.push_back(GreenBlock);
+
     bool play_music = false;
     bool paused = false;
     BGM.Init();
@@ -337,11 +394,45 @@ void game(int players) {
         }
         if (!paused) {
             for(auto& obj : GameObjects) {
+                auto prevy = obj.position.y;
+                auto prevx = obj.position.x;
                 obj.Move();
+                for(auto enemy : Enemies) {
+                    if(Collides(obj.hitbox, enemy.hitbox)) {
+                        if(obj.animator.InState("Attack") && !enemy.animator.InState("Stunned") && (obj.isRight != enemy.move))
+                            enemy.hit();
+                        else if(!enemy.animator.InState("Stunned"))
+                            obj.animator["Stunned"];
+                    }
+                }
+                bool freefall = true;    
+                for(auto block : Blocks) {
+                    if(Collides(obj.hitbox, block.hitbox)) {
+                        if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
+                            obj.position.y = block.position.y - obj.hitbox.height + 1;
+                            obj.isJumping = 0;
+                            obj.jumping_dist = 0;
+                            //obj.animator["Idle"];
+                        } else if(block.position.y + block.hitbox.height < prevy) {   //Popo choca debajo del bloque
+                            obj.isJumping = 1;
+                            obj.animator["Falling"];
+                        } //else if(block.position.x  < prevx + obj.hitbox.weidth)
+                        freefall = false;
+                    }
+                }
+                if(freefall) {
+                    obj.isJumping = 1;
+                    
+                }
                 obj.Draw();
             }
-            Topi.Play();
-            Joseph.Play();
+            for(auto enemy : Enemies) {
+                enemy.Play();
+            }
+            for(auto block : Blocks) {
+                block.Draw();
+            }
+
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -367,9 +458,14 @@ void game(int players) {
     UnloadTexture(Popo_sprite);
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
+    UnloadTexture(Topi_sprite);
+    UnloadTexture(Joseph_sprite);
     //UnloadTexture(Snowball);
     PopoAnimator.Unload();
     NanaAnimator.Unload();
+    AmamAnimator.Unload();
+    TopiAnimator.Unload();
+    JosephAnimator.Unload();
     PopoFX.Unload();
     BGM.Unload();
 }
@@ -720,8 +816,8 @@ int main() {
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
                     case 0:
-                        if(fst_player) game(1);
-                        else if(snd_player) game(2);
+                        if(snd_player) game(2);
+                        else if(fst_player) game(1);
                         break;
                     case 1:
                         speed_run = !speed_run;
