@@ -261,6 +261,7 @@ void game(int players) {
             {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
             {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
             {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
         }
     );
     Animator NanaAnimator(
@@ -272,6 +273,7 @@ void game(int players) {
             {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
             {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
             {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
         }
     );
     Animator AmamAnimator(
@@ -283,6 +285,7 @@ void game(int players) {
             {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
             {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
             {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
         }
     );
 
@@ -313,7 +316,7 @@ void game(int players) {
     Animator GreenBlockAnimator(
         "Idle", 
         {
-            {"Idle", Animation("Assets/OLD SPRITES/Brick - Green 01.png", 8, 8, 3, 0.2, true)}
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Green 01.png", 8, 8, 5, 0.2, true)}
         }
     );
 
@@ -331,13 +334,13 @@ void game(int players) {
 
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
-    RigidBody rigidbody(1, 9.8, {0,0}, {150,100}, {500,100});
-    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
+    RigidBody rigidbody(1, 9.8, {0,0}, {150,400}, {500,100});
+    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-36}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
     auto GameObjects = std::vector<GameObject>();
     GameObjects.push_back(Popo);
     if(players > 1) {
         RigidBody rigidbody2(1, 9.8, {0,0}, {150,0}, {500,100});
-        GameObject Nana(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, NanaAnimator, PopoFX, rigidbody2, 2, Controls[1]);
+        GameObject Nana(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-36}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, NanaAnimator, PopoFX, rigidbody2, 2, Controls[1]);
         GameObjects.push_back(Nana);
     }
     if (/*players > 2*/ true) {
@@ -355,19 +358,25 @@ void game(int players) {
     RigidBody rigidbodyJoseph(1, 9.8, {80,0}, {300,0}, {500,100});
     RigidBody rigidbodyNutpicker(1, 9.8, {80,0}, {300,0}, {500,100});
 
-    Topi TopiIA(Vector2{Topi_sprite.width * (-1.0f), (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-83}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
-    Joseph JosephIA(Vector2{Joseph_sprite.width * (-1.0f), (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-98}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
+    Topi TopiIA(Vector2{Topi_sprite.width * (-1.0f), (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-137}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
+    Joseph JosephIA(Vector2{Joseph_sprite.width * (-1.0f), (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-137}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
     Nutpicker NutpickerIA(Vector2{Nutpicker_sprite.width * (-1.0f), GetScreenHeight() / 4.0f}, Vector2{(float)Nutpicker_sprite.width, (float)Nutpicker_sprite.height}, NutpickerAnimator, rigidbodyNutpicker, 0.01, randSuper(mtSuper));
     
     auto Enemies = std::vector<IAObject*>();
     Enemies.push_back(&TopiIA);
     Enemies.push_back(&JosephIA);
 
-    auto GreenBlock = WorldObject(Vector2{WINDOW_WIDTH/2 - 100.0f, WINDOW_HEIGHT - 300.0f}, Vector2{float(GreenBlock_sprite.width), float(GreenBlock_sprite.height)}, GreenBlockAnimator);
+    //auto GreenBlock = WorldObject(Vector2{WINDOW_WIDTH/2 - 100.0f, WINDOW_HEIGHT - 300.0f}, Vector2{float(GreenBlock_sprite.width), float(GreenBlock_sprite.height)}, GreenBlockAnimator);
+    //auto Blocks = std::vector<WorldObject>();
+    //Blocks.push_back(GreenBlock);
     auto Blocks = std::vector<WorldObject>();
-    Blocks.push_back(GreenBlock);
+    for(int i = 5; i < 24; i++){
+        auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 360.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+        
+        Blocks.push_back(GreenBlock);
+    }
 
-    auto Floor = Rectangulo(0, WINDOW_HEIGHT - 89, WINDOW_WIDTH, 89);
+    auto Floor = Rectangulo(0, WINDOW_HEIGHT - 125, WINDOW_WIDTH, 125);
 
     bool play_music = false;
     bool paused = false;
@@ -398,6 +407,7 @@ void game(int players) {
             Floor.Draw();
             for(auto& obj : GameObjects) {
                 auto prevy = obj.position.y;
+                auto prevx = obj.position.x;
                 //auto prevx = obj.position.x;
                 obj.Move();
                 for(auto& enemy : Enemies) {
@@ -412,25 +422,37 @@ void game(int players) {
                 if (Collides(obj.hitbox, Floor)) {
                     freefall = false;
                     obj.position.y = Floor.y - obj.hitbox.height;
+                    obj.hitbox.Move(obj.position);
+                    obj.rigidbody.velocity.y = 0;
+                    if(obj.animator.InState("Jump") || obj.animator.InState("Fall"))
+                        obj.animator["Idle"];
                 } else {
                     for(auto block : Blocks) {
                         if(Collides(obj.hitbox, block.hitbox)) {
                             if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
                                 obj.position.y = block.position.y - obj.hitbox.height + 1;
-                                obj.isJumping = 0;
+                                obj.animator["Idle"];
                                 obj.jumping_dist = 0;
-                                //obj.animator["Idle"];
+                                obj.rigidbody.velocity.y = 0;
                             } else if(block.position.y + block.hitbox.height < prevy) {   //Popo choca debajo del bloque
-                                obj.isJumping = 1;
-                                obj.animator["Falling"];
-                            } //else if(block.position.x  < prevx + obj.hitbox.weidth)
+                                obj.rigidbody.velocity.y *= -1;
+                                obj.position.y = block.position.y + block.hitbox.height + 1;
+                            } else if(block.position.x > prevx + obj.hitbox.width){      //Popo choca a la izq del bloque
+                                obj.rigidbody.velocity.x *= -1;
+                                obj.position.x = block.position.x - obj.hitbox.width - 1;
+                            }else if(block.position.x + block.hitbox.width < prevx){      //Popo choca a la drch del bloque
+                                obj.rigidbody.velocity.x *= -1;
+                                obj.position.x = block.position.x + block.hitbox.width + 1;
+                            }
+                            obj.hitbox.Move(obj.position);
                             freefall = false;
                         }
                     }
                 }
-                if(freefall) {
-                    obj.isJumping = 1;
-                    obj.animator["Falling"];
+                if(!obj.animator.InState("Jump") && freefall) {
+                    obj.animator["Fall"];
+                    obj.rigidbody.velocity.y += obj.rigidbody.gravity*2;
+                   // obj.position.y = ;        //TODO mover a move
                 }
                 obj.Draw();
             }

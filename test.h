@@ -24,11 +24,8 @@ int GetAxis(std::string axis, std::unordered_map<std::string, int> controls) {
         else if (left_key) return -1;
         else if (right_key) return 1;
     } else if (axis == "Vertical") {
-        bool down_key = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
-        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP);
-        if (down_key && up_key) return 0;
-        if (down_key) return -1;
-        else if (up_key) return 1;
+        bool up_key = IsKeyDown(controls["Jump"]);
+        if (up_key) return 1;
     }
     return 0;
 }
@@ -99,7 +96,7 @@ public:
 
     GameObject(float movement_speed, Vector2 position, Vector2 size, Animator animator, Audioplayer audioplayer, RigidBody rigidbody, int numPlayer, std::unordered_map<std::string, int> controls) {
         isRight = 1;
-        isJumping = false;
+        isJumping = 0;
         //isAttacking = false;
         this->movement_speed = movement_speed;
         // Jumping:
@@ -128,7 +125,7 @@ public:
         if (animator.HasFinished("Attack")) {
             move = GetAxis("Horizontal", controls);
             if (!move) {
-                if (!animator.Trigger("Walk", "Brake") || isJumping == 0) {
+                if (!animator.Trigger("Walk", "Brake") && !animator.InState("Jump")) {
                     //if (!isJumping) {
                         if ((rigidbody.velocity.x > rigidbody.min_velocity.x)) {
                             rigidbody.velocity.x -= rigidbody.acceleration.x * deltaTime;
@@ -148,7 +145,7 @@ public:
                 } else {
                     rigidbody.velocity.x = rigidbody.max_velocity.x;
                 }
-                if (!isJumping) animator["Walk"];
+                if (!animator.InState("Jump")) animator["Walk"];
                 if (!animator.InState("Walk")) {
                 }
                 if ((move < 0 && isRight == 1) || (move > 0 && isRight == -1)) {
@@ -159,33 +156,19 @@ public:
             }
 
             // Vertical movement (jump):
-            
-            if (!isJumping && (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W))) {
-                isJumping = -1;
-                audioplayer["Jump"];
-                animator["Jump"];
-            }
-            float jumping_movement = isJumping * jumping_force * deltaTime;
-            float jumping_offset = max_jumping_dist - std::abs(jumping_dist);
-            if (std::abs(jumping_movement) > jumping_offset) {
-                jumping_movement = isJumping * jumping_offset;
-            }
-            if (isJumping == -1) {
-                if (jumping_dist > -max_jumping_dist) {
-                    jumping_dist += jumping_movement;
-                } else {
-                    jumping_dist = 0;
-                    isJumping = 1;
+            auto moveV = GetAxis("Vertical", controls);
+            if(moveV) {
+                if (!animator.InState("Jump")) {
+                    isJumping = -1;
+                    audioplayer["Jump"];
+                    animator["Jump"];
+                    rigidbody.velocity.y = rigidbody.max_velocity.y * (-1);
                 }
-            }/* else if (isJumping == 1) {
-                if (jumping_dist < max_jumping_dist) {
-                    jumping_dist += jumping_movement;
-                } else {
-                    jumping_dist = 0;
-                    isJumping = 0;
-                }
-            }*/
+            }
             
+            if(animator.InState("Jump")){
+                rigidbody.velocity.y += rigidbody.gravity;
+            }
 
             // Position actualization:
             auto dims = animator.GetDimensions();
@@ -194,15 +177,15 @@ public:
             } else if (position.x > (GetScreenWidth() + dims.first)) {
                 position.x = -dims.first*2;
             } else {
-                if (!isJumping && !animator.InState("Stunned") && IsKeyPressed(controls["Attack"])) {
+                if (!animator.InState("Jump") && !animator.InState("Stunned") && IsKeyPressed(controls["Attack"])) {
                     animator["Attack"];
                     rigidbody.velocity.x = rigidbody.min_velocity.x;
                 } else {
                     position.x += move * rigidbody.velocity.x * deltaTime;
                 }
-            }
-            position.y += jumping_movement;
+            };
         }
+        position.y += rigidbody.velocity.y * deltaTime;
         hitbox.Move(position);
     }
 
