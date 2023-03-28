@@ -177,14 +177,14 @@ public:
                     jumping_dist = 0;
                     isJumping = 1;
                 }
-            } else if (isJumping == 1) {
+            }/* else if (isJumping == 1) {
                 if (jumping_dist < max_jumping_dist) {
                     jumping_dist += jumping_movement;
                 } else {
                     jumping_dist = 0;
                     isJumping = 0;
                 }
-            }
+            }*/
             
 
             // Position actualization:
@@ -269,7 +269,7 @@ public:
         animator.Flip();
     }
 
-    virtual void Play() {};
+    virtual void Play() = 0;
 };
 
 class Topi : public IAObject {

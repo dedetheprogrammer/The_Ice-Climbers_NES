@@ -359,13 +359,15 @@ void game(int players) {
     Joseph JosephIA(Vector2{Joseph_sprite.width * (-1.0f), (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-98}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
     Nutpicker NutpickerIA(Vector2{Nutpicker_sprite.width * (-1.0f), GetScreenHeight() / 4.0f}, Vector2{(float)Nutpicker_sprite.width, (float)Nutpicker_sprite.height}, NutpickerAnimator, rigidbodyNutpicker, 0.01, randSuper(mtSuper));
     
-    auto Enemies = std::vector<IAObject>();
-    Enemies.push_back(TopiIA);
-    Enemies.push_back(JosephIA);
+    auto Enemies = std::vector<IAObject*>();
+    Enemies.push_back(&TopiIA);
+    Enemies.push_back(&JosephIA);
 
     auto GreenBlock = WorldObject(Vector2{WINDOW_WIDTH/2 - 100.0f, WINDOW_HEIGHT - 300.0f}, Vector2{float(GreenBlock_sprite.width), float(GreenBlock_sprite.height)}, GreenBlockAnimator);
     auto Blocks = std::vector<WorldObject>();
     Blocks.push_back(GreenBlock);
+
+    auto Floor = Rectangulo(0, WINDOW_HEIGHT - 89, WINDOW_WIDTH, 89);
 
     bool play_music = false;
     bool paused = false;
@@ -393,43 +395,49 @@ void game(int players) {
             paused = !paused;
         }
         if (!paused) {
+            Floor.Draw();
             for(auto& obj : GameObjects) {
                 auto prevy = obj.position.y;
-                auto prevx = obj.position.x;
+                //auto prevx = obj.position.x;
                 obj.Move();
-                for(auto enemy : Enemies) {
-                    if(Collides(obj.hitbox, enemy.hitbox)) {
-                        if(obj.animator.InState("Attack") && !enemy.animator.InState("Stunned") && (obj.isRight != enemy.move))
-                            enemy.hit();
-                        else if(!enemy.animator.InState("Stunned"))
+                for(auto& enemy : Enemies) {
+                    if(Collides(obj.hitbox, enemy->hitbox)) {
+                        if(obj.animator.InState("Attack") && !enemy->animator.InState("Stunned") && (obj.isRight != enemy->move))
+                            enemy->hit();
+                        else if(!enemy->animator.InState("Stunned"))
                             obj.animator["Stunned"];
                     }
                 }
-                bool freefall = true;    
-                for(auto block : Blocks) {
-                    if(Collides(obj.hitbox, block.hitbox)) {
-                        if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
-                            obj.position.y = block.position.y - obj.hitbox.height + 1;
-                            obj.isJumping = 0;
-                            obj.jumping_dist = 0;
-                            //obj.animator["Idle"];
-                        } else if(block.position.y + block.hitbox.height < prevy) {   //Popo choca debajo del bloque
-                            obj.isJumping = 1;
-                            obj.animator["Falling"];
-                        } //else if(block.position.x  < prevx + obj.hitbox.weidth)
-                        freefall = false;
+                bool freefall = true;
+                if (Collides(obj.hitbox, Floor)) {
+                    freefall = false;
+                    obj.position.y = Floor.y - obj.hitbox.height;
+                } else {
+                    for(auto block : Blocks) {
+                        if(Collides(obj.hitbox, block.hitbox)) {
+                            if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
+                                obj.position.y = block.position.y - obj.hitbox.height + 1;
+                                obj.isJumping = 0;
+                                obj.jumping_dist = 0;
+                                //obj.animator["Idle"];
+                            } else if(block.position.y + block.hitbox.height < prevy) {   //Popo choca debajo del bloque
+                                obj.isJumping = 1;
+                                obj.animator["Falling"];
+                            } //else if(block.position.x  < prevx + obj.hitbox.weidth)
+                            freefall = false;
+                        }
                     }
                 }
                 if(freefall) {
                     obj.isJumping = 1;
-                    
+                    obj.animator["Falling"];
                 }
                 obj.Draw();
             }
-            for(auto enemy : Enemies) {
-                enemy.Play();
+            for(auto& enemy : Enemies) {
+                enemy->Play();
             }
-            for(auto block : Blocks) {
+            for(auto& block : Blocks) {
                 block.Draw();
             }
 
