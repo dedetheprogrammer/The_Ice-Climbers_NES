@@ -72,7 +72,7 @@ void game() {
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
     RigidBody rigidbody(1, 9.8, {0,0}, {150,0}, {500,100});
-    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, PopoAnimator, PopoFX, rigidbody);
+    GameObject Popo(100, Vector2{0,80}, PopoAnimator, PopoFX, rigidbody);
 
     float current_ee_time = 0;
     float easter_egg_time = 9.6;
@@ -129,6 +129,7 @@ void game() {
         //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
         //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
         PopoAnimator.Play(Vector2{350,440});
+        /*
         if (IsKeyPressed(KEY_I)) {
             doom_mode = !doom_mode;
             play_music = !play_music;
@@ -143,8 +144,9 @@ void game() {
                 Popo.rigidbody.max_velocity.x += 1000;
             }
         }
-
         current_ee_time += GetFrameTime();
+        */
+
         EndDrawing();
     }
     UnloadTexture(Popo_sprite);
