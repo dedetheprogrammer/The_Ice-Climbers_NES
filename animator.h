@@ -178,7 +178,7 @@ public:
     bool Trigger(std::string entry_animation, std::string next_animation) {
         if (current_animation == entry_animation) {
             current_animation = next_animation;
-            std::cout << "Trigger Animation: " << current_animation << std::endl;
+            //std::cout << "Trigger Animation: " << current_animation << std::endl;
             return true;
         } else {
             return false;
@@ -200,7 +200,7 @@ public:
         if (animation != current_animation) {
             animations[animation].Stop();
             current_animation = animation;
-            std::cout << "Animation: " << current_animation << std::endl;
+            //std::cout << "Animation: " << current_animation << std::endl;
         }
     }
 };

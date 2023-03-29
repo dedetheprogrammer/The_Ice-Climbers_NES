@@ -246,8 +246,8 @@ void game(int players) {
     Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
     Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
     Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png");
-    Texture2D Topi_sprite = LoadTexture("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png");
-    Texture2D Joseph_sprite = LoadTexture("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png");
+    Texture2D Topi_sprite = LoadTexture("Assets/OLD SPRITES/Topi - Spritesheet 03 - Basic.png");
+    Texture2D Joseph_sprite = LoadTexture("Assets/OLD SPRITES/Joseph - Spritesheet 03 - Basic.png");
     Texture2D Nutpicker_sprite = LoadTexture("Assets/OLD SPRITES/Nutpicker - Spritesheet 02 - Stunned.png");
     Texture2D GreenBlock_sprite = LoadTexture("Assets/OLD SPRITES/Brick - Green 01.png");
 
@@ -293,7 +293,7 @@ void game(int players) {
         "Walk", 
         {
             {"Walk", Animation("Assets/OLD SPRITES/Topi - Spritesheet 01 - Walk.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.2, true)}
+            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)}
         }
     );
     
@@ -301,7 +301,7 @@ void game(int players) {
         "Walk", 
         {
             {"Walk", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 01 - Walk.png", 16, 31, 3, 0.2, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.2, true)}
+            {"Stunned", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.5, true)}
         }
     );
     
@@ -358,8 +358,8 @@ void game(int players) {
     RigidBody rigidbodyJoseph(1, 9.8, {80,0}, {300,0}, {500,100});
     RigidBody rigidbodyNutpicker(1, 9.8, {80,0}, {300,0}, {500,100});
 
-    Topi TopiIA(Vector2{Topi_sprite.width * (-1.0f), (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-137}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
-    Joseph JosephIA(Vector2{Joseph_sprite.width * (-1.0f), (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-137}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
+    Topi TopiIA(Vector2{-30, (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-137}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
+    Joseph JosephIA(Vector2{-50, (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-137}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
     Nutpicker NutpickerIA(Vector2{Nutpicker_sprite.width * (-1.0f), GetScreenHeight() / 4.0f}, Vector2{(float)Nutpicker_sprite.width, (float)Nutpicker_sprite.height}, NutpickerAnimator, rigidbodyNutpicker, 0.01, randSuper(mtSuper));
     
     auto Enemies = std::vector<IAObject*>();
@@ -430,7 +430,7 @@ void game(int players) {
                     for(auto block : Blocks) {
                         if(Collides(obj.hitbox, block.hitbox)) {
                             if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
-                                obj.position.y = block.position.y - obj.hitbox.height + 1;
+                                obj.position.y = block.position.y - obj.hitbox.height;
                                 obj.animator["Idle"];
                                 obj.jumping_dist = 0;
                                 obj.rigidbody.velocity.y = 0;

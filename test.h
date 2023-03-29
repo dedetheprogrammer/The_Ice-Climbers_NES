@@ -289,35 +289,51 @@ public:
 
 class Joseph : public IAObject {
 private:
-    bool onScreen;
+    bool onScreen, appearing;
 public:
     Joseph(Vector2 position, Vector2 size, Animator animator, RigidBody rigidbody, float ratio, int seed) :
-        IAObject(position, size, animator, rigidbody, ratio, seed), onScreen(false) {
+        IAObject(position, size, animator, rigidbody, ratio, seed), onScreen(false), appearing(false) {
         this->hitbox.Print();
     }
 
     void Move() {
+        std::cout << position.x << " , " << position.y << std::endl;
         float deltaTime = GetFrameTime();
         if(onScreen) {
+            std::cout << "OnScreen" << std::endl;
             // Horizontal movement:
             auto dims = animator.GetDimensions();
             if ((position.x + dims.first) < 0 || position.x > GetScreenWidth()) {
                 onScreen = !onScreen;
                 position = initialPos;
-                if(animator.InState("Stunned")) animator["Walk"];
-            } else                position.x += move * rigidbody.velocity.x * deltaTime;
-
-        } else {
-            onScreen = abs(rand(mt) - rand(mt)) < ratio;
-            if(onScreen) {
-                move = side(mt);
-                if(move != lookingRight) {
-                    lookingRight = !lookingRight;
-                    Flip();
+                if(move == -1) {
+                    move = 1;
+                    //Flip();
                 }
+                if(animator.InState("Stunned")) animator["Walk"];
+            } else position.x += move * rigidbody.velocity.x * deltaTime;
+
+        } else if (appearing) {
+            std::cout << "Appearing " << GetScreenWidth() << std::endl;
+            position.x += move * rigidbody.velocity.x * deltaTime;
+            auto dims = animator.GetDimensions();
+            if ((move == 1 && (position.x + dims.first) > 0) || (move == -1 && (position.x < GetScreenWidth()))) {
+                onScreen = !onScreen;
+                appearing = !appearing;
+            }
+        } else {
+            appearing = abs(rand(mt) - rand(mt)) < ratio;
+            if(appearing) {
+                
+                std::cout << "Ready" << std::endl;
+                int old_move = move;
+                move = side(mt);
                 if(!move) {
                     move = -1;
                     position.x = GetScreenWidth();
+                }
+                if(move != old_move) {
+                    Flip();
                 }
                 position.x += move * rigidbody.velocity.x * deltaTime;
             }
