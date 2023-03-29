@@ -1,9 +1,8 @@
 #pragma once
 #include "animator.h"
-#include "colisiones.h"
+#include "collider.h"
 #include "raylib.h"
 #include "audioplayer.h"
-#include "Colisiones/Colisiones/figuras.h"
 #include <ctime>
 #include <random>
 
@@ -92,7 +91,7 @@ public:
     Animator animator;       // Animator component.
     Audioplayer audioplayer; // Audioplayer component.
     RigidBody rigidbody;     // Phisics component.
-    Rectangulo hitbox;       // Collision component
+    Collider hitbox;       // Collision component
 
     GameObject(float movement_speed, Vector2 position, Vector2 size, Animator animator, Audioplayer audioplayer, RigidBody rigidbody, int numPlayer, std::unordered_map<std::string, int> controls) {
         isRight = 1;
@@ -110,13 +109,14 @@ public:
         this->numPlayer = numPlayer;
         this->controls = controls;
         this->animator.setPlayerColor(this->numPlayer);
-        this->hitbox = Rectangulo(position, size * 3);
+        this->hitbox = Collider(&this->position, size * 3, (Color){255, 0, 0, 255});
         std::cout << "Gameobject hitbox:";
+        hitbox.Draw();
         hitbox.Print();
     }
 
     void Move() {
-
+        
         // Delta time:
         float deltaTime = GetFrameTime();
 
@@ -186,7 +186,8 @@ public:
             };
         }
         position.y += rigidbody.velocity.y * deltaTime;
-        hitbox.Move(position);
+        //hitbox.Move(position);
+        hitbox.Print();
     }
 
     void Draw() {
@@ -212,7 +213,7 @@ public:
     Vector2 initialPos; // IAObject initial position.
     Animator animator;  // Animator component.
     RigidBody rigidbody;
-    Rectangulo hitbox;
+    Collider hitbox;
     float ratio;        // IAObject appearance ratio
 
     IAObject(Vector2 position, Vector2 size, Animator animator, RigidBody rigidbody, float ratio, int seed) :
@@ -225,7 +226,7 @@ public:
         this->mt = mt;
         this->rand = rand;
         this->side = side;
-        this->hitbox = Rectangulo(position, size * 3);
+        this->hitbox = Collider(&this->position, size * 3);
     }
 
     void Draw() {
@@ -278,7 +279,7 @@ public:
             }
         }
         position.x += move * rigidbody.velocity.x * deltaTime;
-        hitbox.Move(position);
+        //hitbox.Move(position);
     }
 
     void Play() override {
@@ -292,15 +293,13 @@ private:
     bool onScreen, appearing;
 public:
     Joseph(Vector2 position, Vector2 size, Animator animator, RigidBody rigidbody, float ratio, int seed) :
-        IAObject(position, size, animator, rigidbody, ratio, seed), onScreen(false), appearing(false) {
-        this->hitbox.Print();
-    }
+        IAObject(position, size, animator, rigidbody, ratio, seed), onScreen(false), appearing(false) {}
 
     void Move() {
-        std::cout << position.x << " , " << position.y << std::endl;
+        //std::cout << position.x << " , " << position.y << std::endl;
         float deltaTime = GetFrameTime();
         if(onScreen) {
-            std::cout << "OnScreen" << std::endl;
+           // std::cout << "OnScreen" << std::endl;
             // Horizontal movement:
             auto dims = animator.GetDimensions();
             if ((position.x + dims.first) < 0 || position.x > GetScreenWidth()) {
@@ -314,7 +313,7 @@ public:
             } else position.x += move * rigidbody.velocity.x * deltaTime;
 
         } else if (appearing) {
-            std::cout << "Appearing " << GetScreenWidth() << std::endl;
+            //std::cout << "Appearing " << GetScreenWidth() << std::endl;
             position.x += move * rigidbody.velocity.x * deltaTime;
             auto dims = animator.GetDimensions();
             if ((move == 1 && (position.x + dims.first) > 0) || (move == -1 && (position.x < GetScreenWidth()))) {
@@ -325,7 +324,7 @@ public:
             appearing = abs(rand(mt) - rand(mt)) < ratio;
             if(appearing) {
                 
-                std::cout << "Ready" << std::endl;
+                //std::cout << "Ready" << std::endl;
                 int old_move = move;
                 move = side(mt);
                 if(!move) {
@@ -338,7 +337,7 @@ public:
                 position.x += move * rigidbody.velocity.x * deltaTime;
             }
         }
-        hitbox.Move(position);
+        //hitbox.Move(position);
     }
 
     void Play() override {
@@ -387,7 +386,7 @@ public:
                 position.x += move * rigidbody.velocity.x * deltaTime;
             }
         }
-        hitbox.Move(position);
+        //hitbox.Move(position);
     }
 
     void Play() override {
@@ -404,11 +403,11 @@ private:
 public:
     Vector2 position;   // WorldObject position.
     Animator animator;  // Animator component.
-    Rectangulo hitbox;
+    Collider hitbox;
 
     WorldObject(Vector2 position, Vector2 size, Animator animator) :
         position(position), animator(animator) {
-        this->hitbox = Rectangulo(position, size * 3);
+        this->hitbox = Collider(&this->position, size * 3, (Color){0, 0, 255, 255});
     }
 
     void Draw() {
@@ -433,13 +432,13 @@ public:
     return CollidesV(p.hitbox, p.rigidbody.velocity, i.hitbox, i.rigidbody.velocity);
 }*/
 
-static bool Collides(Rectangulo r1, Rectangulo r2)
+/*static bool Collides(Rectangulo r1, Rectangulo r2)
 {
     return !(r1.x + r1.width < r2.x		// r1 is to the left of r2
         || r2.x + r2.width < r1.x		// r1 is to the right of r2
         || r1.y + r1.height < r2.y		// r1 is above r2 
         || r2.y + r2.height < r1.y);	// r1 is below r2
-}
+}*/
 
 /*static Collision CollidesV(Rectangulo r1, Vector2 v1, Rectangulo r2, Vector2 v2)
 {

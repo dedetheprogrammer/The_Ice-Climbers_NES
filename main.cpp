@@ -335,7 +335,7 @@ void game(int players) {
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
     RigidBody rigidbody(1, 9.8, {0,0}, {150,400}, {500,100});
-    GameObject Popo(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-36}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
+    GameObject Popo(100, Vector2{WINDOW_WIDTH / 2.0f,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-170}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
     auto GameObjects = std::vector<GameObject>();
     GameObjects.push_back(Popo);
     if(players > 1) {
@@ -375,12 +375,18 @@ void game(int players) {
         
         Blocks.push_back(GreenBlock);
     }
-
-    auto Floor = Rectangulo(0, WINDOW_HEIGHT - 125, WINDOW_WIDTH, 125);
+    for(int i = 1; i < 17; i++){
+        auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 120.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+        
+        Blocks.push_back(GreenBlock);
+    }
+    auto floorPosition = Vector2{0, WINDOW_HEIGHT - 125.0f};
+    auto Floor = Collider(&floorPosition, Vector2{WINDOW_WIDTH, 125.0f});
 
     bool play_music = false;
     bool paused = false;
     BGM.Init();
+    std::cout << WINDOW_HEIGHT << std::endl;
     while(!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -406,12 +412,12 @@ void game(int players) {
         if (!paused) {
             Floor.Draw();
             for(auto& obj : GameObjects) {
-                auto prevy = obj.position.y;
-                auto prevx = obj.position.x;
+                Vector2 cpA, cnA; 
+                float ctA, ctC;        // T_hit_near.
                 //auto prevx = obj.position.x;
                 obj.Move();
                 for(auto& enemy : Enemies) {
-                    if(Collides(obj.hitbox, enemy->hitbox)) {
+                    if(Collides(obj.hitbox, obj.rigidbody.velocity, enemy->hitbox, cpA, cnA, ctA)) {
                         if(obj.animator.InState("Attack") && !enemy->animator.InState("Stunned") && (obj.isRight != enemy->move))
                             enemy->hit();
                         else if(!enemy->animator.InState("Stunned"))
@@ -419,32 +425,38 @@ void game(int players) {
                     }
                 }
                 bool freefall = true;
-                if (Collides(obj.hitbox, Floor)) {
+                if (Collides(obj.hitbox, obj.rigidbody.velocity, Floor, cpA, cnA, ctA)) {
                     freefall = false;
-                    obj.position.y = Floor.y - obj.hitbox.height;
-                    obj.hitbox.Move(obj.position);
+                    obj.position.y = Floor.pos->y - obj.hitbox.size.y;
+                    //obj.hitbox.Move(obj.position);
                     obj.rigidbody.velocity.y = 0;
                     if(obj.animator.InState("Jump") || obj.animator.InState("Fall"))
                         obj.animator["Idle"];
                 } else {
                     for(auto block : Blocks) {
-                        if(Collides(obj.hitbox, block.hitbox)) {
-                            if(block.position.y > prevy + obj.hitbox.height) {          //Popo choca encima del bloque
-                                obj.position.y = block.position.y - obj.hitbox.height;
+                        //if(Collides(obj.hitbox, block.hitbox)) {
+                        if(Collides(obj.hitbox, obj.rigidbody.velocity, block.hitbox, cpA, cnA, ctA)){
+                            std::cout << "colision bloque: ";
+                            if(cnA.y < 0) {          //Popo choca encima del bloque
+                                std::cout << "arriba" << std::endl;
+                                obj.position.y = block.position.y - obj.hitbox.size.y;
                                 obj.animator["Idle"];
                                 obj.jumping_dist = 0;
                                 obj.rigidbody.velocity.y = 0;
-                            } else if(block.position.y + block.hitbox.height < prevy) {   //Popo choca debajo del bloque
+                            } else if(cnA.y > 0) {   //Popo choca debajo del bloque
+                                std::cout << "abajo" << std::endl;
                                 obj.rigidbody.velocity.y *= -1;
-                                obj.position.y = block.position.y + block.hitbox.height + 1;
-                            } else if(block.position.x > prevx + obj.hitbox.width){      //Popo choca a la izq del bloque
+                                obj.position.y = block.position.y + block.hitbox.size.y + 1;
+                            } else if(cnA.x < 0){      //Popo choca a la izq del bloque
+                                std::cout << "izquierda" << std::endl;
                                 obj.rigidbody.velocity.x *= -1;
-                                obj.position.x = block.position.x - obj.hitbox.width - 1;
-                            }else if(block.position.x + block.hitbox.width < prevx){      //Popo choca a la drch del bloque
+                                obj.position.x = block.position.x - obj.hitbox.size.x - 1;
+                            }else if(cnA.x > 0){      //Popo choca a la drch del bloque
+                                std::cout << "derecha" << std::endl;
                                 obj.rigidbody.velocity.x *= -1;
-                                obj.position.x = block.position.x + block.hitbox.width + 1;
+                                obj.position.x = block.position.x + block.hitbox.size.x + 1;
                             }
-                            obj.hitbox.Move(obj.position);
+                            //obj.hitbox.Move(obj.position);
                             freefall = false;
                         }
                     }
@@ -455,6 +467,7 @@ void game(int players) {
                    // obj.position.y = ;        //TODO mover a move
                 }
                 obj.Draw();
+                obj.hitbox.Print();
             }
             for(auto& enemy : Enemies) {
                 enemy->Play();
