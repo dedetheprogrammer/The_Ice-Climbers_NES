@@ -1,25 +1,21 @@
-#include "raylib.h"
 #include <sstream>
-//#include "./Colisiones/colisiones.h"
-#include "collider.h"
 #include <iostream>
-
-template <typename T> int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
+#include "components.h"
+#include "entity.h"
+#include "raylib.h"
 
 struct Object {
     Vector2 pos;
     int width;
     int height;
     bool isDragging = false;
-    Collider collider;
+    Collider2D collider;
 
     Object(Vector2 pos, int width, int height) {
         this->pos    = pos;
         this->width  = width;
         this->height = height;
-        collider = Collider(&this->pos, width, height);
+        collider = Collider2D(&this->pos, width, height);
     }
     
     void Draw(bool draw_collider, Color color) {
@@ -44,7 +40,14 @@ int main() {
     Object A({365,100},70,70);
     Object B({100,300},600,200);
 
+    GameObject test;
+    Vector2 position{365, 100};
+    test.addComponent<Transform2D>(position);
+
+    std::cout << test.getComponent<Transform2D>().position << "\n";
     while(!WindowShouldClose()) {
+
+
 
         float deltaTime = GetFrameTime();
         //std::stringstream ss;

@@ -15,7 +15,7 @@ void Game() {
 
     // Animations & Animator component.
     Animator PopoAnimator(
-        "Idle", 
+        "Idle",
         {
             {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
             {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
@@ -26,7 +26,7 @@ void Game() {
     );
 
     // Sounds & Audioplayer component.
-    Audioplayer PopoFX(
+    AudioPlayer PopoFX(
         {
             {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
         }
@@ -45,7 +45,7 @@ void Game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     Vector2 FloorPos{-100,670};
-    Collider Floor(&FloorPos, {1224, 100});
+    Collider2D Floor(&FloorPos, {1224, 100});
 
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
@@ -57,6 +57,7 @@ void Game() {
     bool paused = false;
     BGM.Init();
     while(!WindowShouldClose()) {
+        float deltaTime = GetFrameTime();
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -76,7 +77,7 @@ void Game() {
         }
         if (!paused) {
             Popo.Move(Floor);
-            Popo.Draw();
+            Popo.Draw(deltaTime);
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {

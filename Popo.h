@@ -1,8 +1,5 @@
 #pragma once
-#include "animator.h"
-#include "audio_player.h"
-#include "collider.h"
-#include "rigidbody.h"
+#include "components.h"
 #include "raylib.h"
 
 // Other:
@@ -43,11 +40,11 @@ public:
     Vector2 position; // GameObject position.
     // Components:
     Animator animator; // Animator component.
-    Audioplayer audioplayer; // Audioplayer component.
+    AudioPlayer audioplayer; // Audioplayer component.
     RigidBody2D rigidbody;   // Phisics component.
-    Collider collider; 
+    Collider2D collider; 
 
-    GameObject(Vector2 position, Animator animator, Audioplayer audioplayer, RigidBody2D rigidbody) {
+    GameObject(Vector2 position, Animator animator, AudioPlayer audioplayer, RigidBody2D rigidbody) {
         isRight     = true;
         isGrounded  = false;
         isAttacking = false;
@@ -56,10 +53,10 @@ public:
         this->animator = animator;
         this->audioplayer = audioplayer;
         this->rigidbody = rigidbody;
-        collider = Collider(&this->position, animator.GetViewDimensions());
+        collider = Collider2D(&this->position, animator.GetViewDimensions());
     }
 
-    void Move(Collider& floor) {
+    void Move(Collider2D& floor) {
 
         // Auxiliar variables:
         int move = 0;                     // Horizontal move sense.
@@ -140,8 +137,8 @@ public:
         }
     }
 
-    void Draw() {
-        animator.Play(position);
+    void Draw(float deltaTime) {
+        animator.Play(position, deltaTime);
         collider.Draw();
         rigidbody.Draw(position + animator.GetViewDimensions());
     }
