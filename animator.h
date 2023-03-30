@@ -81,8 +81,12 @@ public:
         frame_src.width *= -1;
     }
 
-    std::pair<int, int> GetDimensions() {
+    Vector2 GetDimensions() {
         return {std::abs(single_frame_width), std::abs(single_frame_height)};
+    }
+
+    Vector2 GetViewDimensions() {
+        return {std::abs(single_frame_width * scale), std::abs(single_frame_height * scale)};
     }
 
     bool HasFinished() {
@@ -148,8 +152,12 @@ public:
         }
     }
 
-    std::pair<int, int> GetDimensions() {
+    Vector2 GetDimensions() {
         return animations[current_animation].GetDimensions();
+    }
+
+    Vector2 GetViewDimensions() {
+        return animations[current_animation].GetViewDimensions();
     }
 
     bool HasFinished(std::string animation) {

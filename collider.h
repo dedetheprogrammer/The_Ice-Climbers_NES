@@ -20,8 +20,8 @@ public:
     Collider(Vector2* pos, int width, int height) : pos(pos), size({(float)width, (float)height}) {}
     Collider(Vector2* pos, Vector2 size) : pos(pos), size(size) {}
 
-    void Draw() {
-        DrawRectangleLinesEx({pos->x, pos->y, size.x, size.y}, 2.0f, (Color){129, 242, 53, 255});
+    void Draw(Color color = {129, 242, 53, 255}) {
+        DrawRectangleLinesEx({pos->x, pos->y, size.x, size.y}, 3.0f, color);
     }
 };
 
@@ -33,7 +33,7 @@ public:
 static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider& target,
     Vector2& contact_point, Vector2& contact_normal, float& contact_time)
 {
-    DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
+    //DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
     Vector2 ray_i = 1.0f/ray_d;
     Vector2 t_near = (*target.pos - ray_o) * ray_i;
     Vector2 t_far  = (*target.pos + target.size - ray_o) * ray_i;
@@ -51,7 +51,7 @@ static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider& t
     if (t_hit_far < 0) return false;
     contact_point  = ray_o + (contact_time * ray_d);
 
-    DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
+    //DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
     if (t_near.x > t_near.y) {
         if (ray_i.x < 0) {
             contact_normal = {1,0};
@@ -80,7 +80,7 @@ static bool Collides(const Collider& A, const Vector2& vA, const Collider& B,
     Collider exp_B = Collider(&exp_B_pos, B.size + A.size);
     // Se coge el centro del rectangulo:
     if (Collides(*A.pos + A.size/2, vA, exp_B, contact_point, contact_normal, contact_time)) {
-        return (contact_time >= 0.0f && contact_time < 1.0f);
+        return (contact_time >= 0.0f && contact_time <= 1.0f);
     }
     return false;
 }

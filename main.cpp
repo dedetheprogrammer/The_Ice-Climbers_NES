@@ -1,33 +1,8 @@
+#include "effects.h"
 #include "settings.h"
-#include "test.h"
+#include "Popo.h"
 
-//-----------------------------------------------------------------------------
-// Otros
-//-----------------------------------------------------------------------------
-class Parpadeo {
-public:
-    bool  show; 
-    float current_time;
-    float trigger_time;
-
-    Parpadeo() : show(false), current_time(0), trigger_time(0) {}
-    Parpadeo(float trigger_time) {
-        show = false;
-        current_time = 0;
-        this->trigger_time = trigger_time;
-    }
-
-    bool Trigger(float deltaTime) {
-        current_time += deltaTime;
-        if (current_time >= trigger_time) {
-            show = !show;
-            current_time = 0;
-        }
-        return show;
-    }
-};
-
-void game() {
+void Game() {
 
     // Audio. Source/Sound player component?
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
@@ -69,19 +44,16 @@ void game() {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
+    Vector2 FloorPos{-100,670};
+    Collider Floor(&FloorPos, {1224, 100});
+
     // GameObject.
     //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
-    RigidBody rigidbody(1, 9.8, {0,0}, {150,0}, {500,100});
-    GameObject Popo(100, Vector2{0,80}, PopoAnimator, PopoFX, rigidbody);
-
-    float current_ee_time = 0;
-    float easter_egg_time = 9.6;
-    bool doom_mode = true;
-    float old_speed = 0;
-
+    RigidBody2D rigidbody(1, 98, {150,0}, {50,200});
+    GameObject Popo(Vector2{600,500}, PopoAnimator, PopoFX, rigidbody);
 
     PopoAnimator["Attack"];
-    bool play_music = true;
+    bool play_music = false;
     bool paused = false;
     BGM.Init();
     while(!WindowShouldClose()) {
@@ -103,7 +75,7 @@ void game() {
             paused = !paused;
         }
         if (!paused) {
-            Popo.Move();
+            Popo.Move(Floor);
             Popo.Draw();
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
@@ -126,27 +98,7 @@ void game() {
             break;
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
-        //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
-        PopoAnimator.Play(Vector2{350,440});
-        /*
-        if (IsKeyPressed(KEY_I)) {
-            doom_mode = !doom_mode;
-            play_music = !play_music;
-            if (!doom_mode) {
-                Popo.rigidbody.max_velocity.x = 150;
-                Popo.rigidbody.velocity.x = 0;
-            }
-        }
-        if (doom_mode) {
-            if (current_ee_time >= easter_egg_time) {
-                DrawRectangle(0,0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, Fade(RED, 0.5));
-                Popo.rigidbody.max_velocity.x += 1000;
-            }
-        }
-        current_ee_time += GetFrameTime();
-        */
-
+        Floor.Draw(PINK);
         EndDrawing();
     }
     UnloadTexture(Popo_sprite);
@@ -191,7 +143,7 @@ int main() {
     float full_black_fade = 1.0f;
     float full_black_fade_add = 0.3;
     Vector2 text_measures = MeasureTextEx(NES, "PRESS <ENTER> TO START", 35, 2);
-    Parpadeo pstart(1);
+    Flicker pstart(1);
     bool first_enter   = false;
     float current_key_cooldown = 0, key_cooldown_add = 0.2, key_cooldown = 0.1;
 
@@ -265,7 +217,7 @@ int main() {
     Rectangle SpacekeySrc{0, 0, (float)Spacekey.width, (float)Spacekey.height};
 
     // Efectos?
-    std::vector<Parpadeo> parpadeos(2, Parpadeo(0.75));
+    std::vector<Flicker> parpadeos(2, Flicker(0.75));
 
     int menu_start = 224, menu_height = 290;
     bool fst_player = false, snd_player = false;
@@ -276,7 +228,8 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-
+    Game();
+    /*
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -509,7 +462,7 @@ int main() {
                     case 0:
                         if (fst_player) {
                             StopMusicStream(ts_music);
-                            game();
+                            Game();
                             PlayMusicStream(ts_music);
                         }
                         break;
@@ -724,7 +677,7 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }
+    }*/
     OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
@@ -747,160 +700,3 @@ int main() {
     CloseAudioDevice();
     save_config();
 }
-
-/*int main() {
-
-    //std::ostringstream s;
-    InitWindow(WINDOW_WIDTH,WINDOW_HEIGHT,"COÑO");
-    SetExitKey(KEY_NULL);
-    InitAudioDevice(); // Initialize audio device.
-
-    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
-    // ---- Music
-    Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
-    ts_music.looping = true;
-    bool play_music = false;
-    PlayMusicStream(ts_music);
-    SetTargetFPS(30);
-
-    // Title screen.
-    // ---- Sprite
-    //Texture2D ts_bg = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Title-screen.png");
-    //Rectangle ts_src{0, 0, (float)ts_bg.width, (float)ts_bg.height};
-    //Rectangle ts_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    // Resouluciones:
-
-    Texture2D PinesFore = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 01 - Pines.png");
-    float PinesForeHeight = (WINDOW_WIDTH * PinesFore.height)/(float)(PinesFore.width);
-    Rectangle PinesForeSrc{0, 0, (float)PinesFore.width, (float)PinesFore.height};
-    Rectangle PinesForeDst{0, WINDOW_HEIGHT - PinesForeHeight, (float)WINDOW_WIDTH, PinesForeHeight};
-    float PinesForeSpeed = 0.6;
-    Texture2D PinesMid = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 02 - Pines.png");
-    float PinesMidHeight = (WINDOW_WIDTH * PinesMid.height)/(float)(PinesMid.width);
-    Rectangle PinesMidSrc{0, 0, (float)PinesMid.width, (float)PinesMid.height};
-    Rectangle PinesMidDst{0, WINDOW_HEIGHT - PinesMidHeight + 5, (float)WINDOW_WIDTH, PinesMidHeight};
-    float PinesMidSpeed = 0.3;
-    Texture2D Mountain = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 03 - Mountain.png");
-    float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
-    Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
-    Rectangle MountainDst{0, WINDOW_HEIGHT - (MountainHeight * 0.75f), WINDOW_WIDTH * 0.75f, MountainHeight * 0.75f};
-    float MountainSpeed = 0.1;
-    Texture2D Fields = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 04 - Fields.png");
-    float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
-    Rectangle FieldsSrc{0, 0, (float)Fields.width, (float)Fields.height};
-    Rectangle FieldsDst{0, WINDOW_HEIGHT - FieldsHeight, (float)WINDOW_WIDTH, FieldsHeight};
-    Texture2D Snow = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 05 - Snow.png");
-    Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
-    Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    float SnowSpeed = 0.1;
-    Texture2D Letter = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 06 - Letter.png");
-    float LetterWidthPos = (WINDOW_WIDTH - (Letter.width*2.5f))/2.0f;
-    Rectangle LetterSrc{0, 0, (float)Letter.width,  (float)Letter.height};
-    Rectangle LetterDst{LetterWidthPos, 30, Letter.width * 2.5f, Letter.height * 2.5f};
-    Texture2D ObscureLayer = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 07 - Obscure layer.png"); 
-    Rectangle ObscureLayerSrc{0, 0, (float)ObscureLayer.width,  (float)ObscureLayer.height};
-    Rectangle ObscureLayerDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    //Texture2D SelectionHammer = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 08 - Selection hammer.png"); 
-    //Rectangle SelectionHammerSrc{0, 0, (float)SelectionHammer.width, (float)SelectionHammer.height};
-    //Rectangle SelectionHammerDst{LetterWidthPos + 80, 282, SelectionHammer.width*1.5f, SelectionHammer.height*1.5f};
-    Animation SelectionHammer("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 08 - Selection hammer Animation.png", 40, 24, 1.5, 0.5, true);
-    Texture2D ObscureSelection = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 09 - Obscure Selection.png");
-    Rectangle ObscureSelectionSrc{0, 0, (float)ObscureSelection.width, (float)ObscureSelection.height};
-    Rectangle ObscureSelectionDst{LetterWidthPos + 75, 277, ObscureSelection.width*3.15f, ObscureSelection.height*1.5f};
-
-    Texture2D Settings = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Settings.png");
-    Rectangle SettingsSrc{0, 0, (float)Settings.width, (float)Settings.height};
-    Rectangle SettingsDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
- 
-    int option = 0;
-    int OPTIONS = 4;
-    bool settings = false;
-    bool new_game  = false;
-    bool closeWindow = false;
-    while(!WindowShouldClose() && !closeWindow) {
-
-        if (scrollingFore <= -PinesFore.width * 2) scrollingFore = 0;
-
-        if (IsKeyPressed(KEY_M)) {
-            play_music = !play_music;
-        }
-        if (play_music) {
-            UpdateMusicStream(ts_music);
-        }
-        BeginDrawing();
-        ClearBackground(BLACK);
-        //DrawTexturePro(ts_bg, ts_src, ts_dst, Vector2{0,0}, 0, WHITE);
-        //DrawTextureEx(PinesFore, (Vector2){ scrollingFore, 70 }, 0, 2, WHITE);
-        //DrawTextureEx(PinesFore, (Vector2){ PinesFore.width*2 + scrollingFore, 70 }, 0, 2, WHITE);
-
-        if (!new_game) {
-            DrawTexturePro(Fields, FieldsSrc, FieldsDst, Vector2{0,0}, 0, WHITE);
-            MountainDst.x -= MountainSpeed;
-            if (MountainDst.x + MountainDst.width < 0) MountainDst.x = GetScreenWidth();
-            DrawTexturePro(Mountain, MountainSrc, MountainDst, Vector2{0,0}, 0, WHITE);
-            SnowSrc.x -= SnowSpeed;
-            SnowSrc.y -= SnowSpeed;
-            DrawTexturePro(Snow, SnowSrc, SnowDst, Vector2{0,0}, 0, WHITE);
-            PinesMidSrc.x += PinesMidSpeed;
-            DrawTexturePro(PinesMid, PinesMidSrc, PinesMidDst, Vector2{0,0}, 0, WHITE);
-            PinesForeSrc.x += PinesForeSpeed;
-            DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
-            if (!settings) {
-                if (IsKeyPressed(KEY_DOWN)) {
-                    option = ((option+1)%OPTIONS);
-                    ObscureSelectionDst.y = 277 + (58.0f * option);
-                }
-                if (IsKeyPressed(KEY_UP)) {
-                    option = ((option-1)%OPTIONS + OPTIONS) % OPTIONS;
-                    ObscureSelectionDst.y = 277 + (58.0f * option);
-                }
-                DrawTexturePro(ObscureSelection, ObscureSelectionSrc, ObscureSelectionDst, Vector2{0,0}, 0, WHITE);
-                DrawTexturePro(Letter, LetterSrc, LetterDst, Vector2{0,0}, 0, WHITE);
-                SelectionHammer.Play({LetterWidthPos + 80, 282 + (58.0f * option)});
-                DrawTextEx(NES, "CONTINUE", {LetterWidthPos + 150, 282}, 35, 2, GRAY);
-                DrawTextEx(NES, "NEW GAME", {LetterWidthPos + 150, 340}, 35, 2, WHITE);
-                DrawTextEx(NES, "SETTINGS", {LetterWidthPos + 150, 398}, 35, 2, WHITE);
-                DrawTextEx(NES, "EXIT",     {LetterWidthPos + 150, 456}, 35, 2, WHITE);
-                DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
-                DrawTextEx(NES, "(C) 2023 NINTENDO", {LetterWidthPos + 80, 550}, 35, 2, WHITE);
-                DrawTextEx(NES, "Press [M] to mute",  {10, 10}, 20, 2, WHITE);
-            } else {
-                DrawTexturePro(Settings, SettingsSrc, SettingsDst, Vector2{0,0}, 0, WHITE);
-            }
-        } else {
-            DrawTextEx(NES, "NORMAL MODE",  {LetterWidthPos + 150, 282}, 35, 2, WHITE);
-            DrawTextEx(NES, "BRAWL MODE",   {LetterWidthPos + 150, 340}, 35, 2, GRAY);
-            DrawTextEx(NES, "ENDLESS MODE", {LetterWidthPos + 150, 398}, 35, 2, GRAY);
-        }
-        EndDrawing();
-
-        if (IsKeyPressed(KEY_ENTER)) {
-            switch(option) {
-                case 0:
-                    std::cout << "Hola!\n";
-                    break;
-                case 1: 
-                    StopMusicStream(ts_music);
-                    game();
-                    PlayMusicStream(ts_music);
-                    break;
-                case 2:
-                    settings = !settings;
-                    break;
-                case 3:
-                    closeWindow = true;
-                    break;
-            }
-
-        }
-    }
-
-    // Title screen.
-    UnloadFont(NES);
-    //UnloadTexture(ts_bg);
-    UnloadMusicStream(ts_music);
-    CloseAudioDevice();
-    CloseWindow();
-
-}
-*/
