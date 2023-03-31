@@ -1,59 +1,37 @@
 #pragma once
-#include "components.h"
+#include "EngineECS.h"
 #include "raylib.h"
 
-// Other:
-Font NES;
-
-// Movimiento.
-int GetAxis(std::string axis) {
-    if (axis == "Horizontal") {
-        bool left_key  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
-        bool right_key = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT); 
-        if (left_key && right_key) return 0;
-        else if (left_key) return -1;
-        else if (right_key) return 1;
-    } else if (axis == "Vertical") {
-        bool down_key = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
-        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP); 
-        if (down_key && up_key) return 0;
-        if (down_key) return -1;
-        else if (up_key) return 1;
-    }
-    return 0;
-}
-
-enum WINDOW_BEHAVOR { COLLISION = 0x01, TRAVERSE = 0x02, IGNORE = 0x04 };
-bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
-    return false;
-}
-
-class GameObject {
+class Popo {
 private:
     //...
 public:
-    // Popo hardcoded properties.
+    // Popo tiene un GameObject, su identidad dentro del engine:
+    GameObject gameObject;
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
+    // eficiente que acceder una y otra vez a los componentes cada vez que 
+    // necesitamos hacer algo con uno de ellos.
+    Animator& animator;
+    AudioPlayer& audioplayer;
+    Collider2D& collider;
+    RigidBody2D& rigidbody;
+    Transform2D& transform;
+
+    // Variables para Popo:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
-    // Transform variables.
-    Vector2 position; // GameObject position.
-    // Components:
-    Animator animator; // Animator component.
-    AudioPlayer audioplayer; // Audioplayer component.
-    RigidBody2D rigidbody;   // Phisics component.
-    Collider2D collider; 
 
-    GameObject(Vector2 position, Animator animator, AudioPlayer audioplayer, RigidBody2D rigidbody) {
-        isRight     = true;
-        isGrounded  = false;
+    Popo(GameObject gameObject) : gameObject(gameObject),
+        animator(gameObject.getComponent<Animator>()),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
+        collider(gameObject.getComponent<Collider2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        isGrounded = false;
+        isRight = true;
         isAttacking = false;
-
-        this->position = position; 
-        this->animator = animator;
-        this->audioplayer = audioplayer;
-        this->rigidbody = rigidbody;
-        collider = Collider2D(&this->position, animator.GetViewDimensions());
     }
 
     void Move(Collider2D& floor) {
@@ -72,15 +50,15 @@ public:
                     collider.size = animator.GetViewDimensions();
                 }
             }
-            position.x += rigidbody.velocity.x * deltaTime;
+            transform.position.x += rigidbody.velocity.x * deltaTime;
             if (move > 0 && !isRight || move < 0 && isRight) {
                 isRight = !isRight;
                 animator.Flip();
             }
-            if (position.x > WINDOW_WIDTH) {
-                position.x = -animator.GetViewDimensions().x;
-            } else if (position.x + animator.GetViewDimensions().x < 0) {
-                position.x = WINDOW_WIDTH;
+            if (transform.position.x > WINDOW_WIDTH) {
+                transform.position.x = -animator.GetViewDimensions().x;
+            } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
+                transform.position.x = WINDOW_WIDTH;
             }
 
             // Vertical movement:
@@ -89,10 +67,11 @@ public:
                     isGrounded = false;
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
+                    audioplayer["Jump"];
                     collider.size = animator.GetViewDimensions();
                 } else if (IsKeyDown(KEY_E)) {
                     isAttacking = true;
-                    position.y -= 3;
+                    transform.position.y -= 3;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
                     collider.size = animator.GetViewDimensions();
@@ -102,13 +81,13 @@ public:
             isAttacking = false;
             animator["Idle"];
             collider.size = animator.GetViewDimensions();
-            position.y += 3;
+            transform.position.y += 3;
         }
 
         // Colissions:
         float ct; Vector2 cp, cn;
         if (!Collides(collider, rigidbody.velocity * deltaTime, floor, cp, cn, ct) || ct >= 1.0f) {
-            position.y += rigidbody.velocity.y * deltaTime;
+            transform.position.y += rigidbody.velocity.y * deltaTime;
             rigidbody.velocity.y += rigidbody.gravity * deltaTime;
         } else {
             if (!isAttacking && !move) {
@@ -138,9 +117,9 @@ public:
     }
 
     void Draw(float deltaTime) {
-        animator.Play(position, deltaTime);
+        animator.Play(transform.position, deltaTime);
         collider.Draw();
-        rigidbody.Draw(position + animator.GetViewDimensions());
+        rigidbody.Draw(transform.position + animator.GetViewDimensions());
     }
 
 };

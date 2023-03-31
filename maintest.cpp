@@ -1,7 +1,6 @@
 #include <sstream>
 #include <iostream>
-#include "components.h"
-#include "entity.h"
+#include "EngineECS.h"
 #include "raylib.h"
 
 struct Object {
@@ -41,8 +40,7 @@ int main() {
     Object B({100,300},600,200);
 
     GameObject test;
-    Vector2 position{365, 100};
-    test.addComponent<Transform2D>(position);
+    test.addComponent<Transform2D>((Vector2){365, 100});
 
     std::cout << test.getComponent<Transform2D>().position << "\n";
     while(!WindowShouldClose()) {

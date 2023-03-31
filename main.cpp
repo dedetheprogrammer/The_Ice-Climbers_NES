@@ -1,44 +1,58 @@
 #include "effects.h"
 #include "settings.h"
 #include "Popo.h"
+#include "EngineECS.h"
+#include "EngineUI.h"
+
+Font NES;
 
 void Game() {
 
-    // Audio. Source/Sound player component?
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
-    // Textures. Sprite component?
-    //Texture2D Snowball = LoadTexture("Assets/NES - Ice Climber - Sprites/03-Snowball.png");
-    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
-    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
-    Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png");
 
-    // Animations & Animator component.
-    Animator PopoAnimator(
-        "Idle",
-        {
-            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
-        }
-    );
-
-    // Sounds & Audioplayer component.
-    AudioPlayer PopoFX(
-        {
-            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
-        }
-    );
+    // ¿Como construyo un GameObject para Popo?
+    // 1. Creamos el GameObject. Recuerda:
+    //  - El GameObject no tiene ningún componente nada más crearlo.
+    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
+    //    a meter otro, perderá el primero.
+    GameObject PopoObject;
+    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
+    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
+    PopoObject.addComponent<Transform2D>(Vector2{600,500});
+    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
+    // GameObject Popo(Vector2{600,500});
+    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
+    // si no, dará error.
+    PopoObject.addComponent<Animator>("Idle", Animator::animator_map {
+        {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
+        {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
+        {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
+        {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
+        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
+    });
+    // 3. Añadimos el componente de Audio:
+    PopoObject.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+    });
+    // 4. Añadimos el Rigidbody:
+    PopoObject.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{50,200});
+    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
+    //  - El Transform2D que tiene la posición del objeto.
+    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
+    //    caso, es la animación inicial.
+    PopoObject.addComponent<Collider2D>(&PopoObject.getComponent<Transform2D>().position, PopoObject.getComponent<Animator>().GetViewDimensions());
+    Popo popo(PopoObject);
 
     // Rectangles = Sprites component?
     // Mountain background:
+    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
     float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
     Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
+    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
@@ -47,12 +61,6 @@ void Game() {
     Vector2 FloorPos{-100,670};
     Collider2D Floor(&FloorPos, {1224, 100});
 
-    // GameObject.
-    //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
-    RigidBody2D rigidbody(1, 98, {150,0}, {50,200});
-    GameObject Popo(Vector2{600,500}, PopoAnimator, PopoFX, rigidbody);
-
-    PopoAnimator["Attack"];
     bool play_music = false;
     bool paused = false;
     BGM.Init();
@@ -76,8 +84,8 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            Popo.Move(Floor);
-            Popo.Draw(deltaTime);
+            popo.Move(Floor);
+            popo.Draw(deltaTime);
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -102,12 +110,10 @@ void Game() {
         Floor.Draw(PINK);
         EndDrawing();
     }
-    UnloadTexture(Popo_sprite);
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     //UnloadTexture(Snowball);
-    PopoAnimator.Unload();
-    PopoFX.Unload();
+    PopoObject.destroy();
     BGM.Unload();
 }
 

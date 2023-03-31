@@ -1,16 +1,19 @@
 #pragma once
-#ifndef COMPONENTS_H
-#define COMPONENTS_H
+#ifndef ECS_H
+#define ECS_H
 
 #include <memory>
 #include <string>
+#include <typeindex>
 #include <unordered_map>
 #include "raylib.h"
 #include "raylib_ext.h"
 
-//-----------------------------------------------------------------------------
-// Components
-//-----------------------------------------------------------------------------´
+// ============================================================================
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+// ============================================================================
 /**
  * @brief A GameObject component.
  * 
@@ -19,18 +22,13 @@ class Component {
 private:
     //...
 public:
-    enum COMPONENT_ENUM { ANIMATOR, AUDIOSOURCE };
+    //enum COMPONENT_ENUM { ANIMATOR, AUDIOSOURCE };
     // Un poco de spoiler de lo que se viene...
     Component() {}
-
-    //virtual Unload() = 0
-
+    virtual ~Component() = default;
+    // Unloads those components that were loaded in memory.
+    virtual void Unload() = 0;
 };
-
-//void Unload(Component& c) {
-//    c.Unload();
-//}
-
 
 //-----------------------------------------------------------------------------
 // Animations
@@ -114,7 +112,7 @@ public:
     }
 
     Vector2 GetDimensions() {
-        return {std::abs(frame_width), std::abs(frame_height)};
+        return {(float)std::abs(frame_width), (float)std::abs(frame_height)};
     }
 
     Vector2 GetViewDimensions() {
@@ -166,15 +164,11 @@ public:
  * 
  */
 class Animator : public Component {
-private:
-    std::string entry_animation;   // (UNUSED) The entry animation of the whole stream.
-    std::string current_animation; // Current animation playing.
-    std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
-    std::unordered_map<std::string, Animation> Animations; // The animations perse.
 public:
+    using animator_map = std::unordered_map<std::string, Animation>;
     Animator()
         : current_animation(""), waiting_animation(""), Animations({}) {}
-    Animator(std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
+    Animator(std::string entry_animation, animator_map Animations)
         : current_animation(entry_animation), Animations(Animations) {}
 
     void Flip() {
@@ -211,7 +205,7 @@ public:
         return false;
     }
 
-    void Unload() {
+    void Unload() override {
         for (auto& animation : Animations) {
             animation.second.Unload();
         }
@@ -221,7 +215,11 @@ public:
         if (animation != current_animation) Animations[animation].Stop();
         current_animation = animation;
     }
-
+private:
+    std::string entry_animation;   // (UNUSED) The entry animation of the whole stream.
+    std::string current_animation; // Current animation playing.
+    std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
+    std::unordered_map<std::string, Animation> Animations; // The animations perse.
 };
 
 //-----------------------------------------------------------------------------
@@ -290,13 +288,12 @@ public:
  * 
  */
 class AudioPlayer : public Component {
-private:
-    std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios;
 public:
+    using audioplayer_map = std::unordered_map<std::string, std::shared_ptr<AudioSource>>;
     AudioPlayer() {}
-    AudioPlayer(std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios) : Audios(Audios) {}
+    AudioPlayer(audioplayer_map Audios) : Audios(Audios) {}
 
-    void Unload() {
+    void Unload() override {
         for (auto& audiosource : Audios) {
             audiosource.second->Unload();
         }
@@ -305,7 +302,8 @@ public:
     void operator[ ](std::string audiosource) {
         Audios[audiosource]->Play();
     }
-
+private:
+    audioplayer_map Audios;
 };
 
 //-----------------------------------------------------------------------------
@@ -315,7 +313,7 @@ public:
  * @brief GameObject physical limits.
  * 
  */
-class Collider2D : public Component{
+class Collider2D : public Component {
 private:
     // ...
 public:
@@ -331,13 +329,17 @@ public:
     void Draw(Color color = {129, 242, 53, 255}) {
         DrawRectangleLinesEx({pos->x, pos->y, size.x, size.y}, 3.0f, color);
     }
+
+    void Unload() override {
+        // No carga nada, pero asi C++ no se queja.
+    }
 };
 
 // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
 // ahora no me apetece explicarla: 
 // - https://www.youtube.com/watch?v=8JJ-4JgR7Dg
 // - https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_Rectangles.cpp
-static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D& target,
+bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D& target,
     Vector2& contact_point, Vector2& contact_normal, float& contact_time)
 {
     //DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
@@ -379,7 +381,7 @@ static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D&
 // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
 // se extiende por ambos lados.
 // De momento A es dinamico y B es estatico, 
-static bool Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B, 
+bool Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B, 
     Vector2& contact_point, Vector2& contact_normal, float& contact_time)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
@@ -393,7 +395,7 @@ static bool Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B
 }
 
 // Luego vendra el dinamismo para ambos. Va mas o menos, puede (debe) pulirse.
-static bool Collides(const Collider2D& A, const Vector2& vA, Vector2& cpA, Vector2& cnA, float& ctA,
+bool Collides(const Collider2D& A, const Vector2& vA, Vector2& cpA, Vector2& cnA, float& ctA,
     const Collider2D& B, const Vector2& vB, Vector2& cpB, Vector2& cnB, float& ctB)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
@@ -436,12 +438,16 @@ public:
         DrawLineEx(center, center + (Vector2){velocity.x, 0.0f}, 3.0f, RED);
         DrawLineEx(center, center + (Vector2){0.0f, velocity.y}, 3.0f, GREEN);
     }
+
+    void Unload() override {
+        // Tampoco hace nada, pero C++ no se queja.
+    }
 };
 
 
 //-----------------------------------------------------------------------------
 // Status
-//-----------------------------------------------------------------------------´
+//-----------------------------------------------------------------------------
 /**
  * @brief GameObject status properties
  * 
@@ -460,6 +466,97 @@ public:
         : position(position), rotation(0.0f), scale({1.0f, 1.0f}) {}
     Transform2D(Vector2 position, float rotation, Vector2 scale)
         : position(position), rotation(rotation), scale(scale) {}
+
+    void Unload() override {
+        // No hace nada, pero no se queja.
+    }
 };
+
+int GetAxis(std::string axis) {
+    if (axis == "Horizontal") {
+        bool left_key  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
+        bool right_key = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT); 
+        if (left_key && right_key) return 0;
+        else if (left_key) return -1;
+        else if (right_key) return 1;
+    } else if (axis == "Vertical") {
+        bool down_key = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
+        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP); 
+        if (down_key && up_key) return 0;
+        if (down_key) return -1;
+        else if (up_key) return 1;
+    }
+    return 0;
+}
+
+// ============================================================================
+// ============================================================================
+// ENTITIES
+// ============================================================================
+// ============================================================================
+/**
+ * @brief Engine GameObject
+ * 
+ */
+class GameObject {
+private:
+    //...
+public:
+    std::unordered_map<std::type_index, Component*> components;
+
+    /*
+    template <typename... Args>
+    GameObject(Args&&... args) {
+        components[typeid(Transform2D)] = new Transform2D(std::forward<Args>(args)...);
+    }
+    */
+
+    template <typename T>
+    T& getComponent() {
+        auto it = components.find(typeid(T));
+        if (it != components.end()) {
+            return dynamic_cast<T&>(*it->second);
+        }
+        throw std::runtime_error("Componente no encontrado.");
+    }
+
+    //template <typename T, typename... Args>
+    //void addComponent(Args... args) {
+    //    components[typeid(T)] = new T(std::forward<Args>(args)...);
+    //}
+
+    template <typename T, typename... Args>
+    void addComponent(Args&&... args) {
+        components[typeid(T)] = new T(std::forward<Args>(args)...);
+    }
+
+    //template <typename T>
+    //void addComponent(T component) {
+    //    components[typeid(T)] = component;
+    //}
+
+    void destroy() {
+        for (auto& component : components) {
+            component.second->Unload();
+            delete component.second;
+        }
+    }
+
+    template <typename T>
+    void removeComponent() {
+        auto it = components.find(typeid(T));
+        if (it != components.end()) {
+            delete it->second;
+            components.erase(it);
+        }
+    }
+};
+
+// ============================================================================
+// ============================================================================
+// SYSTEMS
+// ============================================================================
+// ============================================================================
+// Nothing to see here.
 
 #endif
