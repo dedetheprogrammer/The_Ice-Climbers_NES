@@ -1,8 +1,7 @@
-#include "effects.h"
-#include "settings.h"
-#include "Popo.h"
 #include "EngineECS.h"
 #include "EngineUI.h"
+#include "Popo.h"
+#include "settings.h"
 
 Font NES;
 
@@ -16,15 +15,15 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject PopoObject;
+    GameObject Popo;
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    PopoObject.addComponent<Transform2D>(Vector2{600,500});
+    Popo.addComponent<Transform2D>(Vector2{600,500});
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
-    PopoObject.addComponent<Animator>("Idle", Animator::animator_map {
+    Popo.addComponent<Animator>("Idle", Animator::animator_map {
         {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
         {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
         {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
@@ -32,17 +31,17 @@ void Game() {
         {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
     });
     // 3. Añadimos el componente de Audio:
-    PopoObject.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
+    Popo.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    PopoObject.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{50,200});
+    Popo.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{50,200});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    PopoObject.addComponent<Collider2D>(&PopoObject.getComponent<Transform2D>().position, PopoObject.getComponent<Animator>().GetViewDimensions());
-    Popo popo(PopoObject);
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Script, Movement>();
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -58,8 +57,11 @@ void Game() {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
-    Vector2 FloorPos{-100,670};
-    Collider2D Floor(&FloorPos, {1224, 100});
+
+    GameObject Floor("Floor");
+    Floor.addComponent<Transform2D>(Vector2{-100,670});
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
+
 
     bool play_music = false;
     bool paused = false;
@@ -84,8 +86,14 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            popo.Move(Floor);
-            popo.Draw(deltaTime);
+            CollisionSystem::ComprobarCollisiones() 
+            -> Compruebo si colisiona con algo:
+                -> Si colisiona:
+                    -> A.OnCollision(Collision)
+                    -> B.OnCollision(Collision)
+            
+            //popo.Move(Floor);
+            //popo.Draw(deltaTime);
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -107,13 +115,13 @@ void Game() {
             break;
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        Floor.Draw(PINK);
+        Floor.getComponent<Collider2D>().Draw(PINK);
         EndDrawing();
     }
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     //UnloadTexture(Snowball);
-    PopoObject.destroy();
+    Popo.destroy();
     BGM.Unload();
 }
 

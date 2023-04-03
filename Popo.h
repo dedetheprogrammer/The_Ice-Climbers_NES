@@ -2,40 +2,14 @@
 #include "EngineECS.h"
 #include "raylib.h"
 
-class Popo {
+class Movement : public Script {
 private:
-    //...
-public:
-    // Popo tiene un GameObject, su identidad dentro del engine:
-    GameObject gameObject;
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
-    // eficiente que acceder una y otra vez a los componentes cada vez que 
-    // necesitamos hacer algo con uno de ellos.
-    Animator& animator;
-    AudioPlayer& audioplayer;
-    Collider2D& collider;
-    RigidBody2D& rigidbody;
-    Transform2D& transform;
-
     // Variables para Popo:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
 
-    Popo(GameObject gameObject) : gameObject(gameObject),
-        animator(gameObject.getComponent<Animator>()),
-        audioplayer(gameObject.getComponent<AudioPlayer>()),
-        collider(gameObject.getComponent<Collider2D>()),
-        rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
-    {
-        isGrounded = false;
-        isRight = true;
-        isAttacking = false;
-    }
-
-    void Move(Collider2D& floor) {
-
+    void Move() {
         // Auxiliar variables:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
@@ -55,10 +29,10 @@ public:
                 isRight = !isRight;
                 animator.Flip();
             }
-            if (transform.position.x > WINDOW_WIDTH) {
+            if (transform.position.x > GetScreenWidth()) {
                 transform.position.x = -animator.GetViewDimensions().x;
             } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
-                transform.position.x = WINDOW_WIDTH;
+                transform.position.x = GetScreenWidth();
             }
 
             // Vertical movement:
@@ -86,7 +60,7 @@ public:
 
         // Colissions:
         float ct; Vector2 cp, cn;
-        if (!Collides(collider, rigidbody.velocity * deltaTime, floor, cp, cn, ct) || ct >= 1.0f) {
+        if (true) {//!Collides(collider, rigidbody.velocity * deltaTime, floor, cp, cn, ct) || ct >= 1.0f) {
             transform.position.y += rigidbody.velocity.y * deltaTime;
             rigidbody.velocity.y += rigidbody.gravity * deltaTime;
         } else {
@@ -116,10 +90,44 @@ public:
         }
     }
 
-    void Draw(float deltaTime) {
-        animator.Play(transform.position, deltaTime);
+    void Draw() {
+        animator.Play(transform.position, GetFrameTime());
         collider.Draw();
         rigidbody.Draw(transform.position + animator.GetViewDimensions());
+    }
+
+public:
+
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
+    // eficiente que acceder una y otra vez a los componentes cada vez que 
+    // necesitamos hacer algo con uno de ellos.
+    Animator& animator;
+    AudioPlayer& audioplayer;
+    Collider2D& collider;
+    RigidBody2D& rigidbody;
+    Transform2D& transform;
+
+    Movement(GameObject& gameObject) : Script(gameObject), 
+        animator(gameObject.getComponent<Animator>()),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
+        collider(gameObject.getComponent<Collider2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        isGrounded  = false;
+        isRight     = true;
+        isAttacking = false;
+    }
+
+    void OnCollision(Collision info) {
+        if (info.name == "Floor") {
+            
+        }
+    }
+
+    void Update() override {
+        Move();
+        Draw();
     }
 
 };

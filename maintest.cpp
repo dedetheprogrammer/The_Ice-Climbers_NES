@@ -1,33 +1,37 @@
 #include <sstream>
 #include <iostream>
-#include "EngineECS.h"
 #include "raylib.h"
+#include <typeindex>
 
-struct Object {
+class PuertoRICO {
+public:
     Vector2 pos;
     int width;
     int height;
     bool isDragging = false;
-    Collider2D collider;
+    //Collider2D collider;
 
-    Object(Vector2 pos, int width, int height) {
+    PuertoRICO(Vector2 pos, int width, int height) {
         this->pos    = pos;
         this->width  = width;
         this->height = height;
-        collider = Collider2D(&this->pos, width, height);
+        //collider = Collider2D(&this->pos, width, height);
     }
     
     void Draw(bool draw_collider, Color color) {
-        DrawRectangle(pos.x, pos.y, width, height, color);
-        if (draw_collider) {
-            collider.Draw();
-        }
+        //DrawRectangle(pos.x, pos.y, width, height, color);
+        //if (draw_collider) {
+        //    collider.Draw();
+        //}
     }
 };
 
 
 int main() {
 
+    PuertoRICO A({365,100},70,70);
+
+    /*
     float gravity = 98.0f;
     Vector2 v { 0.0f, 0.0f };
     float jump_force = 200.0f, weight = 1.0f;
@@ -39,10 +43,6 @@ int main() {
     Object A({365,100},70,70);
     Object B({100,300},600,200);
 
-    GameObject test;
-    test.addComponent<Transform2D>((Vector2){365, 100});
-
-    std::cout << test.getComponent<Transform2D>().position << "\n";
     while(!WindowShouldClose()) {
 
 
@@ -51,7 +51,7 @@ int main() {
         //std::stringstream ss;
 
         //auto collided = Collides(A.collider, B.collider);
-        /*
+
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             if (CheckCollisionPointRec(GetMousePosition(), {A.pos.x, A.pos.y, (float)A.width, (float)A.height})) {
                 A.isDragging = true;
@@ -63,7 +63,7 @@ int main() {
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
             A.isDragging = false;
         }
-        */
+
         //Vector2 mp = GetMousePosition(), ray_o = {400,100}, ray_d = mp - ray_o;
         if (IsKeyDown(KEY_RIGHT)) {
             v.x =  100.0f;
@@ -79,15 +79,15 @@ int main() {
 
         float ct;        // T_hit_near.
         Vector2 cp, cn; // Contact point and contact normal.
-        auto collided = Collides(A.collider, v * deltaTime, B.collider, cp, cn, ct);
+        //auto collided = Collides(A.collider, v * deltaTime, B.collider, cp, cn, ct);
         BeginDrawing();
         ClearBackground(BLACK); 
 
         A.Draw(true, RED);
         if (collided) {
             B.Draw(true, GREEN);
-            v += cn * abs(v) * (1 - ct);
-            v.x -= sgn(v.x) * brake_force * deltaTime;
+            //v += cn * abs(v) * (1 - ct);
+            //v.x -= sgn(v.x) * brake_force * deltaTime;
             isGrounded = true;
         } else {
             A.pos += v * deltaTime;
@@ -96,5 +96,7 @@ int main() {
         }
         EndDrawing();
     }
+    */
+    std::cout << typeid(A).name() << std::endl;
 
 }
