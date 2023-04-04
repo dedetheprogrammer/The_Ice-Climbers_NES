@@ -6,6 +6,10 @@
 #include <iostream>
 #include "raylib.h"
 
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 Vector2 operator+(Vector2 a, Vector2 b) {
     return {a.x + b.x, a.y + b.y};
 }
