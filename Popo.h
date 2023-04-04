@@ -1,7 +1,7 @@
 #pragma once
 #include "EngineECS.h"
 #include "raylib.h"
-
+/*
 class Movement : public Script {
 private:
     // Variables para Popo:
@@ -131,3 +131,5 @@ public:
     }
 
 };
+
+*/

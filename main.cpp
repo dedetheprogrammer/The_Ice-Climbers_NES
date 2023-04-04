@@ -1,7 +1,9 @@
 #include "EngineECS.h"
 #include "EngineUI.h"
-#include "Popo.h"
 #include "settings.h"
+
+
+//#include "Popo.h"
 
 Font NES;
 
@@ -23,7 +25,7 @@ void Game() {
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
-    Popo.addComponent<Animator>("Idle", Animator::animator_map {
+    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
         {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
         {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
@@ -31,7 +33,7 @@ void Game() {
         {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
     });
     // 3. Añadimos el componente de Audio:
-    Popo.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
+    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
@@ -41,7 +43,7 @@ void Game() {
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Popo.addComponent<Script, Movement>();
+    //Popo.addComponent<Script, Movement>();
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -57,11 +59,9 @@ void Game() {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
-
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,670});
     Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
-
 
     bool play_music = false;
     bool paused = false;
@@ -86,12 +86,12 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            CollisionSystem::ComprobarCollisiones() 
-            -> Compruebo si colisiona con algo:
-                -> Si colisiona:
-                    -> A.OnCollision(Collision)
-                    -> B.OnCollision(Collision)
-            
+            //CollisionSystem::ComprobarCollisiones() 
+            //-> Compruebo si colisiona con algo:
+            //    -> Si colisiona:
+            //        -> A.OnCollision(Collision)
+            //        -> B.OnCollision(Collision)
+    
             //popo.Move(Floor);
             //popo.Draw(deltaTime);
         } else {
