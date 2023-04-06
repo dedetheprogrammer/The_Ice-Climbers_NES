@@ -9,6 +9,10 @@ void operator+=(Vector2& a, const Vector2& b) {
     a.y += b.y;
 }
 
+Vector2 operator-(Vector2 a) {
+    return {-a.x, -a.y};
+}
+
 Vector2 operator-(Vector2 a, Vector2 b) {
     return {a.x - b.x, a.y - b.y};
 }

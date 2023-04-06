@@ -32,7 +32,7 @@ public:
     GameObject(std::string name);
 
     template <typename T, typename... Args> void addComponent(Args&&... args) {
-        components[typeid(T)] = new T(std::forward<Args>(args)...);
+        components[typeid(T)] = new T(*this, std::forward<Args>(args)...);
     }
     template<typename S, typename T, typename... Args> void addComponent(Args&&... args) {
         scripts[typeid(T)] = new T(*this, std::forward<Args>(args)...);
@@ -69,11 +69,12 @@ public:
  */
 class Component {
 private:
-    //...
+    // ...
 public:
+    GameObject& gameObject;
     //enum COMPONENT_ENUM { ANIMATOR, AUDIOSOURCE };
     // Un poco de spoiler de lo que se viene...
-    Component();
+    Component(GameObject& gameObject);
     virtual ~Component() = default;
     // Unloads those components that were loaded in memory.
     virtual void Unload();
@@ -135,8 +136,8 @@ private:
     std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
     std::unordered_map<std::string, Animation> Animations; // The animations perse.
 public:
-    Animator();
-    Animator(std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
+
+    Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
 
     void Flip();
     Vector2 GetDimensions();
@@ -201,8 +202,7 @@ class AudioPlayer : public Component {
 private:
     std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios;
 public:
-    AudioPlayer();
-    AudioPlayer(std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios);
+    AudioPlayer(GameObject& gameObject, std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios);
     void Unload() override;
     void operator[ ](std::string audiosource);
 };
@@ -220,11 +220,10 @@ public:
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
     
-    Collider2D();
-    Collider2D(Vector2* pos, int width, int height);
-    Collider2D(std::string name, Vector2* pos, int width, int height);
-    Collider2D(Vector2* pos, Vector2 size);
-    Collider2D(std::string name, Vector2* pos, Vector2 size);
+    Collider2D(GameObject& gameObject, Vector2* pos, int width, int height);
+    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height);
+    Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size);
+    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size);
 
     void Draw(Color color = {129, 242, 53, 255});
 };
@@ -246,8 +245,7 @@ public:
     Vector2 max_velocity; // Max velocity that the object can reach.
     Vector2 acceleration; // Object accelerations.
 
-    RigidBody2D();
-    RigidBody2D(float mass, float gravity, Vector2 max_velocity, Vector2 acceleration);
+    RigidBody2D(GameObject& gameObject, float mass, float gravity, Vector2 max_velocity, Vector2 acceleration);
     void Draw(Vector2 center);
 };
 
@@ -258,12 +256,31 @@ class Script : public Component {
 private:
     // ...
 public:
-    GameObject& gameObject;
-
     Script(GameObject& gameObject);
     // virtual void Start() = 0;
     virtual void Update() = 0;
     // virtual void OnCollision = 0;
+};
+
+//-----------------------------------------------------------------------------
+// Sprite
+//-----------------------------------------------------------------------------
+class Sprite : public Component {
+private:
+    float scale;
+    Rectangle src; // What pixels of the sprite do I want to draw?
+    Rectangle dst; // Where and how do I draw these pixels?
+    Texture2D img; // Sprite image.
+
+public:
+    Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin = {0,0}, float dst_scale = 1.0f);
+
+    float GetScale();
+    Vector2 GetDimensions();
+    Vector2 GetViewDimensions();
+    void Draw(Vector2 position);
+    void Unload() override;
+
 };
 
 //-----------------------------------------------------------------------------
@@ -281,9 +298,8 @@ public:
     float rotation;
     Vector2 scale;
 
-    Transform2D();
-    Transform2D(Vector2 position);
-    Transform2D(Vector2 position, float rotation, Vector2 scale);
+    Transform2D(GameObject& gameObject, Vector2 position = {0,0}, float rotation = 0.0f,
+        Vector2 scale = {1.0f, 1.0f});
 };
 
 // Hola
@@ -298,22 +314,22 @@ int GetAxis(std::string axis);
 // Collision System
 // ----------------------------------------------------------------------------
 class CollisionSystem {
-private:
+public:
     static std::unordered_map<std::string, Collider2D*> colliders;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla: 
     // - https://www.youtube.com/watch?v=8JJ-4JgR7Dg
     // - https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_Rectangles.cpp
-    bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D& target,
+    static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D& target,
         Vector2& contact_point, Vector2& contact_normal, float& contact_time);
 
     // Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el 
     // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
     // se extiende por ambos lados.
     // De momento A es dinamico y B es estatico, 
-    bool Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B, 
-        Vector2& contact_point, Vector2& contact_normal, float& contact_time);
+    static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
+        Vector2& contact_normal, float& contact_time);
 
     // Luego vendra el dinamismo para ambos. Va mas o menos, puede (debe) pulirse.
     /*
@@ -323,11 +339,10 @@ private:
     */
 
 public:
-
     static void addCollider(std::string name, Collider2D* collider);
     static void removeCollider(std::string name);
-    void CheckCollisions();
-
+    static void printout();
+    static void checkCollisions();
 };
 
 #endif

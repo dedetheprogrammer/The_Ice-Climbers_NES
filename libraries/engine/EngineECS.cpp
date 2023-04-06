@@ -29,7 +29,7 @@ void GameObject::printout() {
 // ----------------------------------------------------------------------------
 // Componente generico
 // ----------------------------------------------------------------------------
-Component::Component() {};
+Component::Component(GameObject& gameObject) : gameObject(gameObject) {};
 void Component::Unload() {};
 
 //-----------------------------------------------------------------------------
@@ -123,10 +123,8 @@ void Animation::Unload() {
     UnloadTexture(spritesheet);
 }
 
-Animator::Animator()
-    : current_animation(""), waiting_animation(""), Animations({}) {}
-Animator::Animator(std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
-    : current_animation(entry_animation), Animations(Animations) {}
+Animator::Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
+    : Component(gameObject), current_animation(entry_animation), Animations(Animations) {}
 void Animator::Flip() {
     for (auto& animation : Animations) {
         animation.second.Flip();
@@ -180,8 +178,8 @@ void MusicSource::Init() { PlayMusicStream(source); }
 void MusicSource::Play() { UpdateMusicStream(source); }
 void MusicSource::Unload() { UnloadMusicStream(source); }
 
-AudioPlayer::AudioPlayer() {}
-AudioPlayer::AudioPlayer(std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios) : Audios(Audios) {}
+AudioPlayer::AudioPlayer(GameObject& gameObject, std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios)
+    : Component(gameObject), Audios(Audios) {}
 
 void AudioPlayer::Unload() {
     for (auto& audiosource : Audios) {
@@ -196,19 +194,17 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // ----------------------------------------------------------------------------
 // Collider
 // ----------------------------------------------------------------------------
-Collider2D::Collider2D()
-    : pos(nullptr), size({0.0f, 0.0f}) {}
-Collider2D::Collider2D(Vector2* pos, int width, int height)
-    : pos(pos), size({(float)width, (float)height}) {}
-Collider2D::Collider2D(std::string name, Vector2* pos, int width, int height)
-    : pos(pos), size({(float)width, (float)height})
+Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height)
+    : Component(gameObject), pos(pos), size({(float)width, (float)height}) {}
+Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height)
+    : Component(gameObject), pos(pos), size({(float)width, (float)height})
 {
     CollisionSystem::addCollider(name, this);
 }
-Collider2D::Collider2D(Vector2* pos, Vector2 size)
-    : pos(pos), size(size) {}
-Collider2D::Collider2D(std::string name, Vector2* pos, Vector2 size)
-    : pos(pos), size(size)
+Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size)
+    : Component(gameObject), pos(pos), size(size) {}
+Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size)
+    : Component(gameObject), pos(pos), size(size)
 {
     CollisionSystem::addCollider(name, this);
 }
@@ -220,8 +216,9 @@ void Collider2D::Draw(Color color) {
 //-----------------------------------------------------------------------------
 // Physics
 //-----------------------------------------------------------------------------
-RigidBody2D::RigidBody2D() : mass(0), gravity(0), velocity({}) {}
-RigidBody2D::RigidBody2D(float mass, float gravity, Vector2 max_velocity, Vector2 acceleration) {
+RigidBody2D::RigidBody2D(GameObject& gameObject, float mass, float gravity, 
+    Vector2 max_velocity, Vector2 acceleration) : Component(gameObject)
+{
     this->mass    = mass;
     this->gravity = gravity;
     velocity = {0,0};
@@ -238,17 +235,46 @@ void RigidBody2D::Draw(Vector2 center) {
 //-----------------------------------------------------------------------------
 // Scripts
 //-----------------------------------------------------------------------------
-Script::Script(GameObject& gameObject) : gameObject(gameObject) {}
+Script::Script(GameObject& gameObject) : Component(gameObject) {}
+
+//-----------------------------------------------------------------------------
+// Sprites
+//-----------------------------------------------------------------------------
+Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin,
+    float scale) : Component(gameObject)
+{
+    img = LoadTexture(fileName);
+    this->scale = scale;
+    src = {src_origin.x, src_origin.y, (float)img.width, (float)img.height};
+    dst = {0, 0, img.width * scale, img.height * scale};
+}
+
+float Sprite::GetScale() {
+    return scale;
+}
+
+Vector2 Sprite::GetDimensions() {
+    return {src.width, src.height};
+}
+
+Vector2 Sprite::GetViewDimensions() {
+    return {dst.width, dst.height};
+}
+
+void Sprite::Draw(Vector2 position) {
+    dst.x = position.x; dst.y = position.y;
+    DrawTexturePro(img, src, dst, {0,0}, 0, WHITE);
+}
+
+void Sprite::Unload() {
+    UnloadTexture(img);
+}
 
 //-----------------------------------------------------------------------------
 // Transform2D
 //-----------------------------------------------------------------------------
-Transform2D::Transform2D()
-        : position({0,0}), rotation(0.0f), scale({1,1}) {}
-Transform2D::Transform2D(Vector2 position)
-        : position(position), rotation(0.0f), scale({1.0f, 1.0f}) {}
-Transform2D::Transform2D(Vector2 position, float rotation, Vector2 scale)
-        : position(position), rotation(rotation), scale(scale) {}
+Transform2D::Transform2D(GameObject& gameObject, Vector2 position, float rotation, Vector2 scale)
+        : Component(gameObject), position(position), rotation(rotation), scale(scale) {}
 
 int GetAxis(std::string axis) {
     if (axis == "Horizontal") {
@@ -288,7 +314,7 @@ bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     const Collider2D& target, Vector2& contact_point, Vector2& contact_normal,
     float& contact_time)
 {
-    //DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
+    DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
     Vector2 ray_i = 1.0f/ray_d;
     Vector2 t_near = (*target.pos - ray_o) * ray_i;
     Vector2 t_far  = (*target.pos + target.size - ray_o) * ray_i;
@@ -306,7 +332,7 @@ bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     if (t_hit_far < 0) return false;
     contact_point  = ray_o + (contact_time * ray_d);
 
-    //DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
+    DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
     if (t_near.x > t_near.y) {
         if (ray_i.x < 0) {
             contact_normal = {1,0};
@@ -327,37 +353,27 @@ bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
 // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
 // se extiende por ambos lados.
 // De momento A es dinamico y B es estatico:
-bool CollisionSystem::Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B, 
+bool CollisionSystem::Collides(const Collider2D& A, const Collider2D& B, 
     Vector2& contact_point, Vector2& contact_normal, float& contact_time)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
     Vector2 exp_B_pos = *B.pos - (A.size/2);
-    Collider2D exp_B = Collider2D(&exp_B_pos, B.size + A.size);
-    // Se coge el centro del rectangulo:
-    if (Collides(*A.pos + A.size/2, vA, exp_B, contact_point, contact_normal, contact_time)) {
-        return (contact_time >= 0.0f && contact_time <= 1.0f);
+    if (Collides(
+        // El rayo se lanza desde el centro del collider:
+        *A.pos + A.size/2,
+        // La direccion del rayo se obtiene mediante la velocidad del objeto:
+        A.gameObject.getComponent<RigidBody2D>().velocity * GetFrameTime(),
+        // Se crea un nuevo collider ampliado a la mitad del objeto dinamico:
+        Collider2D(B.gameObject, &exp_B_pos, B.size + A.size),
+        // Información de la colision:
+        contact_point,  // Punto del collider con el que el rayo colisiona.
+        contact_normal, // Normal del lado con el que el rayo colisiona.
+        contact_time    // Tiempo restante para la colision.
+    )) {
+        return (contact_time >= 0.0f && contact_time < 1.0f);
     }
     return false;
 }
-
-/*
-// Luego vendra el dinamismo para ambos. Va mas o menos, puede (debe) pulirse.
-bool CollisionSystem::Collides(const Collider2D& A, const Vector2& vA, Vector2& cpA,
-    Vector2& cnA, float& ctA, const Collider2D& B, const Vector2& vB, Vector2& cpB,
-    Vector2& cnB, float& ctB)
-{
-    // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
-    Vector2 exp_A_pos = *A.pos - (B.size/2), exp_B_pos = *B.pos - (A.size/2);
-    Collider2D exp_A = Collider2D(&exp_A_pos, A.size + B.size), exp_B = Collider2D(&exp_B_pos, B.size + A.size);
-    // Se coge el centro del rectangulo:
-    auto cA = Collides(*A.pos + A.size/2, vA, exp_B, cpA, cnA, ctA);
-    auto cB = Collides(*B.pos + B.size/2, vB, exp_A, cpB, cnB, ctB);
-    if (!cA && !cB) {
-        return false;
-    }
-    return (ctA >= 0.0f && ctA < 1.0f) || (ctB >= 0.0f && ctB < 1.0f);
-}
-*/
 
 void CollisionSystem::addCollider(std::string name, Collider2D* collider) {
     colliders[name] = collider;
@@ -365,6 +381,23 @@ void CollisionSystem::addCollider(std::string name, Collider2D* collider) {
 void CollisionSystem::removeCollider(std::string name) {
     colliders.erase(name);
 }
-void CollisionSystem::CheckCollisions() {
-    // No hace nada de momento.
+void CollisionSystem::checkCollisions() {
+    // Iteramos sobre el hashmap de colliders
+    for (auto const& [key_0, value_0] : colliders) {
+        for (auto const& [key_1, value_1] : colliders) {
+            // Comprobamos que no sea el mismo collider
+            if (key_0 != key_1) {
+                // Comprobamos la colisión
+                //if (collider1->Collides(*collider2)) {
+                //    // Los colliders han colisionado
+                //    std::cout << "Collider " << name1 << " colisiona con " << name2 << std::endl;
+                //}
+            }
+        }
+    }
+}
+void CollisionSystem::printout() {
+    for (auto& c : colliders) {
+        std::cout << c.first << "\n";
+    }
 }

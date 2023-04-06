@@ -1,9 +1,31 @@
 #include "EngineECS.h"
-#include "EngineUI.h"
 #include "settings.h"
-
-
 //#include "Popo.h"
+
+enum WINDOW_BEHAVOR { COLLISION = 0x01, TRAVERSE = 0x02, IGNORE = 0x04 };
+bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
+    return false;
+}
+
+class Flicker {
+private:
+    float current_time; // Current time in the current state.
+public:
+    bool  action;       // Indicates if is the moment to perform the action or not. 
+    float trigger_time; // Time for triggering into the next state.
+
+    Flicker() : action(false), current_time(0), trigger_time(0) {}
+    Flicker(float trigger_time) : action(false), current_time(0), trigger_time(trigger_time) {}
+
+    bool Trigger(float deltaTime) {
+        current_time += deltaTime;
+        if (current_time >= trigger_time) {
+            action = !action;
+            current_time = 0;
+        }
+        return action;
+    }
+};
 
 Font NES;
 
@@ -17,7 +39,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo;
+    GameObject Popo("Popo");
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>(Vector2{600,500});
@@ -42,7 +64,7 @@ void Game() {
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
     //Popo.addComponent<Script, Movement>();
 
     // Rectangles = Sprites component?
@@ -61,7 +83,8 @@ void Game() {
     
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,670});
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
+    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
+    CollisionSystem::printout();
 
     bool play_music = false;
     bool paused = false;
