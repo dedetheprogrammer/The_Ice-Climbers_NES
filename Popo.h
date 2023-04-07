@@ -1,7 +1,8 @@
 #pragma once
 #include "EngineECS.h"
 #include "raylib.h"
-/*
+#include "raylibx.h"
+
 class Movement : public Script {
 private:
     // Variables para Popo:
@@ -119,8 +120,8 @@ public:
         isAttacking = false;
     }
 
-    void OnCollision(Collision info) {
-        if (info.name == "Floor") {
+    void OnCollision(Collision contact) {
+        if (contact.gameObject.name == "Floor") {
             
         }
     }
@@ -132,4 +133,3 @@ public:
 
 };
 
-*/

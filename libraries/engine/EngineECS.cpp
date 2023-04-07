@@ -302,6 +302,9 @@ int GetAxis(std::string axis) {
 // ----------------------------------------------------------------------------
 // Collision System
 // ----------------------------------------------------------------------------
+Collision::Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal)
+    : gameObject(gameObject), contact_time(contact_time), contact_point(contact_point), contact_normal(contact_normal) {}
+
 std::unordered_map<std::string, Collider2D*> CollisionSystem::colliders;
 
 /**
@@ -383,15 +386,15 @@ void CollisionSystem::removeCollider(std::string name) {
 }
 void CollisionSystem::checkCollisions() {
     // Iteramos sobre el hashmap de colliders
-    for (auto const& [key_0, value_0] : colliders) {
-        for (auto const& [key_1, value_1] : colliders) {
+    for (auto const& [Collider_A_name, Collider_A] : colliders) {
+        for (auto const& [Collider_B_name, Collider_B] : colliders) {
             // Comprobamos que no sea el mismo collider
-            if (key_0 != key_1) {
+            if (Collider_A_name != Collider_B_name) {
                 // Comprobamos la colisión
-                //if (collider1->Collides(*collider2)) {
-                //    // Los colliders han colisionado
-                //    std::cout << "Collider " << name1 << " colisiona con " << name2 << std::endl;
-                //}
+                float ct; Vector2 cp, cn;
+                if (CollisionSystem::Collides(*Collider_A, *Collider_B, cp, cn, ct)) {
+                    Collider_A->gameObject.OnCollision(Collision(Collider_B->gameObject, ct, cp, cn));
+                }
             }
         }
     }

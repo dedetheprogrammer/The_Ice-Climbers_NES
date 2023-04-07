@@ -53,6 +53,12 @@ public:
     }
     void destroy();
     void printout();
+
+    void OnCollision(Collision contact) {
+        //for (auto & [ScriptType, Script] : scripts) {
+        //    dynamic_cast<ScriptType>()
+        //}
+    }
 };
 
 // ============================================================================
@@ -313,8 +319,19 @@ int GetAxis(std::string axis);
 // ----------------------------------------------------------------------------
 // Collision System
 // ----------------------------------------------------------------------------
-class CollisionSystem {
+class Collision {
+private:
+    //...
 public:
+    GameObject& gameObject;
+    float contact_time;
+    Vector2 contact_point;
+    Vector2 contact_normal;
+    Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal);
+};
+
+class CollisionSystem {
+private:
     static std::unordered_map<std::string, Collider2D*> colliders;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
@@ -330,13 +347,6 @@ public:
     // De momento A es dinamico y B es estatico, 
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
-
-    // Luego vendra el dinamismo para ambos. Va mas o menos, puede (debe) pulirse.
-    /*
-    bool Collides(const Collider2D& A, const Vector2& vA, Vector2& cpA, Vector2& cnA,
-        float& ctA, const Collider2D& B, const Vector2& vB, Vector2& cpB, Vector2& cnB,
-        float& ctB);
-    */
 
 public:
     static void addCollider(std::string name, Collider2D* collider);
