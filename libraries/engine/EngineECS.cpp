@@ -10,15 +10,23 @@
 GameObject::GameObject() : name("GameObject") {}
 GameObject::GameObject(std::string name) : name(name) {}
 
-void GameObject::destroy() {
+void GameObject::Destroy() {
     for (auto& component : components) {
         component.second->Unload();
         delete component.second;
     }
 }
 
-void GameObject::printout() {
-    std::cout << name << "\n";
+void GameObject::OnCollision(Collision contact) {
+    for (auto & [_, Script] : scripts) {
+        Script->OnCollision(contact);
+    }
+}
+
+void GameObject::Update() {
+    for (auto &[_, Script] : scripts) {
+        Script->Update();
+    }
 }
 
 // ============================================================================
@@ -354,8 +362,7 @@ bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
 
 // Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el 
 // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
-// se extiende por ambos lados.
-// De momento A es dinamico y B es estatico:
+// se extiende por ambos lados:
 bool CollisionSystem::Collides(const Collider2D& A, const Collider2D& B, 
     Vector2& contact_point, Vector2& contact_normal, float& contact_time)
 {
@@ -387,13 +394,18 @@ void CollisionSystem::removeCollider(std::string name) {
 void CollisionSystem::checkCollisions() {
     // Iteramos sobre el hashmap de colliders
     for (auto const& [Collider_A_name, Collider_A] : colliders) {
-        for (auto const& [Collider_B_name, Collider_B] : colliders) {
-            // Comprobamos que no sea el mismo collider
-            if (Collider_A_name != Collider_B_name) {
-                // Comprobamos la colisión
-                float ct; Vector2 cp, cn;
-                if (CollisionSystem::Collides(*Collider_A, *Collider_B, cp, cn, ct)) {
-                    Collider_A->gameObject.OnCollision(Collision(Collider_B->gameObject, ct, cp, cn));
+        if (Collider_A->gameObject.hasComponent<RigidBody2D>()) {
+            for (auto const& [Collider_B_name, Collider_B] : colliders) {
+                // Comprobamos que no sea el mismo collider
+                if (Collider_A_name != Collider_B_name) {
+                    // Comprobamos la colisión
+                    float ct = 0; Vector2 cp{0,0}, cn{0,0};
+                    if (CollisionSystem::Collides(*Collider_A, *Collider_B, cp, cn, ct)) {
+                        Collider_A->gameObject.OnCollision(Collision(Collider_B->gameObject, ct, cp, cn));
+                        if (!Collider_B->gameObject.hasComponent<RigidBody2D>()) {
+                            Collider_B->gameObject.OnCollision(Collision(Collider_A->gameObject, 0, {0,0}, {0,0}));
+                        }
+                    }
                 }
             }
         }

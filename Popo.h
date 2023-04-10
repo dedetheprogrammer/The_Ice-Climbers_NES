@@ -6,6 +6,7 @@
 class Movement : public Script {
 private:
     // Variables para Popo:
+    bool floorCollision;
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
@@ -60,35 +61,8 @@ private:
         }
 
         // Colissions:
-        float ct; Vector2 cp, cn;
-        if (true) {//!Collides(collider, rigidbody.velocity * deltaTime, floor, cp, cn, ct) || ct >= 1.0f) {
-            transform.position.y += rigidbody.velocity.y * deltaTime;
-            rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-        } else {
-            if (!isAttacking && !move) {
-                if (rigidbody.velocity.x > 0) {
-                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
-                    if (rigidbody.velocity.x < 0) {
-                        rigidbody.velocity.x = 0;
-                    }
-                    animator["Brake"];
-                    collider.size = animator.GetViewDimensions();
-                } else if (rigidbody.velocity.x < 0) {
-                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
-                    if (rigidbody.velocity.x > 0) {
-                        rigidbody.velocity.x = 0;
-                    }
-                    animator["Brake"];
-                    collider.size = animator.GetViewDimensions();
-                } else {
-                    rigidbody.velocity.x = 0;
-                    animator["Idle"];
-                    collider.size = animator.GetViewDimensions();
-                }
-            }
-            rigidbody.velocity.y += cn.y * std::abs(rigidbody.velocity.y) * (1 - ct);
-            isGrounded = true;
-        }
+        transform.position.y += rigidbody.velocity.y * deltaTime;
+        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
     void Draw() {
@@ -118,11 +92,45 @@ public:
         isGrounded  = false;
         isRight     = true;
         isAttacking = false;
+        floorCollision = false;
     }
 
     void OnCollision(Collision contact) {
+
         if (contact.gameObject.name == "Floor") {
-            
+            int move = GetAxis("Horizontal");
+            float deltaTime = GetFrameTime();
+            if (!isAttacking && !move) {
+                if (rigidbody.velocity.x > 0) {
+                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                    if (rigidbody.velocity.x < 0) {
+                        rigidbody.velocity.x = 0;
+                    }
+                    animator["Brake"];
+                    collider.size = animator.GetViewDimensions();
+                } else if (rigidbody.velocity.x < 0) {
+                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                    if (rigidbody.velocity.x > 0) {
+                        rigidbody.velocity.x = 0;
+                    }
+                    animator["Brake"];
+                    collider.size = animator.GetViewDimensions();
+                } else {
+                    rigidbody.velocity.x = 0;
+                    animator["Idle"];
+                    collider.size = animator.GetViewDimensions();
+                }
+            }
+            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time);
+            isGrounded = true;
+        } else if (contact.gameObject.name == "Cloud") {
+            if (!contact.contact_normal.x) {
+                if (contact.contact_normal.y > 0) {
+                    rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
+                } else {
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time);
+                }
+            }
         }
     }
 

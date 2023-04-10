@@ -1,6 +1,6 @@
 #include "EngineECS.h"
 #include "settings.h"
-//#include "Popo.h"
+#include "Popo.h"
 
 enum WINDOW_BEHAVOR { COLLISION = 0x01, TRAVERSE = 0x02, IGNORE = 0x04 };
 bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
@@ -65,12 +65,12 @@ void Game() {
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    //Popo.addComponent<Script, Movement>();
+    Popo.addComponent<Script, Movement>();
 
     // Rectangles = Sprites component?
     // Mountain background:
     Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
-    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 25;
     Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
@@ -84,7 +84,7 @@ void Game() {
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,670});
     Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
-    CollisionSystem::printout();
+    //CollisionSystem::printout();
 
     bool play_music = false;
     bool paused = false;
@@ -109,6 +109,13 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
+            Popo.Update();
+            // GameSystem::Update();
+                // -> lance thread per objeto:
+                //      -> Update();
+                //      -> checkColllision();
+                //      -> Render();
+            CollisionSystem::checkCollisions();
             //CollisionSystem::ComprobarCollisiones() 
             //-> Compruebo si colisiona con algo:
             //    -> Si colisiona:
@@ -137,6 +144,9 @@ void Game() {
         if (IsKeyPressed(KEY_ESCAPE)) {
             break;
         }
+        if (IsKeyPressed(KEY_R)) {
+            Popo.getComponent<Transform2D>().position = Vector2{600,500};
+        }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         Floor.getComponent<Collider2D>().Draw(PINK);
         EndDrawing();
@@ -144,7 +154,7 @@ void Game() {
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     //UnloadTexture(Snowball);
-    Popo.destroy();
+    Popo.Destroy();
     BGM.Unload();
 }
 

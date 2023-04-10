@@ -16,6 +16,7 @@
  */
 class Component;
 class Script;
+class Collision;
 class GameObject {
 private:
     //...
@@ -37,12 +38,21 @@ public:
     template<typename S, typename T, typename... Args> void addComponent(Args&&... args) {
         scripts[typeid(T)] = new T(*this, std::forward<Args>(args)...);
     }
+
+    template <typename T> bool hasComponent() {
+        auto it = components.find(typeid(T));
+        if (it != components.end()) {
+            return true;
+        }
+        return false;
+    }
+
     template <typename T> T& getComponent() {
         auto it = components.find(typeid(T));
         if (it != components.end()) {
             return dynamic_cast<T&>(*it->second);
         }
-        throw std::runtime_error("Componente no encontrado.");
+        throw std::runtime_error("Componente '" + std::string(typeid(T).name()) + "' no encontrado.");
     }
     template <typename T> void removeComponent() {
         auto it = components.find(typeid(T));
@@ -51,14 +61,10 @@ public:
             components.erase(it);
         }
     }
-    void destroy();
-    void printout();
 
-    void OnCollision(Collision contact) {
-        //for (auto & [ScriptType, Script] : scripts) {
-        //    dynamic_cast<ScriptType>()
-        //}
-    }
+    void Destroy();
+    void OnCollision(Collision contact);
+    void Update();
 };
 
 // ============================================================================
@@ -264,8 +270,8 @@ private:
 public:
     Script(GameObject& gameObject);
     // virtual void Start() = 0;
+    virtual void OnCollision(Collision contact) = 0;
     virtual void Update() = 0;
-    // virtual void OnCollision = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -324,9 +330,10 @@ private:
     //...
 public:
     GameObject& gameObject;
+    // enum
     float contact_time;
     Vector2 contact_point;
-    Vector2 contact_normal;
+    Vector2 contact_normal; // x=-1 (IZQ), x=1 (DCH), y=-1 (ARR), y=1 (ABJ)
     Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal);
 };
 
@@ -353,6 +360,13 @@ public:
     static void removeCollider(std::string name);
     static void printout();
     static void checkCollisions();
+};
+
+class GameSystem {
+private:
+    static std::unordered_map<std::string, GameObject&> scene_instances;
+
+    static Instantiate(GameObject& 9); 
 };
 
 #endif

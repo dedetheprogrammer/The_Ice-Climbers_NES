@@ -12,6 +12,4 @@ public:
     void Spawn() {
          
     }
-
-
 };
