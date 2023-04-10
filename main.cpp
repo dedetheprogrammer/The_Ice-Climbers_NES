@@ -252,8 +252,6 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-    Game();
-    /*
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -693,7 +691,7 @@ int main() {
             }
             
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
-                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)});
+                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)}, deltaTime);
             } else {
                 DrawTexturePro(OldOptionHammer, OldOptionHammerSrc,
                     {450, (float)menu_start + (option_offset * (current_option+1) - option_drift), OldOptionHammer.width * 4.0f, OldOptionHammer.height * 4.0f}, {0,0}, 0, WHITE);
@@ -701,8 +699,8 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }*/
-    OptionHammer.Unload();
+    }
+
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
     UnloadTexture(Sign);

@@ -9,6 +9,7 @@
 #include <variant>
 #include <vector>
 #include "raylib.h"
+#include "controllers.h"
 
 //-----------------------------------------------------------------------------
 // Game settings
@@ -23,7 +24,21 @@ std::unordered_map<std::string, std::string> types {
     {"Vsync", "bool"},
     {"FPSLimit", "int"},
     {"MusicVolume", "float"},
-    {"EffectsVolume", "float"}
+    {"EffectsVolume", "float"},
+    //Controller Settings
+    {"ControllerType", "int"},
+    {"GP_Left", "int"},
+    {"GP_Right", "int"},
+    {"GP_Down", "int"},
+    {"GP_Up", "int"},
+    {"GP_Jump", "int"},
+    {"GP_Attack", "int"},
+    {"KB_Left", "int"},
+    {"KB_Right", "int"},
+    {"KB_Down", "int"},
+    {"KB_Up", "int"},
+    {"KB_Jump", "int"},
+    {"KB_Attack", "int"},
 };
 // -- GRAPHICS
 const bool DEFAULT_OLD_STYLE       = false;
@@ -67,6 +82,24 @@ int& WINDOW_HEIGHT   = std::get<int>(ini["Graphics"]["ScreenHeight"]); // 160px
 float MUSIC_VOLUME   = 1.0f;
 float EFFECTS_VOLUME = 1.0f;
 
+void controller_default_config(int controller) {
+    std::string controllerSection = "Controller_" + std::to_string(controller);
+    ini[controllerSection]["ControllerType"]  = controller;
+    ini[controllerSection]["GP_Left"]  = GAMEPAD_AXIS_LEFT_X;
+    ini[controllerSection]["GP_Right"] = GAMEPAD_AXIS_LEFT_X;
+    ini[controllerSection]["GP_Down"]  = GAMEPAD_AXIS_LEFT_Y;
+    ini[controllerSection]["GP_Up"]    = GAMEPAD_AXIS_LEFT_Y;
+    ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+    ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+
+    ini[controllerSection]["KB_Left"]  = KEY_LEFT;
+    ini[controllerSection]["KB_Right"] = KEY_RIGHT;
+    ini[controllerSection]["KB_Down"]  = KEY_DOWN;
+    ini[controllerSection]["KB_Up"]    = KEY_UP;
+    ini[controllerSection]["KB_Jump"]  = KEY_SPACE;
+    ini[controllerSection]["KB_Attack"]= KEY_LEFT_SHIFT;
+}
+
 void default_config() {
     // Graphics settings:
     ini["Graphics"]["OldFashioned"] = DEFAULT_OLD_STYLE;
@@ -78,7 +111,30 @@ void default_config() {
     // Audio settings:
     ini["Audio"]["MusicVolume"]     = DEFAULT_MUSIC_VOLUME;
     ini["Audio"]["EffectsVolume"]   = DEFAULT_EFFECTS_VOLUME;
-    // Controles no implementados.
+    // Controller settings:
+    controller_default_config(0);
+    controller_default_config(1);
+    controller_default_config(2);
+    controller_default_config(3);
+}
+
+void controller_save_config(int controller, std::ofstream& os) {
+    std::string controllerSection = "Controller_" + std::to_string(controller);
+    os  << "[" << controllerSection << "]"
+        << "\nControllerType="  << std::get<int>(ini[controllerSection]["ControllerType"])
+        << "\nGP_Left="         << std::get<int>(ini[controllerSection]["GP_Left"])
+        << "\nGP_Right="        << std::get<int>(ini[controllerSection]["GP_Right"])
+        << "\nGP_Down="         << std::get<int>(ini[controllerSection]["GP_Down"])
+        << "\nGP_Up="           << std::get<int>(ini[controllerSection]["GP_Up"])
+        << "\nGP_Jump="         << std::get<int>(ini[controllerSection]["GP_Jump"])
+        << "\nGP_Attack="       << std::get<int>(ini[controllerSection]["GP_Attack"])
+        
+        << "\nKB_Left="         << std::get<int>(ini[controllerSection]["KB_Left"])
+        << "\nKB_Right="        << std::get<int>(ini[controllerSection]["KB_Right"])
+        << "\nKB_Down="         << std::get<int>(ini[controllerSection]["KB_Down"])
+        << "\nKB_Up="           << std::get<int>(ini[controllerSection]["KB_Up"])
+        << "\nKB_Jump="         << std::get<int>(ini[controllerSection]["KB_Jump"])
+        << "\nKB_Attack="       << std::get<int>(ini[controllerSection]["KB_Attack"])<< std::endl;
 }
 
 void save_config() {
@@ -94,8 +150,33 @@ void save_config() {
     os << "[Audio]" 
         << "\nMusicVolume="   << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["MusicVolume"])
         << "\nEffectsVolume=" << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["EffectsVolume"]) << std::endl;
-    os << "; [Controls]";
+    controller_save_config(0, os);
+    controller_save_config(1, os);
+    controller_save_config(2, os);
+    controller_save_config(3, os);
     os.close();
+}
+
+void controller_init_config(Controller& controller, std::ifstream& in) {
+    std::string controllerSection = "Controller_" + std::to_string(controller.type);
+    int type = std::get<int>(ini[controllerSection]["ControllerType"]);
+    controller.type = (Controller::Type)type;
+
+    if (type == Controller::KEYBOARD) {
+        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["KB_LEFT"]);
+        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["KB_RIGHT"]);
+        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["KB_DOWN"]);
+        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["KB_UP"]);
+        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["KB_JUMP"]);
+        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["KB_ATTACK"]);
+    } else if (type >= Controller::CONTROLLER_0 && type <= Controller::CONTROLLER_3) {
+        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["GP_LEFT"]);
+        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["GP_RIGHT"]);
+        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["GP_DOWN"]);
+        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["GP_UP"]);
+        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["GP_JUMP"]);
+        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["GP_ATTACK"]);
+    }
 }
 
 void init_config() {
@@ -160,6 +241,12 @@ void init_config() {
             break;
         }
     }
+
+    //---- Controller Settings
+    controller_init_config(Controller_0, in);
+    controller_init_config(Controller_1, in);
+    controller_init_config(Controller_2, in);
+    controller_init_config(Controller_3, in);
 
     //if (VSYNC) {
     //    SetConfigFlags(FLAG_VSYNC_HINT);
