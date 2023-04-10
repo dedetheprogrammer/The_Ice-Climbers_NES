@@ -50,21 +50,22 @@ public:
  * @brief GameObject physical limits.
  * 
  */
+enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR, PLATFORM };
 class Collider2D : public Component {
 private:
     // ...
 public:
-    enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
+    COLLIDER_ENUM type;
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
 
-    Collider2D() : pos(nullptr), size({0.0f,0.0f}) {}
-    Collider2D(Vector2* pos, int width, int height) : pos(pos), size({(float)width, (float)height}) {}
+    Collider2D() : pos(nullptr), size({0.0f,0.0f}), type(UKNOWN) {}
+    Collider2D(Vector2* pos, int width, int height, COLLIDER_ENUM type) : pos(pos), size({(float)width, (float)height}), type(type) {}
     //Collider2D(std::string name, Vector2* pos, int width, int height) : pos(pos), size({(float)width, (float)height}) {
     //    CollisionSystem::addCollider(name, this);
     //}
-    Collider2D(Vector2* pos, Vector2 size) : pos(pos), size(size) {}
+    Collider2D(Vector2* pos, Vector2 size, COLLIDER_ENUM type) : pos(pos), size(size), type(type) {}
     //Collider2D(std::string name, Vector2* pos, Vector2 size) : pos(pos), size(size) {
     //    CollisionSystem::addCollider(name, this);
     //}
@@ -211,9 +212,10 @@ public:
     bool Collides(const Collider2D& A, const Vector2& vA, const Collider2D& B, 
         Vector2& contact_point, Vector2& contact_normal, float& contact_time)
     {
+        
         // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
         Vector2 exp_B_pos = *B.pos - (A.size/2);
-        Collider2D exp_B = Collider2D(&exp_B_pos, B.size + A.size);
+        Collider2D exp_B = Collider2D(&exp_B_pos, B.size + A.size, A.type);
         // Se coge el centro del rectangulo:
         if (Collides(*A.pos + A.size/2, vA, exp_B, contact_point, contact_normal, contact_time)) {
             return (contact_time >= 0.0f && contact_time <= 1.0f);

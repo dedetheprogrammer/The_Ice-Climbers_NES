@@ -2,6 +2,7 @@
 #include "EngineUI.h"
 #include "Popo.h"
 #include "Topi.h"
+#include "Block.h"
 #include "settings.h"
 
 Font NES;
@@ -31,7 +32,9 @@ void Game() {
         {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
         {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
         {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
+        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+        {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+        {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 20, 25, 3, 0.3, true)}
     });
 
     Topi.addComponent<Animator>("Walk", Animator::animator_map  {
@@ -50,8 +53,8 @@ void Game() {
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::PLAYER);
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::ENEMY);
     Popo.addComponent<Script, Movement>();
     Topi.addComponent<Script, MovementTopi>();
 
@@ -72,11 +75,41 @@ void Game() {
 
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,673});
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
-    std::vector<Collider2D*> suelo;
-    suelo.push_back(&Floor.getComponent<Collider2D>());
-    suelo.push_back(&Topi.getComponent<Collider2D>());
-    Popo.updateColliders(suelo);
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100}, COLLIDER_ENUM::FLOOR);
+    std::vector<Collider2D*> colliders;
+    colliders.push_back(&Floor.getComponent<Collider2D>());
+    colliders.push_back(&Topi.getComponent<Collider2D>());
+    std::vector<Collider2D*> BlocksCollider;
+    std::vector<GameObject> Blocks;
+    //auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 120.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+    for(int i = 5; i < 25; i++){
+        GameObject GreenBlock("GreenBlock");
+        GreenBlock.addComponent<Transform2D>(Vector2{96.0f+ 8.0f*4*i, 480.0f});
+        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Grass 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        GreenBlock.addComponent<Script, BlockActions>();
+        
+        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
+        Blocks.push_back(GreenBlock);
+    }
+    for(int i = 1; i < 17; i++){
+        GameObject GreenBlock("GreenBlock");
+        GreenBlock.addComponent<Transform2D>(Vector2{128.0f+ 8.0f*4*i, 288.0f});
+        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Dirt 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        GreenBlock.addComponent<Script, BlockActions>();
+        
+        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
+        Blocks.push_back(GreenBlock);
+    }
+    
+    Popo.updateColliders(colliders);
 
     bool play_music = false;
     bool paused = false;
@@ -103,6 +136,10 @@ void Game() {
         if (!paused) {
             Popo.update();
             Topi.update();
+            
+            for(auto block : Blocks) {
+                block.update();
+            }
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -253,8 +290,8 @@ int main() {
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
     Game();
-    /*
-    while(!WindowShouldClose() && !close_window) {
+    
+    /*while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
         float deltaTime = GetFrameTime();
@@ -701,7 +738,7 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }*/
+    }
     OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
@@ -722,5 +759,5 @@ int main() {
     UnloadFont(NES);
     UnloadMusicStream(ts_music);
     CloseAudioDevice();
-    save_config();
+    save_config();*/
 }
