@@ -141,77 +141,77 @@ main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/build
 .PHONY : main/fast
 
-libraries/engine/EngineECS.obj: libraries/engine/EngineECS.cpp.obj
-.PHONY : libraries/engine/EngineECS.obj
+Libraries/engine/EngineECS.obj: Libraries/engine/EngineECS.cpp.obj
+.PHONY : Libraries/engine/EngineECS.obj
 
 # target to build an object file
-libraries/engine/EngineECS.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/EngineECS.cpp.obj
-.PHONY : libraries/engine/EngineECS.cpp.obj
+Libraries/engine/EngineECS.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineECS.cpp.obj
+.PHONY : Libraries/engine/EngineECS.cpp.obj
 
-libraries/engine/EngineECS.i: libraries/engine/EngineECS.cpp.i
-.PHONY : libraries/engine/EngineECS.i
+Libraries/engine/EngineECS.i: Libraries/engine/EngineECS.cpp.i
+.PHONY : Libraries/engine/EngineECS.i
 
 # target to preprocess a source file
-libraries/engine/EngineECS.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/EngineECS.cpp.i
-.PHONY : libraries/engine/EngineECS.cpp.i
+Libraries/engine/EngineECS.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineECS.cpp.i
+.PHONY : Libraries/engine/EngineECS.cpp.i
 
-libraries/engine/EngineECS.s: libraries/engine/EngineECS.cpp.s
-.PHONY : libraries/engine/EngineECS.s
+Libraries/engine/EngineECS.s: Libraries/engine/EngineECS.cpp.s
+.PHONY : Libraries/engine/EngineECS.s
 
 # target to generate assembly for a file
-libraries/engine/EngineECS.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/EngineECS.cpp.s
-.PHONY : libraries/engine/EngineECS.cpp.s
+Libraries/engine/EngineECS.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineECS.cpp.s
+.PHONY : Libraries/engine/EngineECS.cpp.s
 
-libraries/engine/raylibx.obj: libraries/engine/raylibx.cpp.obj
-.PHONY : libraries/engine/raylibx.obj
+Libraries/engine/raylibx.obj: Libraries/engine/raylibx.cpp.obj
+.PHONY : Libraries/engine/raylibx.obj
 
 # target to build an object file
-libraries/engine/raylibx.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/raylibx.cpp.obj
-.PHONY : libraries/engine/raylibx.cpp.obj
+Libraries/engine/raylibx.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.obj
+.PHONY : Libraries/engine/raylibx.cpp.obj
 
-libraries/engine/raylibx.i: libraries/engine/raylibx.cpp.i
-.PHONY : libraries/engine/raylibx.i
+Libraries/engine/raylibx.i: Libraries/engine/raylibx.cpp.i
+.PHONY : Libraries/engine/raylibx.i
 
 # target to preprocess a source file
-libraries/engine/raylibx.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/raylibx.cpp.i
-.PHONY : libraries/engine/raylibx.cpp.i
+Libraries/engine/raylibx.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.i
+.PHONY : Libraries/engine/raylibx.cpp.i
 
-libraries/engine/raylibx.s: libraries/engine/raylibx.cpp.s
-.PHONY : libraries/engine/raylibx.s
+Libraries/engine/raylibx.s: Libraries/engine/raylibx.cpp.s
+.PHONY : Libraries/engine/raylibx.s
 
 # target to generate assembly for a file
-libraries/engine/raylibx.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/libraries/engine/raylibx.cpp.s
-.PHONY : libraries/engine/raylibx.cpp.s
+Libraries/engine/raylibx.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.s
+.PHONY : Libraries/engine/raylibx.cpp.s
 
-main.obj: main.cpp.obj
-.PHONY : main.obj
+maintest.obj: maintest.cpp.obj
+.PHONY : maintest.obj
 
 # target to build an object file
-main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.obj
-.PHONY : main.cpp.obj
+maintest.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.obj
+.PHONY : maintest.cpp.obj
 
-main.i: main.cpp.i
-.PHONY : main.i
+maintest.i: maintest.cpp.i
+.PHONY : maintest.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
+maintest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.i
+.PHONY : maintest.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+maintest.s: maintest.cpp.s
+.PHONY : maintest.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
+maintest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.s
+.PHONY : maintest.cpp.s
 
 # Help Target
 help:
@@ -223,15 +223,15 @@ help:
 	@echo ... rebuild_cache
 	@echo ... engine
 	@echo ... main
-	@echo ... libraries/engine/EngineECS.obj
-	@echo ... libraries/engine/EngineECS.i
-	@echo ... libraries/engine/EngineECS.s
-	@echo ... libraries/engine/raylibx.obj
-	@echo ... libraries/engine/raylibx.i
-	@echo ... libraries/engine/raylibx.s
-	@echo ... main.obj
-	@echo ... main.i
-	@echo ... main.s
+	@echo ... Libraries/engine/EngineECS.obj
+	@echo ... Libraries/engine/EngineECS.i
+	@echo ... Libraries/engine/EngineECS.s
+	@echo ... Libraries/engine/raylibx.obj
+	@echo ... Libraries/engine/raylibx.i
+	@echo ... Libraries/engine/raylibx.s
+	@echo ... maintest.obj
+	@echo ... maintest.i
+	@echo ... maintest.s
 .PHONY : help
 
 

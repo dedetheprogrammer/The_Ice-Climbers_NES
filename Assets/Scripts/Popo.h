@@ -6,7 +6,6 @@
 class Movement : public Script {
 private:
     // Variables para Popo:
-    bool floorCollision;
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
@@ -92,7 +91,21 @@ public:
         isGrounded  = false;
         isRight     = true;
         isAttacking = false;
-        floorCollision = false;
+    }
+    Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
+        animator(gameObject.getComponent<Animator>()),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
+        collider(gameObject.getComponent<Collider2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        isGrounded  = movement.isGrounded;
+        isRight     = movement.isRight;
+        isAttacking = movement.isAttacking;
+    }
+
+    Component* Clone(GameObject& gameObject) override {
+        return new Movement(gameObject, *this);
     }
 
     void OnCollision(Collision contact) {

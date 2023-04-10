@@ -1,11 +1,7 @@
 #include "EngineECS.h"
 #include "settings.h"
 #include "Popo.h"
-
-enum WINDOW_BEHAVOR { COLLISION = 0x01, TRAVERSE = 0x02, IGNORE = 0x04 };
-bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
-    return false;
-}
+#include "Grass_block.h"
 
 class Flicker {
 private:
@@ -32,7 +28,7 @@ Font NES;
 void Game() {
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
-    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
+    MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
@@ -42,21 +38,22 @@ void Game() {
     GameObject Popo("Popo");
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>(Vector2{600,500});
+    Popo.addComponent<Transform2D>(Vector2{600,400});
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
     Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-        {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-        {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-        {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 3, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 3, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 3, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 3, 0.9, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 3, 0.3, false)},
+        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
     Popo.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{50,200});
@@ -69,26 +66,36 @@ void Game() {
 
     // Rectangles = Sprites component?
     // Mountain background:
-    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
+    Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
     float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 25;
     Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
-    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
+    Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     GameObject Floor("Floor");
-    Floor.addComponent<Transform2D>(Vector2{-100,670});
+    Floor.addComponent<Transform2D>(Vector2{-100,523});
     Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
-    //CollisionSystem::printout();
 
+    GameObject Block("Grass Block");
+    Block.addComponent<Transform2D>(Vector2{112, 380});
+    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{0,0}, 3.0f);
+    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions());
+    Block.addComponent<Script, GrassBlockBehavior>();
+    
     bool play_music = false;
     bool paused = false;
     BGM.Init();
+
+    GameSystem::Instantiate(Popo, Vector2{600,400});
+    GameSystem::Update();
+
+
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         BeginDrawing();
@@ -109,13 +116,17 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            Popo.Update();
-            // GameSystem::Update();
-                // -> lance thread per objeto:
-                //      -> Update();
-                //      -> checkColllision();
-                //      -> Render();
-            CollisionSystem::checkCollisions();
+            //Block.Update();
+            //Popo.Update();
+            ////GameSystem::Update();
+            //    // -> lance thread per objeto:
+            //    //      -> Update();
+            //    //      -> checkColllision();
+            //    //      -> Render();
+            //CollisionSystem::checkCollisions();
+            //Block.getComponent<Collider2D>().Draw(Color{80,170,200,255});
+            //Floor.getComponent<Collider2D>().Draw();
+
             //CollisionSystem::ComprobarCollisiones() 
             //-> Compruebo si colisiona con algo:
             //    -> Si colisiona:
@@ -145,7 +156,7 @@ void Game() {
             break;
         }
         if (IsKeyPressed(KEY_R)) {
-            Popo.getComponent<Transform2D>().position = Vector2{600,500};
+            Popo.getComponent<Transform2D>().position = Vector2{600,400};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         Floor.getComponent<Collider2D>().Draw(PINK);

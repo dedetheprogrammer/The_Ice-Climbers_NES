@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 #include "raylib.h"
 
 /**
@@ -31,6 +32,7 @@ public:
 
     GameObject();
     GameObject(std::string name);
+    GameObject(GameObject& gameObject);
 
     template <typename T, typename... Args> void addComponent(Args&&... args) {
         components[typeid(T)] = new T(*this, std::forward<Args>(args)...);
@@ -54,6 +56,15 @@ public:
         }
         throw std::runtime_error("Componente '" + std::string(typeid(T).name()) + "' no encontrado.");
     }
+
+    template <typename S, typename T> T& getComponent() {
+        auto it = scripts.find(typeid(T));
+        if (it != scripts.end()) {
+            return dynamic_cast<T&>(*it->second);
+        }
+        throw std::runtime_error("Script '" + std::string(typeid(T).name()) + "' no encontrado.");
+    }
+
     template <typename T> void removeComponent() {
         auto it = components.find(typeid(T));
         if (it != components.end()) {
@@ -62,6 +73,15 @@ public:
         }
     }
 
+    template <typename S, typename T> void removeComponent() {
+        auto it = scripts.find(typeid(T));
+        if (it != scripts.end()) {
+            delete it->second;
+            scripts.erase(it);
+        }
+    }
+
+    void Draw(float deltaTime);
     void Destroy();
     void OnCollision(Collision contact);
     void Update();
@@ -88,6 +108,7 @@ public:
     // Un poco de spoiler de lo que se viene...
     Component(GameObject& gameObject);
     virtual ~Component() = default;
+    virtual Component* Clone(GameObject& gameObject) = 0;
     // Unloads those components that were loaded in memory.
     virtual void Unload();
 };
@@ -97,7 +118,6 @@ public:
 //-----------------------------------------------------------------------------
 /**
  * @brief An animation made of sprites.
- * 
  */
 class Animation {
 private:
@@ -139,7 +159,6 @@ public:
 
 /**
  * @brief Animator component
- * 
  */
 class Animator : public Component {
 private:
@@ -148,17 +167,97 @@ private:
     std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
     std::unordered_map<std::string, Animation> Animations; // The animations perse.
 public:
-
+    /**
+     * @brief Construct a new Animator object
+     * 
+     * @param gameObject 
+     * @param entry_animation 
+     * @param Animations 
+     */
     Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
+    
+    /**
+     * @brief Construct a new Animator object
+     * 
+     * @param animator 
+     */
+    Animator(GameObject& gameObject, Animator& animator);
 
+    /**
+     * @brief Clones the current animator into a new one.
+     * 
+     * @return Component* 
+     */
+    Component* Clone(GameObject& gameObject) override;
+
+    /**
+     * @brief Flips all the animations.
+     * 
+     */
     void Flip();
+
+    /**
+     * @brief Get the dimensions of the current animation.
+     * 
+     * @return Vector2 
+     */
     Vector2 GetDimensions();
+
+    /**
+     * @brief Get the scaled dimensions of the current animation.
+     * 
+     * @return Vector2 
+     */
     Vector2 GetViewDimensions();
+
+    /**
+     * @brief Indicates if the current animation has finished.
+     * 
+     * @param animation 
+     * @return true 
+     * @return false 
+     */
     bool HasFinished(std::string animation);
+
+    /**
+     * @brief Indicates if the current state animation is the given one.
+     * 
+     * @param animation 
+     * @return true 
+     * @return false 
+     */
     bool InState(std::string animation);
+
+    /**
+     * @brief Plays the current animation.
+     * 
+     * @param position 
+     * @param deltaTime 
+     */
     void Play(Vector2 position, float deltaTime);
+
+    /**
+     * @brief If the entry animation is the current one, plays it and pass to the
+     * given next animation.
+     * 
+     * @param entry_animation 
+     * @param next_animation 
+     * @return true 
+     * @return false 
+     */
     bool Trigger(std::string entry_animation, std::string next_animation);
+
+    /**
+     * @brief Unloads all the spritesheets.
+     * 
+     */
     void Unload() override;
+
+    /**
+     * @brief Stops the current animation and changes to the given one.
+     * 
+     * @param animation 
+     */
     void operator[](std::string animation);
 };
 
@@ -167,7 +266,6 @@ public:
 //-----------------------------------------------------------------------------´
 /**
  * @brief Fahter class Audio, covers every type of audio.
- * 
  */
 class AudioSource {
 private:
@@ -181,7 +279,6 @@ public:
 
 /**
  * @brief Audio type: sound.
- * 
  */
 class SoundSource : public AudioSource {
 private:
@@ -194,7 +291,6 @@ public:
 
 /**
  * @brief Audio type: music.
- * 
  */
 class MusicSource : public AudioSource {
 private:
@@ -208,13 +304,14 @@ public:
 
 /**
  * @brief Audioplayer component.
- * 
  */
 class AudioPlayer : public Component {
 private:
     std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios;
 public:
     AudioPlayer(GameObject& gameObject, std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios);
+    AudioPlayer(GameObject& gameObject, AudioPlayer& audioplayer);
+    Component* Clone(GameObject& gameObject) override;
     void Unload() override;
     void operator[ ](std::string audiosource);
 };
@@ -225,19 +322,20 @@ public:
  */
 class Collider2D : public Component {
 private:
-    // ...
+    Color color;
 public:
     enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
     
-    Collider2D(GameObject& gameObject, Vector2* pos, int width, int height);
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height);
-    Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size);
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size);
-
-    void Draw(Color color = {129, 242, 53, 255});
+    Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
+    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
+    Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
+    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
+    Collider2D(GameObject& gameObject, Collider2D& collider);
+    Component* Clone(GameObject& gameObject) override;
+    void Draw();
 };
 
 //-----------------------------------------------------------------------------
@@ -258,6 +356,8 @@ public:
     Vector2 acceleration; // Object accelerations.
 
     RigidBody2D(GameObject& gameObject, float mass, float gravity, Vector2 max_velocity, Vector2 acceleration);
+    RigidBody2D(GameObject& gameObject, RigidBody2D& rigidbody);
+    Component* Clone(GameObject& gameObject) override;
     void Draw(Vector2 center);
 };
 
@@ -269,6 +369,7 @@ private:
     // ...
 public:
     Script(GameObject& gameObject);
+    virtual Component* Clone(GameObject& gameObject) = 0;
     // virtual void Start() = 0;
     virtual void OnCollision(Collision contact) = 0;
     virtual void Update() = 0;
@@ -286,10 +387,12 @@ private:
 
 public:
     Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin = {0,0}, float dst_scale = 1.0f);
+    Sprite(GameObject& gameObject, Sprite& sprite);
 
     float GetScale();
     Vector2 GetDimensions();
     Vector2 GetViewDimensions();
+    Component* Clone(GameObject& gameObject) override;
     void Draw(Vector2 position);
     void Unload() override;
 
@@ -310,8 +413,9 @@ public:
     float rotation;
     Vector2 scale;
 
-    Transform2D(GameObject& gameObject, Vector2 position = {0,0}, float rotation = 0.0f,
-        Vector2 scale = {1.0f, 1.0f});
+    Transform2D(GameObject& gameObject, Vector2 position = {0,0}, float rotation = 0.0f, Vector2 scale = {1.0f, 1.0f});
+    Transform2D(GameObject& gameObject, Transform2D& transform);
+    Component* Clone(GameObject& gameObject) override;
 };
 
 // Hola
@@ -360,13 +464,16 @@ public:
     static void removeCollider(std::string name);
     static void printout();
     static void checkCollisions();
+    static void checkCollisions(GameObject& gameObject);
 };
+
 
 class GameSystem {
 private:
-    static std::unordered_map<std::string, GameObject&> scene_instances;
-
-    static Instantiate(GameObject& 9); 
+    static std::unordered_map<std::string, std::vector<GameObject*>> scene_instances;
+public:
+    static void Instantiate(GameObject& gameObject, Vector2 position);
+    static void Update();
 };
 
 #endif

@@ -9,12 +9,36 @@
 // ============================================================================
 GameObject::GameObject() : name("GameObject") {}
 GameObject::GameObject(std::string name) : name(name) {}
+GameObject::GameObject(GameObject& gameObject) {
+    this->name = gameObject.name;
+    for (auto const& [type, component] : gameObject.components) {
+        components[type] = component->Clone(gameObject);
+    }
+    // Quedan los scripts.
+    for (auto const& [type, script] : gameObject.scripts) {
+        scripts[type] = dynamic_cast<Script*>(script->Clone(gameObject));
+    }
+}
 
 void GameObject::Destroy() {
     for (auto& component : components) {
         component.second->Unload();
         delete component.second;
     }
+}
+
+void GameObject::Draw(float deltaTime) {
+    auto it  = components.find(typeid(Animator));
+    auto pos = dynamic_cast<Transform2D&>(*components.find(typeid(Transform2D))->second).position;
+    if (it != components.end()) {
+        dynamic_cast<Animator&>(*it->second).Play(pos, deltaTime);
+    } else {
+        auto it = components.find(typeid(Sprite));
+        if (it != components.end()) {
+            dynamic_cast<Sprite&>(*it->second).Draw(pos);
+        }
+    }
+    
 }
 
 void GameObject::OnCollision(Collision contact) {
@@ -133,6 +157,16 @@ void Animation::Unload() {
 
 Animator::Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
     : Component(gameObject), current_animation(entry_animation), Animations(Animations) {}
+Animator::Animator(GameObject& gameObject, Animator& animator) : Component(gameObject) {
+    entry_animation   = animator.entry_animation;
+    current_animation = animator.current_animation; 
+    waiting_animation = animator.waiting_animation;
+    Animations        = animator.Animations;
+}
+Component* Animator::Clone(GameObject& gameObject) {
+    return new Animator(gameObject, *this);
+}
+
 void Animator::Flip() {
     for (auto& animation : Animations) {
         animation.second.Flip();
@@ -173,28 +207,33 @@ void Animator::operator[](std::string animation) {
 // ----------------------------------------------------------------------------
 // Audio
 // ----------------------------------------------------------------------------
+// -- Audio source
 AudioSource::AudioSource() {}
-
+// -- Sound source
 SoundSource::SoundSource(const char* fileName) : source(LoadSound(fileName)) {}
 void SoundSource::Play() { PlaySound(source); }
 void SoundSource::Unload() { UnloadSound(source); }
-
+// -- Music source
 MusicSource::MusicSource (const char *fileName, bool loop) : source(LoadMusicStream(fileName)) {
     source.looping = loop;
 }
 void MusicSource::Init() { PlayMusicStream(source); }
 void MusicSource::Play() { UpdateMusicStream(source); }
 void MusicSource::Unload() { UnloadMusicStream(source); }
-
+// -- The audio player
 AudioPlayer::AudioPlayer(GameObject& gameObject, std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios)
     : Component(gameObject), Audios(Audios) {}
-
+AudioPlayer::AudioPlayer(GameObject& gameObject, AudioPlayer& audioplayer) : Component(gameObject) {
+    Audios = audioplayer.Audios;
+}
+Component* AudioPlayer::Clone(GameObject& gameObject) {
+    return new AudioPlayer(gameObject, *this);
+}
 void AudioPlayer::Unload() {
     for (auto& audiosource : Audios) {
         audiosource.second->Unload();
     }
 }
-
 void AudioPlayer::operator[ ](std::string audiosource) {
     Audios[audiosource]->Play();
 }
@@ -202,22 +241,30 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // ----------------------------------------------------------------------------
 // Collider
 // ----------------------------------------------------------------------------
-Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height)
-    : Component(gameObject), pos(pos), size({(float)width, (float)height}) {}
-Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height)
-    : Component(gameObject), pos(pos), size({(float)width, (float)height})
+Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color)
+    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}) {}
+Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color)
+    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height})
 {
     CollisionSystem::addCollider(name, this);
 }
-Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size)
-    : Component(gameObject), pos(pos), size(size) {}
-Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size)
-    : Component(gameObject), pos(pos), size(size)
+Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color)
+    : Component(gameObject), color(color), pos(pos), size(size) {}
+Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size, Color color)
+    : Component(gameObject), color(color), pos(pos), size(size)
 {
     CollisionSystem::addCollider(name, this);
+}
+Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject) {
+    color = collider.color;
+    pos   = &gameObject.getComponent<Transform2D>().position;
+    size  = collider.size; 
 }
 
-void Collider2D::Draw(Color color) {
+Component* Collider2D::Clone(GameObject& gameObject) {
+    return new Collider2D(gameObject, *this);
+}
+void Collider2D::Draw() {
     DrawRectangleLinesEx({pos->x, pos->y, size.x, size.y}, 3.0f, color);
 }
 
@@ -233,7 +280,16 @@ RigidBody2D::RigidBody2D(GameObject& gameObject, float mass, float gravity,
     this->max_velocity = max_velocity;
     this->acceleration = acceleration;
 }
-
+RigidBody2D::RigidBody2D(GameObject& gameObject, RigidBody2D& rigidbody) : Component(gameObject) {
+    mass         = rigidbody.mass;
+    gravity      = rigidbody.gravity;
+    velocity     = rigidbody.velocity;
+    max_velocity = rigidbody.max_velocity;
+    acceleration = rigidbody.acceleration;
+}
+Component* RigidBody2D::Clone(GameObject& gameObject) {
+    return new RigidBody2D(gameObject, *this);
+}
 void RigidBody2D::Draw(Vector2 center) {
     DrawLineEx(center, center + velocity, 3.0f, BLUE);
     DrawLineEx(center, center + (Vector2){velocity.x, 0.0f}, 3.0f, RED);
@@ -256,24 +312,28 @@ Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin,
     src = {src_origin.x, src_origin.y, (float)img.width, (float)img.height};
     dst = {0, 0, img.width * scale, img.height * scale};
 }
-
-float Sprite::GetScale() {
+Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
+    scale = sprite.scale;
+    src   = sprite.src;
+    dst   = sprite.dst;
+    img   = sprite.img;
+}
+Component* Sprite::Clone(GameObject& gameObject) {
+    return new Sprite(gameObject, *this);
+}
+float Sprite::GetScale() { 
     return scale;
 }
-
 Vector2 Sprite::GetDimensions() {
     return {src.width, src.height};
 }
-
 Vector2 Sprite::GetViewDimensions() {
     return {dst.width, dst.height};
 }
-
 void Sprite::Draw(Vector2 position) {
     dst.x = position.x; dst.y = position.y;
     DrawTexturePro(img, src, dst, {0,0}, 0, WHITE);
 }
-
 void Sprite::Unload() {
     UnloadTexture(img);
 }
@@ -283,7 +343,14 @@ void Sprite::Unload() {
 //-----------------------------------------------------------------------------
 Transform2D::Transform2D(GameObject& gameObject, Vector2 position, float rotation, Vector2 scale)
         : Component(gameObject), position(position), rotation(rotation), scale(scale) {}
-
+Transform2D::Transform2D(GameObject& gameObject, Transform2D& transform) : Component(gameObject) {
+    position = transform.position;
+    rotation = transform.rotation;
+    scale    = transform.scale;
+}
+Component* Transform2D::Clone(GameObject& gameObject) {
+    return new Transform2D(gameObject, *this);
+}
 int GetAxis(std::string axis) {
     if (axis == "Horizontal") {
         bool left_key  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
@@ -411,8 +478,66 @@ void CollisionSystem::checkCollisions() {
         }
     }
 }
+void CollisionSystem::checkCollisions(GameObject& gameObject) {
+    // Iteramos sobre el hashmap de colliders
+    if (gameObject.hasComponent<RigidBody2D>()) {
+        for (auto const& [Collider_name, Collider] : colliders) {
+            if (Collider_name != gameObject.name) {
+                float ct = 0; Vector2 cp{0,0}, cn{0,0};
+                if (CollisionSystem::Collides(gameObject.getComponent<Collider2D>(), *Collider, cp, cn, ct)) {
+                    gameObject.OnCollision(Collision(Collider->gameObject, ct, cp, cn));
+                    if (!Collider->gameObject.hasComponent<RigidBody2D>()) {
+                        Collider->gameObject.OnCollision(Collision(gameObject, ct, cp, cn));
+                    }
+                }
+            }
+        }
+    }
+}
+
 void CollisionSystem::printout() {
     for (auto& c : colliders) {
         std::cout << c.first << "\n";
     }
+}
+
+// ----------------------------------------------------------------------------
+// Game System
+// ----------------------------------------------------------------------------
+std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::scene_instances;
+
+void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
+
+    GameObject* instance = new GameObject(gameObject);
+    instance->getComponent<Transform2D>().position = position;
+    auto it = scene_instances.find(gameObject.name);
+    if (it != scene_instances.end()) {
+        instance->name += "_" + std::to_string(it->second.size());
+        it->second.push_back(instance);
+    } else {
+        scene_instances[gameObject.name].push_back(instance);
+    }
+}
+
+void GameSystem::Update() {
+    std::cout << ">>> Scene objects <<<\n";
+    for (auto const& [name, instances] : scene_instances) {
+        std::cout << name << ":\n";
+        for (auto const& instance : instances) {
+            std::cout << "  " << instance->name << "\n";
+            for (auto const& [type, _] : instance->scripts) {
+                std::cout << "    " << type.name() << "\n";
+            }
+        }
+    }
+    //for (auto const& [_, instances] : scene_instances) {
+    //    for (auto const& instance : instances) {
+    //        instance->Update();
+    //        CollisionSystem::checkCollisions(*instance);
+    //        if (instance->hasComponent<Collider2D>()) {
+    //            instance->getComponent<Collider2D>().Draw();
+    //        }
+    //        instance->Draw(GetFrameTime());
+    //    }
+    //}
 }

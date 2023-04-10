@@ -5,6 +5,7 @@
 #include "EngineECS.h"
 #include "raylib.h"
 #include "raylibx.h"
+#include "Grass_block.h"
 
 /**
  * @brief GameObject physical limits.
@@ -242,13 +243,33 @@ int main() {
     A.addComponent<Collider2D>(&A.getComponent<Transform2D>().position, Vector2{70,70});
     A.addComponent<RigidBody2D>(1, 98, Vector2{100,100}, Vector2{250.0f,250.0f});
     A.getComponent<RigidBody2D>().velocity = {250.0f * sense(), 250.0f * sense()};
+    A.addComponent<Script, GrassBlockBehavior>();
 
     B.addComponent<Transform2D>(Vector2{300,365});
     B.addComponent<Collider2D>(&B.getComponent<Transform2D>().position, Vector2{100,100});
     B.addComponent<RigidBody2D>(1, 98, Vector2{100,100}, Vector2{100,100});
     B.getComponent<RigidBody2D>().velocity = {100.0f * sense(), 100.0f * sense()};
 
+    GameObject C(A);
+    std::cout << C.name << "\n";
+    std::cout << A.getComponent<Transform2D>().position << "\n";
+    std::cout << C.getComponent<Transform2D>().position << "\n";
+    A.getComponent<Transform2D>().position = Vector2{100,100};
+    std::cout << A.getComponent<Transform2D>().position << "\n";
+    std::cout << C.getComponent<Transform2D>().position << "\n";
+    
+    GameSystem::Instantiate(A, Vector2{0,0});
+    GameSystem::Instantiate(A, Vector2{10,10});
+    GameSystem::Update();
 
+    std::cout << A.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
+    std::cout << C.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
+    A.getComponent<Script, GrassBlockBehavior>().tu_vieja = "ME VOY A CORTAR LOS COJONES";
+    std::cout << A.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
+    std::cout << C.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
+
+
+    /*
     InitWindow(800, 800, "COÑO");
     while (!WindowShouldClose()) {
 
@@ -296,6 +317,6 @@ int main() {
         }
         B.getComponent<Collider2D>().Draw();
         EndDrawing();
-
     }
+    */
 }
