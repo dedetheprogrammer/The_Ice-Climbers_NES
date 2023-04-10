@@ -85,12 +85,12 @@ float EFFECTS_VOLUME = 1.0f;
 void controller_default_config(int controller) {
     std::string controllerSection = "Controller_" + std::to_string(controller);
     ini[controllerSection]["ControllerType"]  = controller;
-    ini[controllerSection]["GP_Left"]  = GAMEPAD_AXIS_LEFT_X;
-    ini[controllerSection]["GP_Right"] = GAMEPAD_AXIS_LEFT_X;
-    ini[controllerSection]["GP_Down"]  = GAMEPAD_AXIS_LEFT_Y;
-    ini[controllerSection]["GP_Up"]    = GAMEPAD_AXIS_LEFT_Y;
+    ini[controllerSection]["GP_Left"]  = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+    ini[controllerSection]["GP_Right"] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+    ini[controllerSection]["GP_Down"]  = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+    ini[controllerSection]["GP_Up"]    = GAMEPAD_BUTTON_LEFT_FACE_UP;
     ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
-    ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+    ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
 
     ini[controllerSection]["KB_Left"]  = KEY_LEFT;
     ini[controllerSection]["KB_Right"] = KEY_RIGHT;

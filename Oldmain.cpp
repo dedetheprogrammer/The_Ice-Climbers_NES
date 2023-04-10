@@ -318,7 +318,7 @@ void game(int players) {
         {
             {"Idle", Animation("Assets/OLD SPRITES/Brick - Green 01.png", 8, 8, 5, 0.2, true)}
         }
-    );
+    );  
 
     // Rectangles = Sprites component?
     // Mountain background:

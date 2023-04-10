@@ -9,6 +9,7 @@ private:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
+    bool isFalling;
 
     void Move() {
         // Auxiliar variables:
@@ -61,11 +62,95 @@ private:
         auto floor = colliders[0];
         // Colissions:
         float ct; Vector2 cp, cn;
-        if (!CollisionSystem.Collides(collider, rigidbody.velocity * deltaTime, *floor, cp, cn, ct) || ct >= 1.0f) {
+        bool collision;
+        for(auto colliderAux : colliders) {
+            collision = CollisionSystem.Collides(collider, rigidbody.velocity * deltaTime, *colliderAux, cp, cn, ct) && ct < 1.0f;
+            if(collision){
+                //std::cout << colliderAux->type << std::endl;
+                switch (colliderAux->type){
+                    case COLLIDER_ENUM::FLOOR:
+                        if (!isAttacking && !move) {
+                            if (rigidbody.velocity.x > 0) {
+                                rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                                if (rigidbody.velocity.x < 0) {
+                                    rigidbody.velocity.x = 0;
+                                }
+                                animator["Brake"];
+                                collider.size = animator.GetViewDimensions();
+                            } else if (rigidbody.velocity.x < 0) {
+                                rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                                if (rigidbody.velocity.x > 0) {
+                                    rigidbody.velocity.x = 0;
+                                }
+                                animator["Brake"];
+                                collider.size = animator.GetViewDimensions();
+                            } else {
+                                rigidbody.velocity.x = 0;
+                                animator["Idle"];
+                                collider.size = animator.GetViewDimensions();
+                            }
+                        }
+                        rigidbody.velocity.y += cn.y * std::abs(rigidbody.velocity.y) * (1 - ct);
+                        isGrounded = true;
+                        break;
+
+                    case COLLIDER_ENUM::PLATFORM:
+                        if(cn.y < 0) { //Popo choca encima del bloque
+                            if (!isAttacking && !move) {
+                                if (rigidbody.velocity.x > 0) {
+                                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                                    if (rigidbody.velocity.x < 0) {
+                                        rigidbody.velocity.x = 0;
+                                    }
+                                    animator["Brake"];
+                                    collider.size = animator.GetViewDimensions();
+                                } else if (rigidbody.velocity.x < 0) {
+                                    rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                                    if (rigidbody.velocity.x > 0) {
+                                        rigidbody.velocity.x = 0;
+                                    }
+                                    animator["Brake"];
+                                    collider.size = animator.GetViewDimensions();
+                                } else {
+                                    rigidbody.velocity.x = 0;
+                                    animator["Idle"];
+                                    collider.size = animator.GetViewDimensions();
+                                }
+                            }
+                            isGrounded = true;
+                            rigidbody.velocity.y += cn.y * std::abs(rigidbody.velocity.y) * (1 - ct);
+                        }else if(cn.y > 0) {   //Popo choca debajo del bloque
+                            //std::cout << "abajo" << std::endl;
+                            rigidbody.velocity.y *= -1;
+                        }/*else if(cn.x < 0){      //Popo choca a la izq del bloque
+                            //std::cout << "izquierda" << std::endl;
+                            rigidbody.velocity.x += cn.x * std::abs(rigidbody.velocity.x) * (1 - ct);
+                            //rigidbody.velocity.x *= -1;
+                            //transform.position.x = block.position.x - obj.hitbox.size.x - 1;
+                        }else if(cn.x > 0){      //Popo choca a la der del bloque
+                            //std::cout << "derecha" << std::endl;
+                            rigidbody.velocity.x += cn.x * std::abs(rigidbody.velocity.x) * (1 - ct);
+                            //rigidbody.velocity.x *= -1;
+                            //transform.position.x = block.position.x + block.hitbox.size.x + 1;
+                        }*/
+                        
+                        break;
+
+                    case COLLIDER_ENUM::ENEMY:
+                        break;
+                }
+                isFalling = false;
+                break;
+            }
+        }
+        if (!collision) {
             //std::cout << "No Colisiona" << std::endl;
             transform.position.y += rigidbody.velocity.y * deltaTime;
             rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-        } else {
+            isGrounded = false;
+            if(isFalling) animator["Fall"];
+            isFalling = true;
+        } /*else {
             //std::cout << "Colisiona" << std::endl;
             if (!isAttacking && !move) {
                 if (rigidbody.velocity.x > 0) {
@@ -90,12 +175,12 @@ private:
             }
             rigidbody.velocity.y += cn.y * std::abs(rigidbody.velocity.y) * (1 - ct);
             isGrounded = true;
-        }
+        }*/
     }
 
     void Draw() {
         animator.Play(transform.position, GetFrameTime());
-        collider.Draw();
+        //collider.Draw();
         rigidbody.Draw(transform.position + animator.GetViewDimensions());
     }
 
@@ -122,6 +207,7 @@ public:
         isGrounded  = false;
         isRight     = true;
         isAttacking = false;
+        isFalling = false;
     }
 
     void Update() override {

@@ -2,6 +2,7 @@
 #include "EngineUI.h"
 #include "Popo.h"
 #include "Topi.h"
+#include "Block.h"
 #include "settings.h"
 
 Font NES;
@@ -31,7 +32,9 @@ void Game() {
         {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
         {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
         {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)}
+        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
+        {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
+        {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 20, 25, 3, 0.3, true)}
     });
 
     Topi.addComponent<Animator>("Walk", Animator::animator_map  {
@@ -50,8 +53,8 @@ void Game() {
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::PLAYER);
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::ENEMY);
     Popo.addComponent<Script, Movement>();
     Topi.addComponent<Script, MovementTopi>();
 
@@ -72,11 +75,41 @@ void Game() {
 
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,673});
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
-    std::vector<Collider2D*> suelo;
-    suelo.push_back(&Floor.getComponent<Collider2D>());
-    suelo.push_back(&Topi.getComponent<Collider2D>());
-    Popo.updateColliders(suelo);
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100}, COLLIDER_ENUM::FLOOR);
+    std::vector<Collider2D*> colliders;
+    colliders.push_back(&Floor.getComponent<Collider2D>());
+    colliders.push_back(&Topi.getComponent<Collider2D>());
+    std::vector<Collider2D*> BlocksCollider;
+    std::vector<GameObject> Blocks;
+    //auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 120.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+    for(int i = 5; i < 25; i++){
+        GameObject GreenBlock("GreenBlock");
+        GreenBlock.addComponent<Transform2D>(Vector2{96.0f+ 8.0f*4*i, 480.0f});
+        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Grass 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        GreenBlock.addComponent<Script, BlockActions>();
+        
+        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
+        Blocks.push_back(GreenBlock);
+    }
+    for(int i = 1; i < 17; i++){
+        GameObject GreenBlock("GreenBlock");
+        GreenBlock.addComponent<Transform2D>(Vector2{128.0f+ 8.0f*4*i, 288.0f});
+        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Dirt 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        GreenBlock.addComponent<Script, BlockActions>();
+        
+        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
+        Blocks.push_back(GreenBlock);
+    }
+    
+    Popo.updateColliders(colliders);
 
     bool play_music = false;
     bool paused = false;
@@ -103,6 +136,10 @@ void Game() {
         if (!paused) {
             Popo.update();
             Topi.update();
+            
+            for(auto block : Blocks) {
+                block.update();
+            }
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -514,7 +551,7 @@ int main() {
                 DrawTextEx(NES, "SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
                 DrawTextEx(NES, "VIDEO",    {500, menu_start + (float)option_offset}, 35, 2, WHITE);
                 DrawTextEx(NES, "AUDIO",    {500, menu_start + (option_offset * 2.0f)}, 35, 2, GRAY);
-                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, GRAY);
+                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, WHITE);
                 DrawTextEx(NES, "RETURN",   {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
@@ -525,8 +562,15 @@ int main() {
                         option_offset  = menu_height/(OPTIONS+1);
                         option_drift   = 3;
                         break;
-                    case 1: case 2:
+                    case 1:
                         std::cout << "Hola\n";
+                        break;
+                    case 2:
+                        CURRENT_MENU   = CONTROL_SETTINGS;
+                        OPTIONS = 4;
+                        current_option = 0;
+                        option_offset  = menu_height/(OPTIONS+1);
+                        option_drift   = 3;
                         break;
                     case 3: 
                         CURRENT_MENU   = MAIN_MENU;
@@ -679,15 +723,126 @@ int main() {
                     option_drift   = 0;
                 }
                 break;
-            case AUDIO_SETTINGS: case CONTROL_SETTINGS:
+            case AUDIO_SETTINGS:
+                break;
+            case CONTROL_SETTINGS:
+                // MENU TITLE:
+                DrawTextEx(NES, "CONTROL SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
+                
+                // CURRENT PLAYER: 0, 1, 2, 3
+                static int currPlyr = 0;
+                DrawTextEx(NES, "PLAYER:", {500, menu_start + (option_offset * 1.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, std::to_string(currPlyr).c_str(), {770, menu_start + (option_offset * 1.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT CONTROLLER: 0, 1, 2, 3
+                static int currCont = Controller::KEYBOARD;
+                std::string currContStr;
+                switch (currCont) {
+                    case Controller::CONTROLLER_0: currContStr = "JOY 0"; break;
+                    case Controller::CONTROLLER_1: currContStr = "JOY 1"; break;
+                    case Controller::CONTROLLER_2: currContStr = "JOY 2"; break;
+                    case Controller::CONTROLLER_3: currContStr = "JOY 3"; break;
+                    case Controller::KEYBOARD: currContStr = "KEYBOARD"; break;
+                    default: currContStr = "NO JOY"; break;
+                }
+                DrawTextEx(NES, "CONTROLLER:", {500, menu_start + (option_offset * 2.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currContStr.c_str(), {770, menu_start + (option_offset * 2.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT ACTION
+                static int currAction = Controller::LEFT;
+                std::string currActionStr;
+                switch (currAction) {
+                    case Controller::LEFT: currActionStr = "GO LEFT"; break;
+                    case Controller::RIGHT: currActionStr = "GO RIGHT"; break;
+                    case Controller::DOWN: currActionStr = "GO DOWN"; break;
+                    case Controller::UP: currActionStr = "GO UP"; break;
+                    case Controller::JUMP: currActionStr = "JUMP"; break;
+                    case Controller::ATTACK: currActionStr = "ATTACK"; break;
+                    default: currActionStr = "No Action"; break;
+                }
+                DrawTextEx(NES, "ACTION:", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currActionStr.c_str(), {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
+                
+                // CURRENT ACTION BINDING
+                static bool selected = false;
+                DrawTextEx(NES, "KEYBINDING:", {500, menu_start + (option_offset * 4.0f)}, 30, 1, WHITE);
+                if (selected) {
+                    DrawTexturePro(Arrow, ArrowSrcInv, {750, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                    DrawTexturePro(Arrow, ArrowSrc, {870, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                }
+                DrawTextEx(NES, "XD", {770, menu_start + (option_offset * 4.0f) + 5}, 17, 1, WHITE);
+                switch (current_option) {
+                    case 0:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currPlyr = mod(currPlyr-1, 4);
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currPlyr = mod(currPlyr+1, 4);
+                        break;
+                    case 1:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT))
+                        { currCont = mod(currCont-1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT))
+                        { currCont = mod(currCont+1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        break;
+                    case 2:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currAction = mod(currAction-1, 6);
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currAction = mod(currAction+1, 6);
+                        break;
+                    case 3:
+                        if (!selected && IsKeyPressed(KEY_ENTER)) {
+                            selected = true;
+                        } else if (selected) {
+                            bool keyboard = (controllers[currPlyr]->type == Controller::Type::KEYBOARD);
+                            int binding = 0;
+                            int axisOffset = 0;
+                            //Keyboard
+                            if (keyboard) binding = GetKeyPressed();
+                            //Gamepad Trigger
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Axis
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Button
+                            else binding = GetGamepadButtonPressed();
+
+                            if (binding != 0) {
+                                controllers[currPlyr]->controls[(Controller::Control)currAction] = binding;
+                                if (axisOffset != 0) controllers[currPlyr]->controls[(Controller::Control)(currAction + axisOffset)] = binding;
+                                selected = false;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    CURRENT_MENU   = SETTINGS;
+                    OPTIONS        = 4;
+                    current_option = 0;
+                    option_offset  = menu_height/(OPTIONS+1);
+                    option_drift   = 0;
+                }
                 break;
             }
 
             if (IsKeyPressed(KEY_DOWN)) {
-                current_option = ((current_option+1)%OPTIONS);
+                current_option = mod(current_option+1, OPTIONS);
             }
             if (IsKeyPressed(KEY_UP)) {
-                current_option = ((current_option-1)%OPTIONS + OPTIONS) % OPTIONS;
+                current_option = mod(current_option-1, OPTIONS);
             }
             
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
@@ -700,7 +855,6 @@ int main() {
         }
         EndDrawing();
     }
-
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
     UnloadTexture(Sign);

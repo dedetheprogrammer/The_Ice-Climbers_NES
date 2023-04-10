@@ -14,13 +14,45 @@
 class Controller {
 private:
     //...
+    bool isGamePadAxis(int binding) {
+        return  binding == GAMEPAD_AXIS_LEFT_X  ||
+                binding == GAMEPAD_AXIS_LEFT_Y  ||
+                binding == GAMEPAD_AXIS_RIGHT_X ||
+                binding == GAMEPAD_AXIS_RIGHT_Y;
+    }
+    bool isGamePadTrigger(int binding) {
+        return  binding == GAMEPAD_AXIS_LEFT_TRIGGER    ||
+                binding == GAMEPAD_AXIS_RIGHT_TRIGGER;
+    }
 public:
     enum Type{NO_TYPE=-1, CONTROLLER_0, CONTROLLER_1, CONTROLLER_2, CONTROLLER_3, KEYBOARD};
     Type type;
-    enum Control{NO_CONTROL=-1, LEFT, RIGHT, DOWN, UP, JUMP, ATTACK};
+    enum Control{NO_CONTROL=-1, LEFT, RIGHT, DOWN, UP, ATTACK, JUMP};
     std::unordered_map<Control, int> controls;
 
-    bool operator[](Control c) {
+
+    bool isPressed(Control c) {
+        if (c == NO_CONTROL) return false;
+
+        if (type == KEYBOARD) {
+            return IsKeyPressed(controls[c]);
+            
+        } else if (type >= 0 && type <= 3) {
+            // Gamepad checks
+            if (!IsGamepadAvailable(type)) return false;
+
+            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.5);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
+            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.5);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
+
+            else if (isGamePadTrigger(controls[c])) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
+            else return IsGamepadButtonPressed(type, controls[c]);
+
+        } else return false;
+    }
+    
+    bool isDown(Control c) {
         if (c == NO_CONTROL) return false;
 
         if (type == KEYBOARD) {
@@ -28,34 +60,63 @@ public:
             
         } else if (type >= 0 && type <= 3) {
             // Gamepad checks
-            if (c == LEFT) return (GetGamepadAxisMovement(type, controls[c]) < 0);
-            else if (c == RIGHT) return (GetGamepadAxisMovement(type, controls[c]) > 0);
-            else if (c == DOWN) return (GetGamepadAxisMovement(type, controls[c]) < 0);
-            else if (c == UP) return (GetGamepadAxisMovement(type, controls[c]) > 0);
+            if (!IsGamepadAvailable(type)) return false;
+
+            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0.15);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
+            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0.15);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
+
+            else if (isGamePadTrigger(controls[c])) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
             else return IsGamepadButtonDown(type, controls[c]);
 
         } else return false;
     }
-    
-    int GetAxis(std::string axis) {
-        if (axis == "Horizontal") {
-            bool left_key  = operator[](LEFT);
-            bool right_key = operator[](RIGHT);
-            if (left_key && right_key) return 0;
-            else if (left_key) return -1;
-            else if (right_key) return 1;
-        } else if (axis == "Vertical") {
-            bool down_key  = operator[](DOWN);
-            bool up_key    = operator[](UP);
-            if (down_key && up_key) return 0;
-            if (down_key) return -1;
-            else if (up_key) return 1;
-        }
-        return 0;
+    /*
+    bool isReleased(Control c) {
+        if (c == NO_CONTROL) return false;
+
+        if (type == KEYBOARD) {
+            return IsKeyReleased(controls[c]);
+            
+        } else if (type >= 0 && type <= 3) {
+            // Gamepad checks
+            if (!IsGamepadAvailable(type)) return false;
+
+            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0);
+            else return IsGamepadButtonReleased(type, controls[c]);
+
+        } else return false;
     }
+    */
+    /*
+    bool isUp(Control c) {
+        if (c == NO_CONTROL) return false;
+
+        if (type == KEYBOARD) {
+            return IsKeyUp(controls[c]);
+            
+        } else if (type >= 0 && type <= 3) {
+            // Gamepad checks
+            if (!IsGamepadAvailable(type)) return false;
+
+            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < 0);
+            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0);
+            else return IsGamepadButtonUp(type, controls[c]);
+
+        } else return false;
+    }
+    */
 };
 
 Controller Controller_0;
 Controller Controller_1;
 Controller Controller_2;
 Controller Controller_3;
+
+Controller* controllers[] = {&Controller_0, &Controller_1, &Controller_2, &Controller_3};
