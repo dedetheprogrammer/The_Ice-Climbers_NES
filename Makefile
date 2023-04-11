@@ -189,29 +189,29 @@ Libraries/engine/raylibx.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.s
 .PHONY : Libraries/engine/raylibx.cpp.s
 
-maintest.obj: maintest.cpp.obj
-.PHONY : maintest.obj
+main.obj: main.cpp.obj
+.PHONY : main.obj
 
 # target to build an object file
-maintest.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.obj
-.PHONY : maintest.cpp.obj
+main.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.obj
+.PHONY : main.cpp.obj
 
-maintest.i: maintest.cpp.i
-.PHONY : maintest.i
+main.i: main.cpp.i
+.PHONY : main.i
 
 # target to preprocess a source file
-maintest.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.i
-.PHONY : maintest.cpp.i
+main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.i
+.PHONY : main.cpp.i
 
-maintest.s: maintest.cpp.s
-.PHONY : maintest.s
+main.s: main.cpp.s
+.PHONY : main.s
 
 # target to generate assembly for a file
-maintest.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/maintest.cpp.s
-.PHONY : maintest.cpp.s
+main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.s
+.PHONY : main.cpp.s
 
 # Help Target
 help:
@@ -229,9 +229,9 @@ help:
 	@echo ... Libraries/engine/raylibx.obj
 	@echo ... Libraries/engine/raylibx.i
 	@echo ... Libraries/engine/raylibx.s
-	@echo ... maintest.obj
-	@echo ... maintest.i
-	@echo ... maintest.s
+	@echo ... main.obj
+	@echo ... main.i
+	@echo ... main.s
 .PHONY : help
 
 

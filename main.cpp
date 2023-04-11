@@ -38,7 +38,7 @@ void Game() {
     GameObject Popo("Popo");
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>(Vector2{600,400});
+    Popo.addComponent<Transform2D>(Vector2{600,0});
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
@@ -63,6 +63,7 @@ void Game() {
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
+    GameSystem::Instantiate(Popo, Vector2{400,0});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -80,22 +81,25 @@ void Game() {
     
     GameObject Floor("Floor");
     Floor.addComponent<Transform2D>(Vector2{-100,523});
-    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 100});
+    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
 
     GameObject Block("Grass Block");
     Block.addComponent<Transform2D>(Vector2{112, 380});
-    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{0,0}, 3.0f);
-    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions());
+    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{3.5f,3.0f});
+    int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
+    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     Block.addComponent<Script, GrassBlockBehavior>();
+    for (int i = 0; i < 18; i++) {
+        GameSystem::Instantiate(Block, Vector2{112.0f + block_width * i, 380});
+    }
     
     bool play_music = false;
     bool paused = false;
     BGM.Init();
 
-    GameSystem::Instantiate(Popo, Vector2{600,400});
-    GameSystem::Update();
+    GameSystem::Printout();
 
-
+    std::cout << GameSystem::GameObjects["Popo"][0]->getComponent<Animator>().GetViewDimensions() << "\n";
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         BeginDrawing();
@@ -116,25 +120,8 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            //Block.Update();
-            //Popo.Update();
-            ////GameSystem::Update();
-            //    // -> lance thread per objeto:
-            //    //      -> Update();
-            //    //      -> checkColllision();
-            //    //      -> Render();
-            //CollisionSystem::checkCollisions();
-            //Block.getComponent<Collider2D>().Draw(Color{80,170,200,255});
-            //Floor.getComponent<Collider2D>().Draw();
-
-            //CollisionSystem::ComprobarCollisiones() 
-            //-> Compruebo si colisiona con algo:
-            //    -> Si colisiona:
-            //        -> A.OnCollision(Collision)
-            //        -> B.OnCollision(Collision)
-    
-            //popo.Move(Floor);
-            //popo.Draw(deltaTime);
+            //std::cout << "Original: " << Popo.getComponent<Transform2D>().position << ", Instance: " << GameSystem::GameObjects["Popo"][0]->getComponent<Transform2D>().position << "\n";
+            GameSystem::Update();
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -159,7 +146,7 @@ void Game() {
             Popo.getComponent<Transform2D>().position = Vector2{600,400};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        Floor.getComponent<Collider2D>().Draw(PINK);
+        Floor.getComponent<Collider2D>().Draw();
         EndDrawing();
     }
     UnloadTexture(Mountain_sprite);

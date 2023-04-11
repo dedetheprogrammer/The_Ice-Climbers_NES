@@ -40,7 +40,7 @@ if(BUILD_GAME)
         Libraries/raylib
     )
 
-    add_executable(main maintest.cpp)
+    add_executable(main main.cpp)
 
     target_link_libraries(
         main

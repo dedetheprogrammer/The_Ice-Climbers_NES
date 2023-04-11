@@ -65,7 +65,7 @@ private:
     }
 
     void Draw() {
-        animator.Play(transform.position, GetFrameTime());
+        animator.Play();
         collider.Draw();
         rigidbody.Draw(transform.position + animator.GetViewDimensions());
     }
@@ -134,14 +134,14 @@ public:
                     collider.size = animator.GetViewDimensions();
                 }
             }
-            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time);
+            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.2;
             isGrounded = true;
         } else if (contact.gameObject.name == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
                     rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
                 } else {
-                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time);
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
                 }
             }
         }
@@ -149,7 +149,6 @@ public:
 
     void Update() override {
         Move();
-        Draw();
     }
 
 };

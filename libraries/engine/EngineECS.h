@@ -54,7 +54,7 @@ public:
         if (it != components.end()) {
             return dynamic_cast<T&>(*it->second);
         }
-        throw std::runtime_error("Componente '" + std::string(typeid(T).name()) + "' no encontrado.");
+        throw std::runtime_error(name + ": Componente '" + std::string(typeid(T).name()) + "' no encontrado.");
     }
 
     template <typename S, typename T> T& getComponent() {
@@ -62,7 +62,7 @@ public:
         if (it != scripts.end()) {
             return dynamic_cast<T&>(*it->second);
         }
-        throw std::runtime_error("Script '" + std::string(typeid(T).name()) + "' no encontrado.");
+        throw std::runtime_error(name + ": Script '" + std::string(typeid(T).name()) + "' no encontrado.");
     }
 
     template <typename T> void removeComponent() {
@@ -81,7 +81,6 @@ public:
         }
     }
 
-    void Draw(float deltaTime);
     void Destroy();
     void OnCollision(Collision contact);
     void Update();
@@ -132,7 +131,7 @@ private:
     int current_frame;        // Current frame.
     int current_row;          // (NOT IMPLEMENTED) Current frames row.
     // Animation rendering:
-    float scale;              // Sprite scaling.
+    Vector2 scale;            // Sprite scaling.
     Rectangle frame_src;      // Covers the area of the current frame.
     Rectangle frame_dst;      // Covers the area where to draw the current frame.
     // Animation timing:
@@ -146,12 +145,14 @@ public:
 
     Animation();
     Animation(const char* fileName, int frame_width, int frame_height, float scale, float duration, bool loop);
+    Animation(const char* fileName, int frame_width, int frame_height, Vector2 scale, float duration, bool loop);
 
     void Flip();
+    Vector2 GetScale();
     Vector2 GetDimensions();
     Vector2 GetViewDimensions();
     bool HasFinished();
-    void Play(Vector2 position, float deltaTime);
+    void Play(Vector2 position);
     void Stop();
     void Unload();
 
@@ -197,6 +198,13 @@ public:
     void Flip();
 
     /**
+     * @brief Get the scale of the current animation.
+     * 
+     * @return Vector2 
+     */
+    Vector2 GetScale();
+
+    /**
      * @brief Get the dimensions of the current animation.
      * 
      * @return Vector2 
@@ -234,7 +242,7 @@ public:
      * @param position 
      * @param deltaTime 
      */
-    void Play(Vector2 position, float deltaTime);
+    void Play();
 
     /**
      * @brief If the entry animation is the current one, plays it and pass to the
@@ -380,20 +388,20 @@ public:
 //-----------------------------------------------------------------------------
 class Sprite : public Component {
 private:
-    float scale;
+    Vector2 scale;
     Rectangle src; // What pixels of the sprite do I want to draw?
     Rectangle dst; // Where and how do I draw these pixels?
     Texture2D img; // Sprite image.
-
 public:
-    Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin = {0,0}, float dst_scale = 1.0f);
+    Sprite(GameObject& gameObject, const char* fileName, float scale);
+    Sprite(GameObject& gameObject, const char* fileName, Vector2 scale);
     Sprite(GameObject& gameObject, Sprite& sprite);
 
-    float GetScale();
+    Vector2 GetScale();
     Vector2 GetDimensions();
     Vector2 GetViewDimensions();
     Component* Clone(GameObject& gameObject) override;
-    void Draw(Vector2 position);
+    void Draw();
     void Unload() override;
 
 };
@@ -470,10 +478,12 @@ public:
 
 class GameSystem {
 private:
-    static std::unordered_map<std::string, std::vector<GameObject*>> scene_instances;
 public:
+    static std::unordered_map<std::string, std::vector<GameObject*>> GameObjects;
     static void Instantiate(GameObject& gameObject, Vector2 position);
     static void Update();
+    static void Printout();
 };
+
 
 #endif

@@ -6,6 +6,7 @@
 #include "raylib.h"
 #include "raylibx.h"
 #include "Grass_block.h"
+#include "test.h"
 
 /**
  * @brief GameObject physical limits.
@@ -238,36 +239,48 @@ int sense() {
 
 int main() {
 
+    InitWindow(800, 800, "COÑO");
+
     GameObject A("A"), B("B");
     A.addComponent<Transform2D>(Vector2{365,200});
-    A.addComponent<Collider2D>(&A.getComponent<Transform2D>().position, Vector2{70,70});
     A.addComponent<RigidBody2D>(1, 98, Vector2{100,100}, Vector2{250.0f,250.0f});
     A.getComponent<RigidBody2D>().velocity = {250.0f * sense(), 250.0f * sense()};
-    A.addComponent<Script, GrassBlockBehavior>();
+    A.addComponent<Sprite>("Assets/Sprites/UI_Hammer.png", 3.0f);
+    A.addComponent<Script, test>();
+    A.addComponent<Collider2D>(&A.getComponent<Transform2D>().position, A.getComponent<Sprite>().GetViewDimensions());
 
-    B.addComponent<Transform2D>(Vector2{300,365});
-    B.addComponent<Collider2D>(&B.getComponent<Transform2D>().position, Vector2{100,100});
-    B.addComponent<RigidBody2D>(1, 98, Vector2{100,100}, Vector2{100,100});
-    B.getComponent<RigidBody2D>().velocity = {100.0f * sense(), 100.0f * sense()};
+    //B.addComponent<Transform2D>(Vector2{300,365});
+    //B.addComponent<Collider2D>(&B.getComponent<Transform2D>().position, Vector2{100,100});
+    //B.addComponent<RigidBody2D>(1, 98, Vector2{100,100}, Vector2{100,100});
+    //B.getComponent<RigidBody2D>().velocity = {100.0f * sense(), 100.0f * sense()};
 
-    GameObject C(A);
-    std::cout << C.name << "\n";
-    std::cout << A.getComponent<Transform2D>().position << "\n";
-    std::cout << C.getComponent<Transform2D>().position << "\n";
-    A.getComponent<Transform2D>().position = Vector2{100,100};
-    std::cout << A.getComponent<Transform2D>().position << "\n";
-    std::cout << C.getComponent<Transform2D>().position << "\n";
-    
-    GameSystem::Instantiate(A, Vector2{0,0});
-    GameSystem::Instantiate(A, Vector2{10,10});
-    GameSystem::Update();
+    //GameObject C(A);
+    //std::cout << C.name << "\n";
+    //std::cout << A.getComponent<Transform2D>().position << "\n";
+    //std::cout << C.getComponent<Transform2D>().position << "\n";
+    //A.getComponent<Transform2D>().position = Vector2{100,100};
+    //std::cout << A.getComponent<Transform2D>().position << "\n";
+    //std::cout << C.getComponent<Transform2D>().position << "\n";
+    //C.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{0,0}, 3.0f);
+    //if (C.hasComponent<Sprite>()) {
+    //    std::cout << "hola\n";
+    //} else {
+    //    std::cout << "adios\n";
+    //}
+//
+    //C.getComponent<Collider2D>().size = C.getComponent<Sprite>().GetViewDimensions();
+    //
+//
 
-    std::cout << A.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
-    std::cout << C.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
-    A.getComponent<Script, GrassBlockBehavior>().tu_vieja = "ME VOY A CORTAR LOS COJONES";
-    std::cout << A.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
-    std::cout << C.getComponent<Script, GrassBlockBehavior>().tu_vieja << "\n";
-
+    //Texture2D a = LoadTexture("Assets/Sprites/Grass_block_large.png");
+    GameSystem::Instantiate(A, {370,370});
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
+        DrawRectangle(0,0,40,40,RED);
+        GameSystem::Update();
+        EndDrawing();
+    }
 
     /*
     InitWindow(800, 800, "COÑO");

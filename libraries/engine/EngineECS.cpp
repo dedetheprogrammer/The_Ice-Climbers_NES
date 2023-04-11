@@ -10,13 +10,15 @@
 GameObject::GameObject() : name("GameObject") {}
 GameObject::GameObject(std::string name) : name(name) {}
 GameObject::GameObject(GameObject& gameObject) {
-    this->name = gameObject.name;
-    for (auto const& [type, component] : gameObject.components) {
-        components[type] = component->Clone(gameObject);
+    name = gameObject.name;
+    components[typeid(Transform2D)] = gameObject.components[typeid(Transform2D)]->Clone(*this);
+    for (auto [type, component] : gameObject.components) {
+        if (type != typeid(Transform2D)) {
+            components[type] = component->Clone(*this);
+        }
     }
-    // Quedan los scripts.
-    for (auto const& [type, script] : gameObject.scripts) {
-        scripts[type] = dynamic_cast<Script*>(script->Clone(gameObject));
+    for (auto [type, script] : gameObject.scripts) {
+        scripts[type] = dynamic_cast<Script*>(script->Clone(*this));
     }
 }
 
@@ -25,20 +27,6 @@ void GameObject::Destroy() {
         component.second->Unload();
         delete component.second;
     }
-}
-
-void GameObject::Draw(float deltaTime) {
-    auto it  = components.find(typeid(Animator));
-    auto pos = dynamic_cast<Transform2D&>(*components.find(typeid(Transform2D))->second).position;
-    if (it != components.end()) {
-        dynamic_cast<Animator&>(*it->second).Play(pos, deltaTime);
-    } else {
-        auto it = components.find(typeid(Sprite));
-        if (it != components.end()) {
-            dynamic_cast<Sprite&>(*it->second).Draw(pos);
-        }
-    }
-    
 }
 
 void GameObject::OnCollision(Collision contact) {
@@ -78,7 +66,7 @@ Animation::Animation() {
     current_frame = 0;
     current_row = 0;
     // Animation rendering:
-    scale = 0.0f;
+    scale = {};
     frame_src = {};
     frame_dst = {};
     // Animation timing:
@@ -88,8 +76,30 @@ Animation::Animation() {
     current_time = 0.0f;
     loop = false;
 }
-
 Animation::Animation(const char* fileName, int frame_width, int frame_height, float scale, float duration, bool loop) {
+    std::cout << "Hola: " << scale << "\n";
+    // Animation properties:
+    spritesheet = LoadTexture(fileName);
+    this->frame_width = frame_width;
+    this->frame_height = frame_height;
+    frames_per_row = spritesheet.width/frame_width; 
+    frames_rows = spritesheet.height/frame_height;
+    total_frames = frames_rows * frames_per_row;
+    // Animation state:
+    current_frame = 0;
+    current_row = 0;
+    // Animation rendering:
+    this->scale = {scale, scale};
+    frame_src = {0,0,(float)frame_width,(float)frame_height};
+    frame_dst = {0,0,frame_width * scale, frame_height * scale};
+    // Animation timing:
+    this->duration = duration;
+    frame_lapse = duration/(float)total_frames;
+    current_frame_time = 0.0f;
+    current_time = 0.0f;
+    this->loop = loop;
+}
+Animation::Animation(const char* fileName, int frame_width, int frame_height, Vector2 scale, float duration, bool loop) {
     // Animation properties:
     spritesheet = LoadTexture(fileName);
     this->frame_width = frame_width;
@@ -103,7 +113,7 @@ Animation::Animation(const char* fileName, int frame_width, int frame_height, fl
     // Animation rendering:
     this->scale = scale;
     frame_src = {0,0,(float)frame_width,(float)frame_height};
-    frame_dst = {0,0,frame_width * scale, frame_height * scale};
+    frame_dst = {0,0,frame_width * scale.x, frame_height * scale.y};
     // Animation timing:
     this->duration = duration;
     frame_lapse = duration/(float)total_frames;
@@ -114,16 +124,20 @@ Animation::Animation(const char* fileName, int frame_width, int frame_height, fl
 void Animation::Flip() {
     frame_src.width *= -1;
 }
+Vector2 Animation::GetScale() {
+    return scale;
+}
 Vector2 Animation::GetDimensions() {
-    return {(float)std::abs(frame_width), (float)std::abs(frame_height)};
+    return {std::abs(frame_src.x), std::abs(frame_src.y)};
 }
 Vector2 Animation::GetViewDimensions() {
-    return {std::abs(frame_width)*scale, std::abs(frame_height)*scale};
+    //std::cout << Vector2{std::abs(frame_dst.x), std::abs(frame_dst.y)} << "\n";
+    return {std::abs(frame_dst.width), std::abs(frame_dst.height)};
 }
 bool Animation::HasFinished() {
     return (current_time >= duration);
 }
-void Animation::Play(Vector2 position, float deltaTime) {
+void Animation::Play(Vector2 position) {
     if (current_frame_time >= frame_lapse) {
         current_frame_time = 0;
         if (loop) {
@@ -142,8 +156,8 @@ void Animation::Play(Vector2 position, float deltaTime) {
     }
     frame_dst.x = position.x; frame_dst.y = position.y;
     DrawTexturePro(spritesheet, frame_src, frame_dst, Vector2{0,0}, 0, WHITE);
-    current_frame_time += deltaTime;
-    current_time += deltaTime; 
+    current_frame_time += GetFrameTime();
+    current_time += GetFrameTime(); 
 }
 void Animation::Stop() {
     current_frame = current_row = 0;
@@ -172,6 +186,9 @@ void Animator::Flip() {
         animation.second.Flip();
     }
 }
+Vector2 Animator::GetScale() {
+    return Animations[current_animation].GetScale();
+}
 Vector2 Animator::GetDimensions() {
     return Animations[current_animation].GetDimensions();
 }
@@ -184,8 +201,8 @@ bool Animator::HasFinished(std::string animation) {
 bool Animator::InState(std::string animation) {
     return current_animation == animation;
 }
-void Animator::Play(Vector2 position, float deltaTime) {
-    Animations[current_animation].Play(position, deltaTime);
+void Animator::Play() {
+    Animations[current_animation].Play(gameObject.getComponent<Transform2D>().position);
 }
 bool Animator::Trigger(std::string entry_animation, std::string next_animation) {
     if (current_animation == entry_animation) {
@@ -242,7 +259,10 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // Collider
 // ----------------------------------------------------------------------------
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color)
-    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}) {}
+    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height})
+{
+
+}
 Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color)
     : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height})
 {
@@ -304,13 +324,17 @@ Script::Script(GameObject& gameObject) : Component(gameObject) {}
 //-----------------------------------------------------------------------------
 // Sprites
 //-----------------------------------------------------------------------------
-Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 src_origin,
-    float scale) : Component(gameObject)
-{
+Sprite::Sprite(GameObject& gameObject, const char* fileName, float scale) : Component(gameObject) {
+    img = LoadTexture(fileName);
+    this->scale = {scale, scale};
+    src = {0, 0, (float)img.width, (float)img.height};
+    dst = {0, 0, img.width * scale, img.height * scale};
+}
+Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 scale) : Component(gameObject) {
     img = LoadTexture(fileName);
     this->scale = scale;
-    src = {src_origin.x, src_origin.y, (float)img.width, (float)img.height};
-    dst = {0, 0, img.width * scale, img.height * scale};
+    src = {0, 0, (float)img.width, (float)img.height};
+    dst = {0, 0, img.width * scale.x, img.height * scale.y};
 }
 Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
     scale = sprite.scale;
@@ -321,7 +345,7 @@ Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
 Component* Sprite::Clone(GameObject& gameObject) {
     return new Sprite(gameObject, *this);
 }
-float Sprite::GetScale() { 
+Vector2 Sprite::GetScale() { 
     return scale;
 }
 Vector2 Sprite::GetDimensions() {
@@ -330,8 +354,9 @@ Vector2 Sprite::GetDimensions() {
 Vector2 Sprite::GetViewDimensions() {
     return {dst.width, dst.height};
 }
-void Sprite::Draw(Vector2 position) {
-    dst.x = position.x; dst.y = position.y;
+void Sprite::Draw() {
+    auto& pos = gameObject.getComponent<Transform2D>().position;
+    dst.x = pos.x; dst.y = pos.y;
     DrawTexturePro(img, src, dst, {0,0}, 0, WHITE);
 }
 void Sprite::Unload() {
@@ -504,24 +529,25 @@ void CollisionSystem::printout() {
 // ----------------------------------------------------------------------------
 // Game System
 // ----------------------------------------------------------------------------
-std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::scene_instances;
+std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::GameObjects;
 
 void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
 
     GameObject* instance = new GameObject(gameObject);
     instance->getComponent<Transform2D>().position = position;
-    auto it = scene_instances.find(gameObject.name);
-    if (it != scene_instances.end()) {
+    auto it = GameObjects.find(gameObject.name);
+    if (it == GameObjects.end()) {
+        instance->name += "_0";
+        GameObjects[gameObject.name].push_back(instance);
+    } else {
         instance->name += "_" + std::to_string(it->second.size());
         it->second.push_back(instance);
-    } else {
-        scene_instances[gameObject.name].push_back(instance);
     }
 }
 
-void GameSystem::Update() {
+void GameSystem::Printout() {
     std::cout << ">>> Scene objects <<<\n";
-    for (auto const& [name, instances] : scene_instances) {
+    for (auto const& [name, instances] : GameObjects) {
         std::cout << name << ":\n";
         for (auto const& instance : instances) {
             std::cout << "  " << instance->name << "\n";
@@ -530,14 +556,21 @@ void GameSystem::Update() {
             }
         }
     }
-    //for (auto const& [_, instances] : scene_instances) {
-    //    for (auto const& instance : instances) {
-    //        instance->Update();
-    //        CollisionSystem::checkCollisions(*instance);
-    //        if (instance->hasComponent<Collider2D>()) {
-    //            instance->getComponent<Collider2D>().Draw();
-    //        }
-    //        instance->Draw(GetFrameTime());
-    //    }
-    //}
+}
+
+void GameSystem::Update() {
+    for (auto [_, instances] : GameObjects) {
+        for (auto instance : instances) {
+            instance->Update();
+            CollisionSystem::checkCollisions(*instance);
+            if (instance->hasComponent<Animator>()) {
+                instance->getComponent<Animator>().Play();
+            } else if (instance->hasComponent<Sprite>()) {
+                instance->getComponent<Sprite>().Draw();
+            }
+            if (instance->hasComponent<Collider2D>()) {
+                instance->getComponent<Collider2D>().Draw();
+            }
+        }
+    }
 }
