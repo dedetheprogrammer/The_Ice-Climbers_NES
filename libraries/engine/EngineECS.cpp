@@ -131,7 +131,6 @@ Vector2 Animation::GetDimensions() {
     return {std::abs(frame_src.x), std::abs(frame_src.y)};
 }
 Vector2 Animation::GetViewDimensions() {
-    //std::cout << Vector2{std::abs(frame_dst.x), std::abs(frame_dst.y)} << "\n";
     return {std::abs(frame_dst.width), std::abs(frame_dst.height)};
 }
 bool Animation::HasFinished() {
@@ -537,10 +536,9 @@ void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
     instance->getComponent<Transform2D>().position = position;
     auto it = GameObjects.find(gameObject.name);
     if (it == GameObjects.end()) {
-        instance->name += "_0";
         GameObjects[gameObject.name].push_back(instance);
     } else {
-        instance->name += "_" + std::to_string(it->second.size());
+        instance->name += " (" + std::to_string(it->second.size()) + ")";
         it->second.push_back(instance);
     }
 }
@@ -568,9 +566,9 @@ void GameSystem::Update() {
             } else if (instance->hasComponent<Sprite>()) {
                 instance->getComponent<Sprite>().Draw();
             }
-            if (instance->hasComponent<Collider2D>()) {
-                instance->getComponent<Collider2D>().Draw();
-            }
+            //if (instance->hasComponent<Collider2D>()) {
+            //    instance->getComponent<Collider2D>().Draw();
+            //}
         }
     }
 }

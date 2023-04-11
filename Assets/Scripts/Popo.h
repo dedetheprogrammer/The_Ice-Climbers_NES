@@ -134,7 +134,7 @@ public:
                     collider.size = animator.GetViewDimensions();
                 }
             }
-            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.2;
+            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             isGrounded = true;
         } else if (contact.gameObject.name == "Cloud") {
             if (!contact.contact_normal.x) {

@@ -38,7 +38,7 @@ void Game() {
     GameObject Popo("Popo");
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>(Vector2{600,0});
+    Popo.addComponent<Transform2D>();
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
@@ -56,20 +56,20 @@ void Game() {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{50,200});
+    Popo.addComponent<RigidBody2D>(1, 98, Vector2{100,0}, Vector2{100,190});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
-    GameSystem::Instantiate(Popo, Vector2{400,0});
+    GameSystem::Instantiate(Popo, Vector2{400,488});
 
     // Rectangles = Sprites component?
     // Mountain background:
     Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
-    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 25;
-    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 40;
+    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
@@ -80,17 +80,17 @@ void Game() {
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
     GameObject Floor("Floor");
-    Floor.addComponent<Transform2D>(Vector2{-100,523});
+    Floor.addComponent<Transform2D>(Vector2{-100,560});
     Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
 
     GameObject Block("Grass Block");
-    Block.addComponent<Transform2D>(Vector2{112, 380});
-    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{3.5f,3.0f});
+    Block.addComponent<Transform2D>();
+    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{3.62f, 3.0f});
     int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     Block.addComponent<Script, GrassBlockBehavior>();
-    for (int i = 0; i < 18; i++) {
-        GameSystem::Instantiate(Block, Vector2{112.0f + block_width * i, 380});
+    for (int i = 0; i < 24; i++) {
+        GameSystem::Instantiate(Block, Vector2{113.0f + block_width * i, 423});
     }
     
     bool play_music = false;
