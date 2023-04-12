@@ -528,6 +528,13 @@ void CollisionSystem::printout() {
 // ----------------------------------------------------------------------------
 // Game System
 // ----------------------------------------------------------------------------
+/**
+ * @brief Va a cambiar un poco la representación interna del sistema del juego:
+ *  - Los objetos se van a dividir por labels/tags: una tag es un nombre que puede englobar uno o varios gameobjects.
+ *  - A la hora de instanciar un GameObject, se puede decidir la configuración del mismo (tag, nombre, tags de comprobación).
+ *  - Si defines los tags, a la hora de comprobar las colisiones, comprobará solo las tags que se le han indicado en la configuración.
+ * 
+ */
 std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::GameObjects;
 
 void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
