@@ -17,7 +17,9 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        // Nada
+        if (contact.gameObject.name == "Popo") {
+            std::cout << "My name is " << gameObject.name << " White, I live in your mom.\n";
+        }
     }
 
 };

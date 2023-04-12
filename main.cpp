@@ -97,9 +97,8 @@ void Game() {
     bool paused = false;
     BGM.Init();
 
-    GameSystem::Printout();
+    // GameSystem::Printout();
 
-    std::cout << GameSystem::GameObjects["Popo"][0]->getComponent<Animator>().GetViewDimensions() << "\n";
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         BeginDrawing();
@@ -120,7 +119,6 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            //std::cout << "Original: " << Popo.getComponent<Transform2D>().position << ", Instance: " << GameSystem::GameObjects["Popo"][0]->getComponent<Transform2D>().position << "\n";
             GameSystem::Update();
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);

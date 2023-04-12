@@ -544,16 +544,16 @@ void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
 }
 
 void GameSystem::Printout() {
-    std::cout << ">>> Scene objects <<<\n";
-    for (auto const& [name, instances] : GameObjects) {
-        std::cout << name << ":\n";
-        for (auto const& instance : instances) {
-            std::cout << "  " << instance->name << "\n";
-            for (auto const& [type, _] : instance->scripts) {
-                std::cout << "    " << type.name() << "\n";
-            }
-        }
-    }
+    //std::cout << ">>> Scene objects <<<\n";
+    //for (auto const& [name, instances] : GameObjects) {
+    //    std::cout << name << ":\n";
+    //    for (auto const& instance : instances) {
+    //        std::cout << "  " << instance->name << "\n";
+    //        for (auto const& [type, _] : instance->scripts) {
+    //            std::cout << "    " << type.name() << "\n";
+    //        }
+    //    }
+    //}
 }
 
 void GameSystem::Update() {
@@ -566,9 +566,9 @@ void GameSystem::Update() {
             } else if (instance->hasComponent<Sprite>()) {
                 instance->getComponent<Sprite>().Draw();
             }
-            //if (instance->hasComponent<Collider2D>()) {
-            //    instance->getComponent<Collider2D>().Draw();
-            //}
+            if (instance->hasComponent<Collider2D>()) {
+                instance->getComponent<Collider2D>().Draw();
+            }
         }
     }
 }
