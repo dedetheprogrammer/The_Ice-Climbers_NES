@@ -5,70 +5,11 @@
 
 class Movement : public Script {
 private:
+
     // Variables para Popo:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
-
-    void Move() {
-        // Auxiliar variables:
-        int move = 0;                     // Horizontal move sense.
-        float deltaTime = GetFrameTime(); // Delta time
-
-        if (!isAttacking) {
-            // Horizontal movement:
-            move = GetAxis("Horizontal");
-            if (move) {
-                rigidbody.velocity.x = move * rigidbody.acceleration.x;
-                if (isGrounded) {
-                    animator["Walk"];
-                    collider.size = animator.GetViewDimensions();
-                }
-            }
-            transform.position.x += rigidbody.velocity.x * deltaTime;
-            if ((move > 0 && !isRight) || (move < 0 && isRight)) {
-                isRight = !isRight;
-                animator.Flip();
-            }
-            if (transform.position.x > GetScreenWidth()) {
-                transform.position.x = -animator.GetViewDimensions().x;
-            } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
-                transform.position.x = GetScreenWidth();
-            }
-
-            // Vertical movement:
-            if (isGrounded) {
-                if (IsKeyDown(KEY_SPACE)) {
-                    isGrounded = false;
-                    rigidbody.velocity.y = -rigidbody.acceleration.y;
-                    animator["Jump"];
-                    audioplayer["Jump"];
-                    collider.size = animator.GetViewDimensions();
-                } else if (IsKeyDown(KEY_E)) {
-                    isAttacking = true;
-                    transform.position.y -= 3;
-                    rigidbody.velocity.x = 0;
-                    animator["Attack"];
-                    collider.size = animator.GetViewDimensions();
-                }
-            }
-        } else if (animator.HasFinished("Attack")) {
-            isAttacking = false;
-            animator["Idle"];
-            collider.size = animator.GetViewDimensions();
-            transform.position.y += 3;
-        }
-
-        // Colissions:
-        transform.position.y += rigidbody.velocity.y * deltaTime;
-        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-    }
-
-    void Draw() {
-        animator.Play();
-        collider.Draw();
-        rigidbody.Draw(transform.position + animator.GetViewDimensions());
-    }
 
 public:
 
@@ -147,7 +88,57 @@ public:
     }
 
     void Update() override {
-        Move();
+        // Auxiliar variables:
+        int move = 0;                     // Horizontal move sense.
+        float deltaTime = GetFrameTime(); // Delta time
+
+        if (!isAttacking) {
+            // Horizontal movement:
+            move = GetAxis("Horizontal");
+            if (move) {
+                rigidbody.velocity.x = move * rigidbody.acceleration.x;
+                if (isGrounded) {
+                    animator["Walk"];
+                    collider.size = animator.GetViewDimensions();
+                }
+            }
+            transform.position.x += rigidbody.velocity.x * deltaTime;
+            if ((move > 0 && !isRight) || (move < 0 && isRight)) {
+                isRight = !isRight;
+                animator.Flip();
+            }
+            if (transform.position.x > GetScreenWidth()) {
+                transform.position.x = -animator.GetViewDimensions().x;
+            } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
+                transform.position.x = GetScreenWidth();
+            }
+
+            // Vertical movement:
+            if (isGrounded) {
+                if (IsKeyDown(KEY_SPACE)) {
+                    isGrounded = false;
+                    rigidbody.velocity.y = -rigidbody.acceleration.y;
+                    animator["Jump"];
+                    audioplayer["Jump"];
+                    collider.size = animator.GetViewDimensions();
+                } else if (IsKeyDown(KEY_E)) {
+                    isAttacking = true;
+                    transform.position.y -= 3;
+                    rigidbody.velocity.x = 0;
+                    animator["Attack"];
+                    collider.size = animator.GetViewDimensions();
+                }
+            }
+        } else if (animator.HasFinished("Attack")) {
+            isAttacking = false;
+            animator["Idle"];
+            collider.size = animator.GetViewDimensions();
+            transform.position.y += 3;
+        }
+
+        // Colissions:
+        transform.position.y += rigidbody.velocity.y * deltaTime;
+        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
 };

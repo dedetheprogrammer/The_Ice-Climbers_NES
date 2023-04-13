@@ -12,12 +12,6 @@
 #include <vector>
 #include "raylib.h"
 
-// Un objeto del juego.
-
-class Component;
-class Script;
-class Collision;
-
 // Configuración de una instancia.
 struct GameObjectOptions {
     // Nombre que queremos que reciba la nueva instancia.
@@ -35,6 +29,11 @@ struct GameObjectOptions {
     // Color collider_color  = {-1,-1,-1,-1};
 };
 
+class Component;
+class Script;
+class Collision;
+
+// Un objeto del juego.
 class GameObject {
 private:
     // Clonar GameObject.
@@ -121,10 +120,8 @@ public:
 // ----------------------------------------------------------------------------
 // Componente generico
 // ----------------------------------------------------------------------------
-/**
- * @brief A GameObject component.
- * 
- */
+
+// A GameObject component.
 class Component {
 private:
     // ...
@@ -142,9 +139,8 @@ public:
 //-----------------------------------------------------------------------------
 // Animations
 //-----------------------------------------------------------------------------
-/**
- * @brief An animation made of sprites.
- */
+
+// An animation made of sprites.
 class Animation {
 private:
     // Animation properties:
@@ -185,9 +181,7 @@ public:
 
 };
 
-/**
- * @brief Animator component
- */
+// Animator component
 class Animator : public Component {
 private:
     std::string entry_animation;   // (UNUSED) The entry animation of the whole stream.
@@ -195,113 +189,51 @@ private:
     std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
     std::unordered_map<std::string, Animation> Animations; // The animations perse.
 public:
-    /**
-     * @brief Construct a new Animator object
-     * 
-     * @param gameObject 
-     * @param entry_animation 
-     * @param Animations 
-     */
+    // Construct a new Animator object
     Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
     
-    /**
-     * @brief Construct a new Animator object
-     * 
-     * @param animator 
-     */
+    // Construct a new Animator object
     Animator(GameObject& gameObject, Animator& animator);
 
-    /**
-     * @brief Clones the current animator into a new one.
-     * 
-     * @return Component* 
-     */
+    // Clones the current animator into a new one.
     Component* Clone(GameObject& gameObject) override;
 
-    /**
-     * @brief Flips all the animations.
-     * 
-     */
+    // Flips all the animations.
     void Flip();
 
-    /**
-     * @brief Get the scale of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // @brief Gets the scale of the current animation.
     Vector2 GetScale();
 
-    /**
-     * @brief Get the dimensions of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // Gets the dimensions of the current animation.
     Vector2 GetDimensions();
 
-    /**
-     * @brief Get the scaled dimensions of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // Gets the scaled dimensions of the current animation.
     Vector2 GetViewDimensions();
 
-    /**
-     * @brief Indicates if the current animation has finished.
-     * 
-     * @param animation 
-     * @return true 
-     * @return false 
-     */
+    // Indicates if the current animation has finished.
     bool HasFinished(std::string animation);
 
-    /**
-     * @brief Indicates if the current state animation is the given one.
-     * 
-     * @param animation 
-     * @return true 
-     * @return false 
-     */
+    // Indicates if the current state animation is the given one.
     bool InState(std::string animation);
 
-    /**
-     * @brief Plays the current animation.
-     * 
-     * @param position 
-     * @param deltaTime 
-     */
+    // Plays the current animation.
     void Play();
 
-    /**
-     * @brief If the entry animation is the current one, plays it and pass to the
-     * given next animation.
-     * 
-     * @param entry_animation 
-     * @param next_animation 
-     * @return true 
-     * @return false 
-     */
+    // If the entry animation is the current one, plays it and pass to the
     bool Trigger(std::string entry_animation, std::string next_animation);
 
-    /**
-     * @brief Unloads all the spritesheets.
-     * 
-     */
+    // Unloads all the spritesheets.
     void Unload() override;
 
-    /**
-     * @brief Stops the current animation and changes to the given one.
-     * 
-     * @param animation 
-     */
+    // Stops the current animation and changes to the given one.
     void operator[](std::string animation);
 };
 
 //-----------------------------------------------------------------------------
 // Audio
-//-----------------------------------------------------------------------------´
-/**
- * @brief Fahter class Audio, covers every type of audio.
- */
+//-----------------------------------------------------------------------------
+
+// Fahter class Audio, covers every type of audio.
 class AudioSource {
 private:
     // ...
@@ -312,9 +244,7 @@ public:
     virtual void Unload() = 0;
 };
 
-/**
- * @brief Audio type: sound.
- */
+// Audio type: sound.
 class SoundSource : public AudioSource {
 private:
     Sound source;
@@ -324,9 +254,7 @@ public:
     void Unload() override;
 };
 
-/**
- * @brief Audio type: music.
- */
+// Audio type: music.
 class MusicSource : public AudioSource {
 private:
     Music source;
@@ -337,9 +265,8 @@ public:
     void Unload() override;
 };
 
-/**
- * @brief Audioplayer component.
- */
+
+// Audioplayer component.
 class AudioPlayer : public Component {
 private:
     std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios;
@@ -351,10 +278,7 @@ public:
     void operator[ ](std::string audiosource);
 };
 
-/**
- * @brief GameObject physical limits.
- * 
- */
+// GameObject physical limits.
 class Collider2D : public Component {
 private:
     //...
@@ -375,10 +299,7 @@ public:
 //-----------------------------------------------------------------------------
 // Physics
 //-----------------------------------------------------------------------------
-/**
- * @brief GameObject physics behaviour.
- * 
- */
+// GameObject physics behaviour.
 class RigidBody2D : public Component{
 private:
     // ...
@@ -392,7 +313,7 @@ public:
     RigidBody2D(GameObject& gameObject, float mass, float gravity, Vector2 max_velocity, Vector2 acceleration);
     RigidBody2D(GameObject& gameObject, RigidBody2D& rigidbody);
     Component* Clone(GameObject& gameObject) override;
-    void Draw(Vector2 center);
+    void Draw();
 };
 
 //-----------------------------------------------------------------------------
@@ -435,10 +356,7 @@ public:
 //-----------------------------------------------------------------------------
 // Status
 //-----------------------------------------------------------------------------
-/**
- * @brief GameObject status properties
- * 
- */
+// GameObject status properties
 class Transform2D : public Component{
 private:
     // ...
@@ -452,7 +370,7 @@ public:
     Component* Clone(GameObject& gameObject) override;
 };
 
-// Hola
+// Devuelve si existe movimiento en alguno de los ejes.
 int GetAxis(std::string axis);
 
 // ============================================================================

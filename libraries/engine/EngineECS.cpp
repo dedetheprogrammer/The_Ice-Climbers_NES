@@ -311,7 +311,9 @@ RigidBody2D::RigidBody2D(GameObject& gameObject, RigidBody2D& rigidbody) : Compo
 Component* RigidBody2D::Clone(GameObject& gameObject) {
     return new RigidBody2D(gameObject, *this);
 }
-void RigidBody2D::Draw(Vector2 center) {
+void RigidBody2D::Draw() {
+    auto center = gameObject.getComponent<Transform2D>().position + 
+        (gameObject.getComponent<Collider2D>().size/2);
     DrawLineEx(center, center + velocity, 3.0f, BLUE);
     DrawLineEx(center, center + (Vector2){velocity.x, 0.0f}, 3.0f, RED);
     DrawLineEx(center, center + (Vector2){0.0f, velocity.y}, 3.0f, GREEN);
@@ -563,6 +565,9 @@ void GameSystem::Update() {
             }
             if (ref.gameObject->hasComponent<Collider2D>()) {
                 ref.gameObject->getComponent<Collider2D>().Draw();
+            }
+            if (ref.gameObject->hasComponent<RigidBody2D>()) {
+                ref.gameObject->getComponent<RigidBody2D>().Draw();
             }
         }
     }
