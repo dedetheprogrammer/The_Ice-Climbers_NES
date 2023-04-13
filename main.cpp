@@ -10,8 +10,8 @@ public:
     bool  action;       // Indicates if is the moment to perform the action or not. 
     float trigger_time; // Time for triggering into the next state.
 
-    Flicker() : action(false), current_time(0), trigger_time(0) {}
-    Flicker(float trigger_time) : action(false), current_time(0), trigger_time(trigger_time) {}
+    Flicker() : current_time(0), action(false), trigger_time(0) {}
+    Flicker(float trigger_time) : current_time(0), action(false), trigger_time(trigger_time) {}
 
     bool Trigger(float deltaTime) {
         current_time += deltaTime;
@@ -35,7 +35,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo");
+    GameObject Popo("Popo", "Player", {}, {"Floor"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -61,9 +61,9 @@ void Game() {
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
-    GameSystem::Instantiate(Popo, Vector2{400,488});
+    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -79,20 +79,22 @@ void Game() {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
     
-    GameObject Floor("Floor");
-    Floor.addComponent<Transform2D>(Vector2{-100,560});
-    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
+    GameObject Floor("Base Floor", "Floor");
+    Floor.addComponent<Transform2D>();
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
+    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,560}});
 
-    GameObject Block("Grass Block");
+    GameObject Block("Grass Block", "Floor");
     Block.addComponent<Transform2D>();
     Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{3.62f, 3.0f});
     int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     Block.addComponent<Script, GrassBlockBehavior>();
     for (int i = 0; i < 24; i++) {
-        GameSystem::Instantiate(Block, Vector2{113.0f + block_width * i, 423});
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{113.0f + block_width * i, 423}});
     }
     
+    GameSystem::Printout();
     bool play_music = false;
     bool paused = false;
     BGM.Init();
@@ -100,7 +102,6 @@ void Game() {
     // GameSystem::Printout();
 
     while(!WindowShouldClose()) {
-        float deltaTime = GetFrameTime();
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -144,12 +145,10 @@ void Game() {
             Popo.getComponent<Transform2D>().position = Vector2{600,400};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        Floor.getComponent<Collider2D>().Draw();
         EndDrawing();
     }
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
-    //UnloadTexture(Snowball);
     Popo.Destroy();
     BGM.Unload();
 }
@@ -170,10 +169,11 @@ int main() {
     // ---- Music
     Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
     ts_music.looping = true;
-    bool play_music = false;
+    // bool play_music = false;
 
     // Initial trailer --------------------------------------------------------
-    int state = 0, shown = 0;
+    // int state = 0, shown = 0;
+    /*
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -272,6 +272,7 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
+    */
     Game();
     /*
     while(!WindowShouldClose() && !close_window) {
@@ -721,7 +722,7 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }*/
+    }
     OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
@@ -739,6 +740,7 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
+    */
     UnloadFont(NES);
     UnloadMusicStream(ts_music);
     CloseAudioDevice();

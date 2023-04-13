@@ -8,33 +8,58 @@
 #include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "raylib.h"
 
-/**
- * @brief Engine GameObject
- * 
- */
+// Un objeto del juego.
+
 class Component;
 class Script;
 class Collision;
+
+// Configuración de una instancia.
+struct GameObjectOptions {
+    // Nombre que queremos que reciba la nueva instancia.
+    std::string name      = "";
+    // Tag que queremos que reciba la nueva instancia.
+    std::string tag       = "";
+    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // tags secundarios para colisiones, etc.
+    std::unordered_set<std::string> second_tags;
+    // Tags que queremos que se comprueben en las colisiones.
+    std::unordered_set<std::string> related_tags = {};
+    // Posición en la que queremos que se instancie la nueva instancia.
+    Vector2 position      = {-1,-1};
+    // Color del colider para cuando se dibuje (de momento sin implementar).
+    // Color collider_color  = {-1,-1,-1,-1};
+};
+
 class GameObject {
 private:
-    //...
+    // Clonar GameObject.
+    void Clone(GameObject& gameObject);
 public:
-    // Nombre de GameObject (puede englobar varios GameObject).
-    std::string tag;
     // Nombre del GameObject (unico por GameObject).
     std::string name;
+    // Tag de GameObject (puede englobar varios GameObject).
+    std::string tag;
+    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // tags secundarios para colisiones, etc.
+    std::unordered_set<std::string> second_tags;
+    // Tags a los que esta relacionado el GameObject actual. 
+    std::unordered_set<std::string> related_tags;
     // Para componentes que solo puede haber uno por GameObject.
     std::unordered_map<std::type_index, Component*> components;
     // Puede haber varios Scripts en un GameObject.
     std::unordered_map<std::type_index, Script*> scripts;
-    // Se puede discutir si permitir que haya varios componentes por gameObject..
+    // Se puede discutir si permitir que haya varios componentes por gameObject.
 
-    GameObject();
-    GameObject(std::string name);
+    GameObject(std::string name = "GameObject", std::string tag = "",
+        std::unordered_set<std::string> second_tags  = {},
+        std::unordered_set<std::string> related_tags = {});
     GameObject(GameObject& gameObject);
+    GameObject(GameObject& gameObject, const GameObjectOptions& options);
 
     template <typename T, typename... Args> void addComponent(Args&&... args) {
         components[typeid(T)] = new T(*this, std::forward<Args>(args)...);
@@ -332,17 +357,16 @@ public:
  */
 class Collider2D : public Component {
 private:
-    Color color;
+    //...
 public:
-    enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
+    // enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
+    Color color;  // Color del collider.
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
     
     Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Collider2D& collider);
     Component* Clone(GameObject& gameObject) override;
     void Draw();
@@ -437,23 +461,42 @@ int GetAxis(std::string axis);
 // ============================================================================
 // ============================================================================
 // ----------------------------------------------------------------------------
-// Collision System
+// Game System
+// /!\ Aunque no lo creais y no lo parezca, todo esto lo hago para encapsular 
+// el tratamiento a pelo de los colliders y de los objetos en escena, de manera
+// que con llamar a un par de funciones lo haga solo sin que vosotros tengais 
+// que controlarlo (+ reutilizacion de codigo + mantenimiento + generalizacion).
 // ----------------------------------------------------------------------------
-class Collision {
-private:
-    //...
-public:
+
+// Información de una colision resultante.
+struct Collision {
+    // GameObject con el que ha colisionado.
     GameObject& gameObject;
-    // enum
+    // Tiempo de colision
     float contact_time;
+    // Punto de intersección del rayo del objeto dinámico al estático
     Vector2 contact_point;
+    // Normal del punto de intersección (lado desde el que van a chocar).
     Vector2 contact_normal; // x=-1 (IZQ), x=1 (DCH), y=-1 (ARR), y=1 (ABJ)
+    // Constructor
     Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal);
 };
 
-class CollisionSystem {
+class GameSystem {
 private:
-    static std::unordered_map<std::string, Collider2D*> colliders;
+    // Instancia de la escena en el Game engine
+    struct GameObjectRef {
+        GameObject* original;   // Original GameObject.
+        GameObject* gameObject; // Instatiated GameObject.
+    };
+    // Spoiler, but not for now:
+    // - La idea es dividir el juego en escenas, por lo que cada escena tendrá
+    //   sus objetos, y ya, opcional, puede plantearse pero se deja en el aire.
+    // std::unordered_map<std::string, Scene> scenes;
+    // std::string current scene;
+    // Instances
+    static std::unordered_map<std::string, int> nGameObjects;
+    static std::unordered_map<std::string, std::unordered_map<std::string, GameObjectRef>> GameObjects;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla: 
@@ -468,24 +511,11 @@ private:
     // De momento A es dinamico y B es estatico, 
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
-
 public:
-    static void addCollider(std::string name, Collider2D* collider);
-    static void removeCollider(std::string name);
-    static void printout();
-    static void checkCollisions();
-    static void checkCollisions(GameObject& gameObject);
-};
-
-
-class GameSystem {
-private:
-public:
-    static std::unordered_map<std::string, std::vector<GameObject*>> GameObjects;
-    static void Instantiate(GameObject& gameObject, Vector2 position);
-    static void Update();
+    static void Collisions(GameObject& gameObject);
+    static void Instantiate(GameObject& gameObject, GameObjectOptions options);
     static void Printout();
+    static void Update();
 };
-
 
 #endif

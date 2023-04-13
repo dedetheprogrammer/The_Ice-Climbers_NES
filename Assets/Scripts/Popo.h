@@ -26,7 +26,7 @@ private:
                 }
             }
             transform.position.x += rigidbody.velocity.x * deltaTime;
-            if (move > 0 && !isRight || move < 0 && isRight) {
+            if ((move > 0 && !isRight) || (move < 0 && isRight)) {
                 isRight = !isRight;
                 animator.Flip();
             }
@@ -109,8 +109,7 @@ public:
     }
 
     void OnCollision(Collision contact) {
-
-        if (contact.gameObject.name == "Floor") {
+        if (contact.gameObject.tag == "Floor") {
             int move = GetAxis("Horizontal");
             float deltaTime = GetFrameTime();
             if (!isAttacking && !move) {
@@ -136,7 +135,7 @@ public:
             }
             rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             isGrounded = true;
-        } else if (contact.gameObject.name == "Cloud") {
+        } else if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
                     rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;

@@ -7,10 +7,26 @@
 // Entidades
 // ============================================================================
 // ============================================================================
-GameObject::GameObject() : name("GameObject") {}
-GameObject::GameObject(std::string name) : name(name) {}
+GameObject::GameObject(std::string name, std::string tag,
+    std::unordered_set<std::string> second_tags,
+    std::unordered_set<std::string> related_tags
+) : name(name), tag(tag), second_tags(second_tags), related_tags(related_tags) {}
 GameObject::GameObject(GameObject& gameObject) {
     name = gameObject.name;
+    tag  = gameObject.tag;
+    related_tags = gameObject.related_tags;
+    Clone(gameObject);
+}
+GameObject::GameObject(GameObject& gameObject, const GameObjectOptions& options) {
+    this->name         = options.name;
+    this->tag          = options.tag;
+    this->related_tags = options.related_tags;
+    Clone(gameObject);
+    //this->getComponent<Collider2D>().color = options.collider_color;
+    this->getComponent<Transform2D>().position = options.position;
+}
+
+void GameObject::Clone(GameObject& gameObject) {
     components[typeid(Transform2D)] = gameObject.components[typeid(Transform2D)]->Clone(*this);
     for (auto [type, component] : gameObject.components) {
         if (type != typeid(Transform2D)) {
@@ -258,28 +274,14 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // Collider
 // ----------------------------------------------------------------------------
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color)
-    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height})
-{
-
-}
-Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color)
-    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height})
-{
-    CollisionSystem::addCollider(name, this);
-}
+    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}) {}
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color)
     : Component(gameObject), color(color), pos(pos), size(size) {}
-Collider2D::Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size, Color color)
-    : Component(gameObject), color(color), pos(pos), size(size)
-{
-    CollisionSystem::addCollider(name, this);
-}
 Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject) {
     color = collider.color;
     pos   = &gameObject.getComponent<Transform2D>().position;
     size  = collider.size; 
 }
-
 Component* Collider2D::Clone(GameObject& gameObject) {
     return new Collider2D(gameObject, *this);
 }
@@ -397,26 +399,26 @@ int GetAxis(std::string axis) {
 // Sistemas
 // ============================================================================
 // ============================================================================
+// ----------------------------------------------------------------------------
+// Game System
+// ----------------------------------------------------------------------------
+/**
+ * @brief Va a cambiar un poco la representación interna del sistema del juego:
+ *  - Los objetos se van a dividir por labels/tags: una tag es un nombre que puede englobar uno o varios gameobjects.
+ *  - A la hora de instanciar un GameObject, se puede decidir la configuración del mismo (tag, nombre, tags de comprobación).
+ *  - Si defines los tags, a la hora de comprobar las colisiones, comprobará solo las tags que se le han indicado en la configuración.
+ */
+std::unordered_map<std::string, int> GameSystem::nGameObjects;
+std::unordered_map<std::string, std::unordered_map<std::string, GameSystem::GameObjectRef>> GameSystem::GameObjects;
 
-// ----------------------------------------------------------------------------
-// Collision System
-// ----------------------------------------------------------------------------
 Collision::Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal)
     : gameObject(gameObject), contact_time(contact_time), contact_point(contact_point), contact_normal(contact_normal) {}
 
-std::unordered_map<std::string, Collider2D*> CollisionSystem::colliders;
-
-/**
- * @brief Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui, 
- * ahora no me apetece explicarla:
- *  - https://www.youtube.com/watch?v=8JJ-4JgR7Dg
- *  - https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_Rectangles.cpp
- */
-bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
+bool GameSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     const Collider2D& target, Vector2& contact_point, Vector2& contact_normal,
     float& contact_time)
 {
-    DrawLineEx(ray_o, ray_o + 10000 * ray_d, 2.0f, PINK);
+    DrawLineEx(ray_o, ray_o + (10000 * ray_d), 2.0f, PINK);
     Vector2 ray_i = 1.0f/ray_d;
     Vector2 t_near = (*target.pos - ray_o) * ray_i;
     Vector2 t_far  = (*target.pos + target.size - ray_o) * ray_i;
@@ -454,47 +456,40 @@ bool CollisionSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
 // Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el 
 // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
 // se extiende por ambos lados:
-bool CollisionSystem::Collides(const Collider2D& A, const Collider2D& B, 
-    Vector2& contact_point, Vector2& contact_normal, float& contact_time)
+bool GameSystem::Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point, 
+    Vector2& contact_normal, float& contact_time)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
     Vector2 exp_B_pos = *B.pos - (A.size/2);
     if (Collides(
         // El rayo se lanza desde el centro del collider:
         *A.pos + A.size/2,
-        // La direccion del rayo se obtiene mediante la velocidad del objeto:
+        // La dirección del rayo se obtiene mediante la velocidad del objeto:
         A.gameObject.getComponent<RigidBody2D>().velocity * GetFrameTime(),
-        // Se crea un nuevo collider ampliado a la mitad del objeto dinamico:
+        // Se crea un nuevo collider ampliado a la mitad del objeto dinámico:
         Collider2D(B.gameObject, &exp_B_pos, B.size + A.size),
         // Información de la colision:
-        contact_point,  // Punto del collider con el que el rayo colisiona.
-        contact_normal, // Normal del lado con el que el rayo colisiona.
-        contact_time    // Tiempo restante para la colision.
+        contact_point,  // Punto del collider con el que el rayo intersecta.
+        contact_normal, // Normal del lado con el que el rayo intersecta.
+        contact_time    // Tiempo restante de interseccion.
     )) {
         return (contact_time >= 0.0f && contact_time < 1.0f);
     }
     return false;
 }
 
-void CollisionSystem::addCollider(std::string name, Collider2D* collider) {
-    colliders[name] = collider;
-}
-void CollisionSystem::removeCollider(std::string name) {
-    colliders.erase(name);
-}
-void CollisionSystem::checkCollisions() {
-    // Iteramos sobre el hashmap de colliders
-    for (auto const& [Collider_A_name, Collider_A] : colliders) {
-        if (Collider_A->gameObject.hasComponent<RigidBody2D>()) {
-            for (auto const& [Collider_B_name, Collider_B] : colliders) {
-                // Comprobamos que no sea el mismo collider
-                if (Collider_A_name != Collider_B_name) {
-                    // Comprobamos la colisión
+void GameSystem::Collisions(GameObject& gameObject) {
+    if (!gameObject.tag.empty() && gameObject.hasComponent<Collider2D>() && gameObject.hasComponent<RigidBody2D>()) {
+        for (auto& rel_tag : gameObject.related_tags) {
+            for (auto& [check_name, check_ref] : GameObjects[rel_tag]) {
+                if (gameObject.name != check_name && check_ref.gameObject->hasComponent<Collider2D>()) {
                     float ct = 0; Vector2 cp{0,0}, cn{0,0};
-                    if (CollisionSystem::Collides(*Collider_A, *Collider_B, cp, cn, ct)) {
-                        Collider_A->gameObject.OnCollision(Collision(Collider_B->gameObject, ct, cp, cn));
-                        if (!Collider_B->gameObject.hasComponent<RigidBody2D>()) {
-                            Collider_B->gameObject.OnCollision(Collision(Collider_A->gameObject, 0, {0,0}, {0,0}));
+                    auto Collider_A = gameObject.getComponent<Collider2D>();
+                    auto Collider_B = check_ref.gameObject->getComponent<Collider2D>();
+                    if (Collides(Collider_A, Collider_B, cp, cn, ct)) {
+                        gameObject.OnCollision(Collision(*check_ref.gameObject, ct, cp, cn));
+                        if (!check_ref.gameObject->hasComponent<RigidBody2D>()) {
+                            check_ref.gameObject->OnCollision(Collision(gameObject, ct, cp, -cn));
                         }
                     }
                 }
@@ -502,79 +497,72 @@ void CollisionSystem::checkCollisions() {
         }
     }
 }
-void CollisionSystem::checkCollisions(GameObject& gameObject) {
-    // Iteramos sobre el hashmap de colliders
-    if (gameObject.hasComponent<RigidBody2D>()) {
-        for (auto const& [Collider_name, Collider] : colliders) {
-            if (Collider_name != gameObject.name) {
-                float ct = 0; Vector2 cp{0,0}, cn{0,0};
-                if (CollisionSystem::Collides(gameObject.getComponent<Collider2D>(), *Collider, cp, cn, ct)) {
-                    gameObject.OnCollision(Collision(Collider->gameObject, ct, cp, cn));
-                    if (!Collider->gameObject.hasComponent<RigidBody2D>()) {
-                        Collider->gameObject.OnCollision(Collision(gameObject, ct, cp, cn));
-                    }
-                }
-            }
+
+void GameSystem::Instantiate(GameObject& gameObject, GameObjectOptions options) {
+    // Configuring the name:
+    if (options.name.empty()) {
+        options.name = gameObject.name;
+        if (nGameObjects.find(gameObject.name) != nGameObjects.end()) {
+            options.name += " (" + std::to_string(nGameObjects[gameObject.name]++) + ")";
+        } else {
+            nGameObjects[gameObject.name] = 1;
+        }
+    }
+    // Configuring the tag:
+    if (options.tag.empty()) {
+        options.tag = gameObject.tag;
+    }
+    // Configuring the secondary tags:
+    if (options.second_tags.empty()) {
+        options.second_tags = gameObject.second_tags;
+    }
+    // Configuring the related tags:
+    if (options.tag == "All") {
+        options.related_tags = {};
+        for (auto& [tag, _] : GameObjects) {
+            options.related_tags.insert(tag);
+        }
+    }
+    if (options.related_tags.empty()) {
+        options.related_tags = gameObject.related_tags;
+    }
+    // Configuring the position:
+    if (options.position.x == -1 || options.position.y == -1) {
+        options.position = gameObject.getComponent<Transform2D>().position;
+    }
+    // Configuring the color:
+    //if (options.collider_color.r == -1 || options.collider_color.g == -1 || options.collider_color.b == -1 || options.collider_color.a == -1) {
+    //    options.collider_color = gameObject.getComponent<Collider2D>().color;
+    //}
+    // Inserting the new instance:
+    GameObjects[options.tag][options.name] = {
+        &gameObject,
+        new GameObject(gameObject, options)
+    };
+}
+
+void GameSystem::Printout() {
+    std::cout << ">>> Scene objects <<<\n";
+    for (auto& [tag, tag_instances] : GameObjects) {
+        std::cout << ">>>> Tag: " << tag << "\n";
+        for (auto& [name, instance] : tag_instances) {
+            std::cout << ">>>>> Name: " << name << "\n";  
         }
     }
 }
 
-void CollisionSystem::printout() {
-    for (auto& c : colliders) {
-        std::cout << c.first << "\n";
-    }
-}
-
-// ----------------------------------------------------------------------------
-// Game System
-// ----------------------------------------------------------------------------
-/**
- * @brief Va a cambiar un poco la representación interna del sistema del juego:
- *  - Los objetos se van a dividir por labels/tags: una tag es un nombre que puede englobar uno o varios gameobjects.
- *  - A la hora de instanciar un GameObject, se puede decidir la configuración del mismo (tag, nombre, tags de comprobación).
- *  - Si defines los tags, a la hora de comprobar las colisiones, comprobará solo las tags que se le han indicado en la configuración.
- * 
- */
-std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::GameObjects;
-
-void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
-
-    GameObject* instance = new GameObject(gameObject);
-    instance->getComponent<Transform2D>().position = position;
-    auto it = GameObjects.find(gameObject.name);
-    if (it == GameObjects.end()) {
-        GameObjects[gameObject.name].push_back(instance);
-    } else {
-        instance->name += " (" + std::to_string(it->second.size()) + ")";
-        it->second.push_back(instance);
-    }
-}
-
-void GameSystem::Printout() {
-    //std::cout << ">>> Scene objects <<<\n";
-    //for (auto const& [name, instances] : GameObjects) {
-    //    std::cout << name << ":\n";
-    //    for (auto const& instance : instances) {
-    //        std::cout << "  " << instance->name << "\n";
-    //        for (auto const& [type, _] : instance->scripts) {
-    //            std::cout << "    " << type.name() << "\n";
-    //        }
-    //    }
-    //}
-}
-
 void GameSystem::Update() {
-    for (auto [_, instances] : GameObjects) {
-        for (auto instance : instances) {
-            instance->Update();
-            CollisionSystem::checkCollisions(*instance);
-            if (instance->hasComponent<Animator>()) {
-                instance->getComponent<Animator>().Play();
-            } else if (instance->hasComponent<Sprite>()) {
-                instance->getComponent<Sprite>().Draw();
+    for (auto& [_, gameObjectRefs] : GameObjects) {
+        for (auto& [_, ref] : gameObjectRefs) {
+            ref.gameObject->Update();
+            Collisions(*ref.gameObject);
+            if (ref.gameObject->hasComponent<Animator>()) {
+                ref.gameObject->getComponent<Animator>().Play();
+            } else if (ref.gameObject->hasComponent<Sprite>()) {
+                ref.gameObject->getComponent<Sprite>().Draw();
             }
-            if (instance->hasComponent<Collider2D>()) {
-                instance->getComponent<Collider2D>().Draw();
+            if (ref.gameObject->hasComponent<Collider2D>()) {
+                ref.gameObject->getComponent<Collider2D>().Draw();
             }
         }
     }

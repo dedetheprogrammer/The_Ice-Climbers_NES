@@ -273,14 +273,18 @@ int main() {
 //
 
     //Texture2D a = LoadTexture("Assets/Sprites/Grass_block_large.png");
-    GameSystem::Instantiate(A, {370,370});
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(BLACK);
-        DrawRectangle(0,0,40,40,RED);
-        GameSystem::Update();
-        EndDrawing();
-    }
+    GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Hola"  });
+    GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Adios" });
+    GameSystem::Instantiate(A, {.name = "Pito de burro", .tag = "Hola"  });
+    GameSystem::Instantiate(A, {.name = "Pito de burro", .tag = "Adios" });
+    GameSystem::Printout();
+    //while (!WindowShouldClose()) {
+    //    BeginDrawing();
+    //    ClearBackground(BLACK);
+    //    DrawRectangle(0,0,40,40,RED);
+    //    GameSystem::Update();
+    //    EndDrawing();
+    //}
 
     /*
     InitWindow(800, 800, "COÑO");
