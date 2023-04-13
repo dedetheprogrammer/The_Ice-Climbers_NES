@@ -27,13 +27,13 @@ public:
     Animator& animator;
     Collider2D& collider;
     Transform2D& transform;
-    std::vector<Collider2D*>& colliders;
+    std::vector<GameObject*>& gameObjects;
 
     BlockActions(GameObject& gameObject) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         transform(gameObject.getComponent<Transform2D>()),
-        colliders(gameObject.colliders)
+        gameObjects(gameObject.gameObjects)
     {
         isGrounded  = false;
         isRight     = true;

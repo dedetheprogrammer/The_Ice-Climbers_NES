@@ -1,393 +1,133 @@
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <sstream>
-#include <variant>
-#include <vector>
-#include "test.h"
+//#include "EngineECS.h"
+#include "EngineUI.h"
+#include "Popo.h"
+#include "Topi.h"
+#include "Block.h"
+#include "SidePlatform.h"
+#include "settings.h"
 
-//-----------------------------------------------------------------------------
-// Otros
-//-----------------------------------------------------------------------------
-class Parpadeo {
-public:
-    bool  show; 
-    float current_time;
-    float trigger_time;
+Font NES;
 
-    Parpadeo() : show(false), current_time(0), trigger_time(0) {}
-    Parpadeo(float trigger_time) {
-        show = false;
-        current_time = 0;
-        this->trigger_time = trigger_time;
-    }
+void Game() {
 
-    bool Trigger(float deltaTime) {
-        current_time += deltaTime;
-        if (current_time >= trigger_time) {
-            show = !show;
-            current_time = 0;
-        }
-        return show;
-    }
-};
+    //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
+    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
-//-----------------------------------------------------------------------------
-// Game settings
-// ----------------------------------------------------------------------------
-using Config = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<int, float, bool>>>;
-Config ini;
-std::unordered_map<std::string, std::string> types {
-    {"OldFashioned", "bool"},
-    {"ScreenWidth", "int"},
-    {"ScreenHeight", "int"},
-    {"DisplayMode", "int"},
-    {"Vsync", "bool"},
-    {"FPSLimit", "int"},
-    {"MusicVolume", "float"},
-    {"EffectsVolume", "float"}
-};
-// -- GRAPHICS
-const bool DEFAULT_OLD_STYLE       = false;
-// ---- DISPLAY MODE
-const int DEFAULT_DISPLAY_MODE     = 0;
-int DISPLAY_MODE_OPTION            = 0;
-enum DISPLAY_MODE_ENUM { WINDOWED = 0, WINDOWED_FULLSCREEN, FULLSCREEN };
-std::string to_string(DISPLAY_MODE_ENUM dme) {
-    if (dme == WINDOWED) {
-        return "WINDOWED";
-    } else if (dme == WINDOWED_FULLSCREEN) {
-        return "FULLWINDOWED";
-    } else if (dme == FULLSCREEN) {
-        return "FULLSCREEN";
-    } else {
-        return "WHAT THE FUCK JUST HAPPENED HERE.";
-    }
-}
-// ---- SCREEN SIZE
-const int DEFAULT_SCREEN_WIDTH     = 900;
-const int DEFAULT_SCREEN_HEIGHT    = 600;
-int RESOLUTION_OPTION              = 0;
-std::vector<std::pair<int, int>> RESOLUTION_OPTIONS {
-    {640, 480}, {800, 600}, {900, 600}, {1024, 768}, {1280, 720}, {1920, 1080}
-};
-// ---- VSYNC
-const bool DEFAULT_VSYNC           = false;
-// ---- FPS LIMIT
-const int DEFAULT_FPS_LIMIT        = 30;
-int FPS_LIMIT_OPTION               = 0;
-std::vector<int> FPS_LIMIT_OPTIONS { 15, 30, 60 };
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f};
+    // ¿Como construyo un GameObject para Popo?
+    // 1. Creamos el GameObject. Recuerda:
+    //  - El GameObject no tiene ningún componente nada más crearlo.
+    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
+    //    a meter otro, perderá el primero.
+    GameObject Popo;
+    GameObject Topi;
+    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
+    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
+    Popo.addComponent<Transform2D>(Vector2{WINDOW_WIDTH / 2.0f, levels[0] - 24*4.0f});
+    Topi.addComponent<Transform2D>(Vector2{-30, levels[0] - 16*4.0f});
+    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
+    // GameObject Popo(Vector2{600,500});
+    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
+    // si no, dará error.
+    Popo.addComponent<Animator>("Idle", Animator::animator_map {
+        {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 4, 0.75, true)},
+        {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 4, 0.135, true)},
+        {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 4, 0.3, true)},
+        {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 4, 0.9, false)},
+        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 4, 0.3, true)},
+        {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 4, 0.3, true)},
+        {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 20, 25, 4, 0.3, true)}
+    });
 
-// -- MUSIC/AUDIO:
-const float DEFAULT_MUSIC_VOLUME   = 1.0f;
-const float DEFAULT_EFFECTS_VOLUME = 1.0f;
-// Crear sistema que verifique nombres no reconocidos.
-// Crear sistema que verifique valores sin sentido.
-
-int& WINDOW_WIDTH    = std::get<int>(ini["Graphics"]["ScreenWidth"]);  // 240px
-int& WINDOW_HEIGHT   = std::get<int>(ini["Graphics"]["ScreenHeight"]); // 160px
-float MUSIC_VOLUME   = 1.0f;
-float EFFECTS_VOLUME = 1.0f;
-
-void default_config() {
-    // Graphics settings:
-    ini["Graphics"]["OldFashioned"] = DEFAULT_OLD_STYLE;
-    ini["Graphics"]["ScreenWidth"]  = DEFAULT_SCREEN_WIDTH;
-    ini["Graphics"]["ScreenHeight"] = DEFAULT_SCREEN_HEIGHT;
-    ini["Graphics"]["DisplayMode"]  = DEFAULT_DISPLAY_MODE;
-    ini["Graphics"]["Vsync"]        = DEFAULT_VSYNC;
-    ini["Graphics"]["FPSLimit"]     = DEFAULT_FPS_LIMIT;
-    // Audio settings:
-    ini["Audio"]["MusicVolume"]     = DEFAULT_MUSIC_VOLUME;
-    ini["Audio"]["EffectsVolume"]   = DEFAULT_EFFECTS_VOLUME;
-    // Controles no implementados.
-}
-
-void save_config() {
-    std::ofstream os("settings.ini");
-    os << "; Probando probando...\n";
-    os << "[Graphics]"
-        << "\nOldFashioned="  << std::get<bool>(ini["Graphics"]["OldFashioned"])
-        << "\nScreenWidth="   << std::get<int>(ini["Graphics"]["ScreenWidth"])
-        << "\nScreenHeight="  << std::get<int>(ini["Graphics"]["ScreenHeight"])
-        << "\nDisplayMode="   << std::get<int>(ini["Graphics"]["DisplayMode"]) // 0: Full screen, 1: Full screen with borders, 2: Windowed.
-        << "\nVsync="         << std::get<bool>(ini["Graphics"]["Vsync"])
-        << "\nFPSLimit="      << std::get<int>(ini["Graphics"]["FPSLimit"]) << std::endl;
-    os << "[Audio]" 
-        << "\nMusicVolume="   << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["MusicVolume"])
-        << "\nEffectsVolume=" << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["EffectsVolume"]) << std::endl;
-    os << "; [Controls]";
-    os.close();
-}
-
-void init_config() {
-    std::ifstream in("settings.ini");
-    if (!in.is_open()) {
-        default_config();
-        save_config();
-    } else{
-        std::streamsize buffersize = 1024 * 1024; // 1MB.
-        std::vector<char> buffer(buffersize);
-        in.rdbuf()->pubsetbuf(buffer.data(), buffersize);
-
-        std::string section;
-        for (std::string line; std::getline(in, line); ) {
-            if (line.size() > 2 && line[0] == '[' && line.back() == ']') {
-                section = line.substr(1, line.size() - 2);
-                continue;
-            }
-
-            std::istringstream iss(line);
-            std::string key, value;
-            if (std::getline(iss >> std::ws, key, '=') && std::getline(iss >> std::ws, value)) {
-                if (types[key] == "bool") ini[section][key] = (value == "1");
-                else if (types[key] == "int") ini[section][key] = std::stoi(value);
-                else if (types[key] == "float") ini[section][key] = std::stof(value);
-            }
-        }
-    }
-    
-    //-- Graphics
-    int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
-    int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
-    DISPLAY_MODE_OPTION = std::get<int>(ini["Graphics"]["DisplayMode"]);
-    if (DISPLAY_MODE_OPTION == WINDOWED) {
-        InitWindow(aux_0, aux_1, "COÑO");
-        SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
-        if (IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-        InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "COÑO");
-        SetWindowPosition(0, 30);
-    } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
-        InitWindow(aux_0, aux_1, "COÑO");
-        if (!IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-    }
-    //---- Screen size
-    for (size_t i = 0; i < RESOLUTION_OPTIONS.size(); i++) {
-        if (RESOLUTION_OPTIONS[i].first == aux_0 && RESOLUTION_OPTIONS[i].second == aux_1) {
-            RESOLUTION_OPTION = i;
-            break;
-        }
-    }
-    //---- FPS limit
-    aux_0 = std::get<int>(ini["Graphics"]["FPSLimit"]);
-    SetTargetFPS(aux_0);
-    for (size_t i = 0; i < FPS_LIMIT_OPTIONS.size(); i++) {
-        if (FPS_LIMIT_OPTIONS[i] == aux_0) {
-            FPS_LIMIT_OPTION = i;
-            break;
-        }
-    }
-
-    //if (VSYNC) {
-    //    SetConfigFlags(FLAG_VSYNC_HINT);
-    //} else {
-    //    SetConfigFlags(~FLAG_VSYNC_HINT);
-    //}
-    //-- Audio:
-    InitAudioDevice(); // Initialize audio device.
-    //-- Controls:
-    SetExitKey(KEY_NULL);
-
-}
-
-std::unordered_map<std::string, int> PopoControl {
-    {"Right", KEY_D},
-    {"Left", KEY_A},
-    {"Jump", KEY_W},
-    {"Attack", KEY_E},
-};
-std::unordered_map<std::string, int> NanaControl {
-    {"Right", KEY_L},
-    {"Left", KEY_J},
-    {"Jump", KEY_O},
-    {"Attack", KEY_P},
-};
-std::unordered_map<std::string, int> AmamControl {
-    {"Right", KEY_RIGHT},
-    {"Left", KEY_LEFT},
-    {"Jump", KEY_UP},
-    {"Attack", KEY_KP_0},
-};
-std::unordered_map<std::string, int> fifiControl {
-    {"Right", KEY_L},
-    {"Left", KEY_J},
-    {"Jump", KEY_O},
-    {"Attack", KEY_P},
-};
-std::vector<std::unordered_map<std::string,int>> Controls {PopoControl, NanaControl, AmamControl, fifiControl};
-
-//-----------------------------------------------------------------------------
-// Menus
-// ----------------------------------------------------------------------------
-enum MENU_ENUM { MAIN_MENU, NEW_GAME, NORMAL_GAME, SETTINGS, VIDEO_SETTINGS, AUDIO_SETTINGS, CONTROL_SETTINGS };
-
-void game(int players) {
-
-    // Audio. Source/Sound player component?
-    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
-
-    // Sounds & Audioplayer component.
-    Audioplayer PopoFX(
-        {
-            {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+    Topi.addComponent<Animator>("Walk", Animator::animator_map  {
+            {"Walk", Animation("Assets/OLD SPRITES/Topi - Spritesheet 01 - Walk.png", 16, 16, 4, 0.3, true)},
+            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 4, 0.5, true)}
         }
     );
-    
-    // Textures. Sprite component?
-    //Texture2D Snowball = LoadTexture("Assets/OLD SPRITES/03-Snowball.png");
-    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
-    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
-    Texture2D Popo_sprite = LoadTexture("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png");
-    Texture2D Topi_sprite = LoadTexture("Assets/OLD SPRITES/Topi - Spritesheet 03 - Basic.png");
-    Texture2D Joseph_sprite = LoadTexture("Assets/OLD SPRITES/Joseph - Spritesheet 03 - Basic.png");
-    Texture2D Nutpicker_sprite = LoadTexture("Assets/OLD SPRITES/Nutpicker - Spritesheet 02 - Stunned.png");
-    Texture2D GreenBlock_sprite = LoadTexture("Assets/OLD SPRITES/Brick - Green 01.png");
-
-    // Animations & Animator component.
-    Animator PopoAnimator(
-        "Idle", 
-        {
-            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
-            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
-        }
-    );
-    Animator NanaAnimator(
-        "Idle", 
-        {
-            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
-            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
-        }
-    );
-    Animator AmamAnimator(
-        "Idle", 
-        {
-            {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-            {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-            {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-            {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-            {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
-            {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 16, 24, 3, 0.3, true)},
-        }
-    );
-
-    Animator TopiAnimator(
-        "Walk", 
-        {
-            {"Walk", Animation("Assets/OLD SPRITES/Topi - Spritesheet 01 - Walk.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)}
-        }
-    );
-    
-    Animator JosephAnimator(
-        "Walk", 
-        {
-            {"Walk", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 01 - Walk.png", 16, 31, 3, 0.2, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Joseph - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.5, true)}
-        }
-    );
-    
-    Animator NutpickerAnimator(
-        "Walk", 
-        {
-            {"Walk", Animation("Assets/OLD SPRITES/Nutpicker - Spritesheet 01 - Fly.png", 16, 31, 3, 0.2, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Nutpicker - Spritesheet 02 - Stunned.png", 16, 31, 3, 0.2, true)}
-        }
-    );
-    
-    Animator GreenBlockAnimator(
-        "Idle", 
-        {
-            {"Idle", Animation("Assets/OLD SPRITES/Brick - Green 01.png", 8, 8, 5, 0.2, true)}
-        }
-    );  
+    // 3. Añadimos el componente de Audio:
+    Popo.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+    });
+    // 4. Añadimos el Rigidbody:
+    Popo.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{150,200});
+    Topi.addComponent<RigidBody2D>(1, 98, Vector2{60,0}, Vector2{100,0});
+    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
+    //  - El Transform2D que tiene la posición del objeto.
+    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
+    //    caso, es la animación inicial.
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::PLAYER);
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::ENEMY);
+    Popo.addComponent<Script, Movement>();
+    Topi.addComponent<Script, MovementTopi>();
 
     // Rectangles = Sprites component?
     // Mountain background:
+    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
     float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
     Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
+    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
-
-    // GameObject.
-    //GameObject Popo(100, Vector2{(WINDOW_WIDTH - Popo_sprite.width*2.0f)/2,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-91}, PopoAnimator);
-    RigidBody rigidbody(1, 9.8, {0,0}, {150,400}, {500,100});
-    GameObject Popo(100, Vector2{WINDOW_WIDTH / 2.0f,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-170}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, PopoAnimator, PopoFX, rigidbody, 1,Controls[0]);
-    auto GameObjects = std::vector<GameObject>();
-    GameObjects.push_back(Popo);
-    if(players > 1) {
-        RigidBody rigidbody2(1, 9.8, {0,0}, {150,0}, {500,100});
-        GameObject Nana(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-36}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, NanaAnimator, PopoFX, rigidbody2, 2, Controls[1]);
-        GameObjects.push_back(Nana);
-    }
-    if (/*players > 2*/ true) {
-        /*RigidBody rigidbody3(1, 9.8, {0,0}, {150,0}, {500,100});
-        GameObject Amam(100, Vector2{0,(WINDOW_HEIGHT - Popo_sprite.height*2.0f)-107}, Vector2{(float)Popo_sprite.width, (float)Popo_sprite.height}, AmamAnimator, PopoFX, rigidbody3, 3, Controls[2]);
-        GameObjects.push_back(Amam);*/
-    }
-
-    // IAs
     
-    std::mt19937 mtSuper(time(0));
-    std::uniform_int_distribution<> randSuper(0, INT_MAX);
 
-    RigidBody rigidbodyTopi(1, 9.8, {60,0}, {300,0}, {500,100});
-    RigidBody rigidbodyJoseph(1, 9.8, {80,0}, {300,0}, {500,100});
-    RigidBody rigidbodyNutpicker(1, 9.8, {80,0}, {300,0}, {500,100});
-
-    Topi TopiIA(Vector2{-30, (WINDOW_HEIGHT - Topi_sprite.height*2.0f)-137}, Vector2{(float)Topi_sprite.width, (float)Topi_sprite.height}, TopiAnimator, rigidbodyTopi, 0.0, randSuper(mtSuper));
-    Joseph JosephIA(Vector2{-50, (WINDOW_HEIGHT - Joseph_sprite.height*2.0f)-137}, Vector2{(float)Joseph_sprite.width, (float)Joseph_sprite.height}, JosephAnimator, rigidbodyJoseph, 0.01, randSuper(mtSuper));
-    Nutpicker NutpickerIA(Vector2{Nutpicker_sprite.width * (-1.0f), GetScreenHeight() / 4.0f}, Vector2{(float)Nutpicker_sprite.width, (float)Nutpicker_sprite.height}, NutpickerAnimator, rigidbodyNutpicker, 0.01, randSuper(mtSuper));
+    GameObject Floor("Floor");
+    Floor.addComponent<Transform2D>(Vector2{-100,levels[0]});
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 1}, COLLIDER_ENUM::FLOOR);
+    std::vector<GameObject*> GameObjects;
+    GameObjects.push_back(&Floor);
+    GameObjects.push_back(&Topi);
+    std::vector<GameObject> Blocks;
     
-    auto Enemies = std::vector<IAObject*>();
-    Enemies.push_back(&TopiIA);
-    Enemies.push_back(&JosephIA);
-
-    //auto GreenBlock = WorldObject(Vector2{WINDOW_WIDTH/2 - 100.0f, WINDOW_HEIGHT - 300.0f}, Vector2{float(GreenBlock_sprite.width), float(GreenBlock_sprite.height)}, GreenBlockAnimator);
-    //auto Blocks = std::vector<WorldObject>();
-    //Blocks.push_back(GreenBlock);
-    auto Blocks = std::vector<WorldObject>();
     for(int i = 5; i < 24; i++){
-        auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 360.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+        GameObject GrassBlock("GrassBlock");
+        GrassBlock.addComponent<Transform2D>(Vector2{8.0f*4*4 + 8.0f*4*i, /*levels[1]*/480.0f});
+        GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        GrassBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Grass 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        GrassBlock.addComponent<Script, BlockActions>();
         
-        Blocks.push_back(GreenBlock);
+        GameObjects.push_back(&GrassBlock);
+        Blocks.push_back(GrassBlock);
     }
-    for(int i = 1; i < 17; i++){
-        auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 120.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
+    /*for(int i = 1; i < 17; i++){
+        GameObject DirtBlock("DirtBlock");
+        DirtBlock.addComponent<Transform2D>(Vector2{128.0f+ 8.0f*4*i, 288.0f});
+        DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        DirtBlock.addComponent<Animator>("Idle", Animator::animator_map  {
+            {"Idle", Animation("Assets/OLD SPRITES/Brick - Dirt 01.png", 8, 8, 4, 0.2, true)}
+            }
+        );
+        DirtBlock.addComponent<Script, BlockActions>();
         
-        Blocks.push_back(GreenBlock);
-    }
-    auto floorPosition = Vector2{0, WINDOW_HEIGHT - 125.0f};
-    auto Floor = Collider(&floorPosition, Vector2{WINDOW_WIDTH, 125.0f});
+        GameObjects.push_back(&DirtBlock);
+        Blocks.push_back(DirtBlock);
+    }*/
+
+    /*for(int i = 1; i < levels.size(); i++) {
+        GameObject SidePlatform("SidePlatform");
+        SidePlatform.addComponent<Transform2D>(Vector2{-8.0f*4*3, levels[1]});
+        SidePlatform.addComponent<Collider2D>(&SidePlatform.getComponent<Transform2D>().position, Vector2{float(8*4*(6+1)), float(8*4)}, COLLIDER_ENUM::PLATFORM);
+        SidePlatform.addComponent<Script, LockedPlatform>();
+        
+        GameObjects.push_back(&SidePlatform);
+        Blocks.push_back(SidePlatform);
+    }*/
+    
+
+    Popo.updateColliders(GameObjects);
 
     bool play_music = false;
     bool paused = false;
     BGM.Init();
-    std::cout << WINDOW_HEIGHT << std::endl;
     while(!WindowShouldClose()) {
+        float deltaTime = GetFrameTime();
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -397,10 +137,6 @@ void game(int players) {
             BGM.Play();
         }
     
-        if (IsKeyPressed(KEY_ESCAPE)) {
-            break;
-        }
-
         DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
@@ -410,72 +146,12 @@ void game(int players) {
             paused = !paused;
         }
         if (!paused) {
-            Floor.Draw();
-            for(auto& obj : GameObjects) {
-                Vector2 cpA, cnA; 
-                float ctA, ctC;        // T_hit_near.
-                //auto prevx = obj.position.x;
-                obj.Move();
-                for(auto& enemy : Enemies) {
-                    if(Collides(obj.hitbox, obj.rigidbody.velocity, enemy->hitbox, cpA, cnA, ctA)) {
-                        if(obj.animator.InState("Attack") && !enemy->animator.InState("Stunned") && (obj.isRight != enemy->move))
-                            enemy->hit();
-                        else if(!enemy->animator.InState("Stunned"))
-                            obj.animator["Stunned"];
-                    }
-                }
-                bool freefall = true;
-                if (Collides(obj.hitbox, obj.rigidbody.velocity, Floor, cpA, cnA, ctA)) {
-                    freefall = false;
-                    obj.position.y = Floor.pos->y - obj.hitbox.size.y;
-                    //obj.hitbox.Move(obj.position);
-                    obj.rigidbody.velocity.y = 0;
-                    if(obj.animator.InState("Jump") || obj.animator.InState("Fall"))
-                        obj.animator["Idle"];
-                } else {
-                    for(auto block : Blocks) {
-                        //if(Collides(obj.hitbox, block.hitbox)) {
-                        if(Collides(obj.hitbox, obj.rigidbody.velocity, block.hitbox, cpA, cnA, ctA)){
-                            std::cout << "colision bloque: ";
-                            if(cnA.y < 0) {          //Popo choca encima del bloque
-                                std::cout << "arriba" << std::endl;
-                                obj.position.y = block.position.y - obj.hitbox.size.y;
-                                obj.animator["Idle"];
-                                obj.jumping_dist = 0;
-                                obj.rigidbody.velocity.y = 0;
-                            } else if(cnA.y > 0) {   //Popo choca debajo del bloque
-                                std::cout << "abajo" << std::endl;
-                                obj.rigidbody.velocity.y *= -1;
-                                obj.position.y = block.position.y + block.hitbox.size.y + 1;
-                            } else if(cnA.x < 0){      //Popo choca a la izq del bloque
-                                std::cout << "izquierda" << std::endl;
-                                obj.rigidbody.velocity.x *= -1;
-                                obj.position.x = block.position.x - obj.hitbox.size.x - 1;
-                            }else if(cnA.x > 0){      //Popo choca a la drch del bloque
-                                std::cout << "derecha" << std::endl;
-                                obj.rigidbody.velocity.x *= -1;
-                                obj.position.x = block.position.x + block.hitbox.size.x + 1;
-                            }
-                            //obj.hitbox.Move(obj.position);
-                            freefall = false;
-                        }
-                    }
-                }
-                if(!obj.animator.InState("Jump") && freefall) {
-                    obj.animator["Fall"];
-                    obj.rigidbody.velocity.y += obj.rigidbody.gravity*2;
-                   // obj.position.y = ;        //TODO mover a move
-                }
-                obj.Draw();
-                obj.hitbox.Print();
+            Popo.update();
+            Topi.update();
+            
+            for(auto block : Blocks) {
+                block.update();
             }
-            for(auto& enemy : Enemies) {
-                enemy->Play();
-            }
-            for(auto& block : Blocks) {
-                block.Draw();
-            }
-
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -493,25 +169,24 @@ void game(int players) {
             }
             paused_showtime -= GetFrameTime();
         }
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            break;
+        }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        //DrawRectangle(techo.x, techo.y, techo.width, techo.height, BLUE);
-        //DrawRectangle(suelo.x, suelo.y, suelo.width, suelo.height, RED);
+        //Floor.getComponent<Collider2D>().Draw(PINK);
         EndDrawing();
     }
-    UnloadTexture(Popo_sprite);
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
-    UnloadTexture(Topi_sprite);
-    UnloadTexture(Joseph_sprite);
     //UnloadTexture(Snowball);
-    PopoAnimator.Unload();
-    NanaAnimator.Unload();
-    AmamAnimator.Unload();
-    TopiAnimator.Unload();
-    JosephAnimator.Unload();
-    PopoFX.Unload();
+    Popo.destroy();
     BGM.Unload();
 }
+
+//-----------------------------------------------------------------------------
+// Menus
+// ----------------------------------------------------------------------------
+enum MENU_ENUM { MAIN_MENU, NEW_GAME, NORMAL_GAME, SETTINGS, VIDEO_SETTINGS, AUDIO_SETTINGS, CONTROL_SETTINGS };
 
 int main() {
 
@@ -541,7 +216,7 @@ int main() {
     float full_black_fade = 1.0f;
     float full_black_fade_add = 0.3;
     Vector2 text_measures = MeasureTextEx(NES, "PRESS <ENTER> TO START", 35, 2);
-    Parpadeo pstart(1);
+    Flicker pstart(1);
     bool first_enter   = false;
     float current_key_cooldown = 0, key_cooldown_add = 0.2, key_cooldown = 0.1;
 
@@ -615,7 +290,7 @@ int main() {
     Rectangle SpacekeySrc{0, 0, (float)Spacekey.width, (float)Spacekey.height};
 
     // Efectos?
-    std::vector<Parpadeo> parpadeos(2, Parpadeo(0.75));
+    std::vector<Flicker> parpadeos(2, Flicker(0.75));
 
     int menu_start = 224, menu_height = 290;
     bool fst_player = false, snd_player = false;
@@ -626,8 +301,8 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-
-
+    Game();
+    /*
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -754,7 +429,6 @@ int main() {
                         DrawTextEx(NES, "PRESS", {WINDOW_WIDTH/2.0f - aux.x - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.f}, 35,2, BLUE);
                         DrawTexturePro(Enterkey, EnterkeySrc, {WINDOW_WIDTH/2.0f - (Enterkey.width * 1.7f) + 10, WINDOW_HEIGHT - 120.0f, Enterkey.width * 1.7f, Enterkey.height * 1.7f}, {0,0}, 0, WHITE);
                         DrawTextEx(NES, "TO START", { WINDOW_WIDTH/2.0f + 30, WINDOW_HEIGHT - 120.f}, 35, 2, BLUE);
-
                     } else {
                         DrawTextEx(NES, "PRESS <ENTER> TO START", {(WINDOW_WIDTH - text_measures.x)/2.0f, WINDOW_HEIGHT - 200.0f}, 35, 2, BLUE);
                     }
@@ -859,8 +533,11 @@ int main() {
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
                     case 0:
-                        if(snd_player) game(2);
-                        else if(fst_player) game(1);
+                        if (fst_player) {
+                            StopMusicStream(ts_music);
+                            Game();
+                            PlayMusicStream(ts_music);
+                        }
                         break;
                     case 1:
                         speed_run = !speed_run;
@@ -888,7 +565,7 @@ int main() {
                 DrawTextEx(NES, "SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
                 DrawTextEx(NES, "VIDEO",    {500, menu_start + (float)option_offset}, 35, 2, WHITE);
                 DrawTextEx(NES, "AUDIO",    {500, menu_start + (option_offset * 2.0f)}, 35, 2, GRAY);
-                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, GRAY);
+                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, WHITE);
                 DrawTextEx(NES, "RETURN",   {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
@@ -899,8 +576,15 @@ int main() {
                         option_offset  = menu_height/(OPTIONS+1);
                         option_drift   = 3;
                         break;
-                    case 1: case 2:
+                    case 1:
                         std::cout << "Hola\n";
+                        break;
+                    case 2:
+                        CURRENT_MENU   = CONTROL_SETTINGS;
+                        OPTIONS = 4;
+                        current_option = 0;
+                        option_offset  = menu_height/(OPTIONS+1);
+                        option_drift   = 3;
                         break;
                     case 3: 
                         CURRENT_MENU   = MAIN_MENU;
@@ -1053,19 +737,130 @@ int main() {
                     option_drift   = 0;
                 }
                 break;
-            case AUDIO_SETTINGS: case CONTROL_SETTINGS:
+            case AUDIO_SETTINGS:
+                break;
+            case CONTROL_SETTINGS:
+                // MENU TITLE:
+                DrawTextEx(NES, "CONTROL SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
+                
+                // CURRENT PLAYER: 0, 1, 2, 3
+                static int currPlyr = 0;
+                DrawTextEx(NES, "PLAYER:", {500, menu_start + (option_offset * 1.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, std::to_string(currPlyr).c_str(), {770, menu_start + (option_offset * 1.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT CONTROLLER: 0, 1, 2, 3
+                static int currCont = Controller::KEYBOARD;
+                std::string currContStr;
+                switch (currCont) {
+                    case Controller::CONTROLLER_0: currContStr = "JOY 0"; break;
+                    case Controller::CONTROLLER_1: currContStr = "JOY 1"; break;
+                    case Controller::CONTROLLER_2: currContStr = "JOY 2"; break;
+                    case Controller::CONTROLLER_3: currContStr = "JOY 3"; break;
+                    case Controller::KEYBOARD: currContStr = "KEYBOARD"; break;
+                    default: currContStr = "NO JOY"; break;
+                }
+                DrawTextEx(NES, "CONTROLLER:", {500, menu_start + (option_offset * 2.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currContStr.c_str(), {770, menu_start + (option_offset * 2.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT ACTION
+                static int currAction = Controller::LEFT;
+                std::string currActionStr;
+                switch (currAction) {
+                    case Controller::LEFT: currActionStr = "GO LEFT"; break;
+                    case Controller::RIGHT: currActionStr = "GO RIGHT"; break;
+                    case Controller::DOWN: currActionStr = "GO DOWN"; break;
+                    case Controller::UP: currActionStr = "GO UP"; break;
+                    case Controller::JUMP: currActionStr = "JUMP"; break;
+                    case Controller::ATTACK: currActionStr = "ATTACK"; break;
+                    default: currActionStr = "No Action"; break;
+                }
+                DrawTextEx(NES, "ACTION:", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currActionStr.c_str(), {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
+                
+                // CURRENT ACTION BINDING
+                static bool selected = false;
+                DrawTextEx(NES, "KEYBINDING:", {500, menu_start + (option_offset * 4.0f)}, 30, 1, WHITE);
+                if (selected) {
+                    DrawTexturePro(Arrow, ArrowSrcInv, {750, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                    DrawTexturePro(Arrow, ArrowSrc, {870, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                }
+                DrawTextEx(NES, "XD", {770, menu_start + (option_offset * 4.0f) + 5}, 17, 1, WHITE);
+                switch (current_option) {
+                    case 0:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currPlyr = mod(currPlyr-1, 4);
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currPlyr = mod(currPlyr+1, 4);
+                        break;
+                    case 1:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT))
+                        { currCont = mod(currCont-1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT))
+                        { currCont = mod(currCont+1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        break;
+                    case 2:
+                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currAction = mod(currAction-1, 6);
+                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currAction = mod(currAction+1, 6);
+                        break;
+                    case 3:
+                        if (!selected && IsKeyPressed(KEY_ENTER)) {
+                            selected = true;
+                        } else if (selected) {
+                            bool keyboard = (controllers[currPlyr]->type == Controller::Type::KEYBOARD);
+                            int binding = 0;
+                            int axisOffset = 0;
+                            //Keyboard
+                            if (keyboard) binding = GetKeyPressed();
+                            //Gamepad Trigger
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Axis
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Button
+                            else binding = GetGamepadButtonPressed();
+
+                            if (binding != 0) {
+                                controllers[currPlyr]->controls[(Controller::Control)currAction] = binding;
+                                if (axisOffset != 0) controllers[currPlyr]->controls[(Controller::Control)(currAction + axisOffset)] = binding;
+                                selected = false;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    CURRENT_MENU   = SETTINGS;
+                    OPTIONS        = 4;
+                    current_option = 0;
+                    option_offset  = menu_height/(OPTIONS+1);
+                    option_drift   = 0;
+                }
                 break;
             }
 
             if (IsKeyPressed(KEY_DOWN)) {
-                current_option = ((current_option+1)%OPTIONS);
+                current_option = mod(current_option+1, OPTIONS);
             }
             if (IsKeyPressed(KEY_UP)) {
-                current_option = ((current_option-1)%OPTIONS + OPTIONS) % OPTIONS;
+                current_option = mod(current_option-1, OPTIONS);
             }
             
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
-                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)});
+                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)}, deltaTime);
             } else {
                 DrawTexturePro(OldOptionHammer, OldOptionHammerSrc,
                     {450, (float)menu_start + (option_offset * (current_option+1) - option_drift), OldOptionHammer.width * 4.0f, OldOptionHammer.height * 4.0f}, {0,0}, 0, WHITE);
@@ -1074,7 +869,6 @@ int main() {
         }
         EndDrawing();
     }
-    OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
     UnloadTexture(Sign);
@@ -1095,161 +889,5 @@ int main() {
     UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
+    */
 }
-
-/*int main() {
-
-    //std::ostringstream s;
-    InitWindow(WINDOW_WIDTH,WINDOW_HEIGHT,"COÑO");
-    SetExitKey(KEY_NULL);
-    InitAudioDevice(); // Initialize audio device.
-
-    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES/Pixel_NES.otf");
-    // ---- Music
-    Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
-    ts_music.looping = true;
-    bool play_music = false;
-    PlayMusicStream(ts_music);
-    SetTargetFPS(30);
-
-    // Title screen.
-    // ---- Sprite
-    //Texture2D ts_bg = LoadTexture("Assets/NES - Ice Climber - Sprites/01-Title-screen.png");
-    //Rectangle ts_src{0, 0, (float)ts_bg.width, (float)ts_bg.height};
-    //Rectangle ts_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    // Resouluciones:
-
-    Texture2D PinesFore = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 01 - Pines.png");
-    float PinesForeHeight = (WINDOW_WIDTH * PinesFore.height)/(float)(PinesFore.width);
-    Rectangle PinesForeSrc{0, 0, (float)PinesFore.width, (float)PinesFore.height};
-    Rectangle PinesForeDst{0, WINDOW_HEIGHT - PinesForeHeight, (float)WINDOW_WIDTH, PinesForeHeight};
-    float PinesForeSpeed = 0.6;
-    Texture2D PinesMid = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 02 - Pines.png");
-    float PinesMidHeight = (WINDOW_WIDTH * PinesMid.height)/(float)(PinesMid.width);
-    Rectangle PinesMidSrc{0, 0, (float)PinesMid.width, (float)PinesMid.height};
-    Rectangle PinesMidDst{0, WINDOW_HEIGHT - PinesMidHeight + 5, (float)WINDOW_WIDTH, PinesMidHeight};
-    float PinesMidSpeed = 0.3;
-    Texture2D Mountain = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 03 - Mountain.png");
-    float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
-    Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
-    Rectangle MountainDst{0, WINDOW_HEIGHT - (MountainHeight * 0.75f), WINDOW_WIDTH * 0.75f, MountainHeight * 0.75f};
-    float MountainSpeed = 0.1;
-    Texture2D Fields = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 04 - Fields.png");
-    float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
-    Rectangle FieldsSrc{0, 0, (float)Fields.width, (float)Fields.height};
-    Rectangle FieldsDst{0, WINDOW_HEIGHT - FieldsHeight, (float)WINDOW_WIDTH, FieldsHeight};
-    Texture2D Snow = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 05 - Snow.png");
-    Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
-    Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    float SnowSpeed = 0.1;
-    Texture2D Letter = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 06 - Letter.png");
-    float LetterWidthPos = (WINDOW_WIDTH - (Letter.width*2.5f))/2.0f;
-    Rectangle LetterSrc{0, 0, (float)Letter.width,  (float)Letter.height};
-    Rectangle LetterDst{LetterWidthPos, 30, Letter.width * 2.5f, Letter.height * 2.5f};
-    Texture2D ObscureLayer = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 07 - Obscure layer.png"); 
-    Rectangle ObscureLayerSrc{0, 0, (float)ObscureLayer.width,  (float)ObscureLayer.height};
-    Rectangle ObscureLayerDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    //Texture2D SelectionHammer = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 08 - Selection hammer.png"); 
-    //Rectangle SelectionHammerSrc{0, 0, (float)SelectionHammer.width, (float)SelectionHammer.height};
-    //Rectangle SelectionHammerDst{LetterWidthPos + 80, 282, SelectionHammer.width*1.5f, SelectionHammer.height*1.5f};
-    Animation SelectionHammer("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 08 - Selection hammer Animation.png", 40, 24, 1.5, 0.5, true);
-    Texture2D ObscureSelection = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Titlescreen - 09 - Obscure Selection.png");
-    Rectangle ObscureSelectionSrc{0, 0, (float)ObscureSelection.width, (float)ObscureSelection.height};
-    Rectangle ObscureSelectionDst{LetterWidthPos + 75, 277, ObscureSelection.width*3.15f, ObscureSelection.height*1.5f};
-
-    Texture2D Settings = LoadTexture("Assets/NES - Ice Climber - Sprites/1_new/Settings.png");
-    Rectangle SettingsSrc{0, 0, (float)Settings.width, (float)Settings.height};
-    Rectangle SettingsDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
- 
-    int option = 0;
-    int OPTIONS = 4;
-    bool settings = false;
-    bool new_game  = false;
-    bool closeWindow = false;
-    while(!WindowShouldClose() && !closeWindow) {
-
-        if (scrollingFore <= -PinesFore.width * 2) scrollingFore = 0;
-
-        if (IsKeyPressed(KEY_M)) {
-            play_music = !play_music;
-        }
-        if (play_music) {
-            UpdateMusicStream(ts_music);
-        }
-        BeginDrawing();
-        ClearBackground(BLACK);
-        //DrawTexturePro(ts_bg, ts_src, ts_dst, Vector2{0,0}, 0, WHITE);
-        //DrawTextureEx(PinesFore, (Vector2){ scrollingFore, 70 }, 0, 2, WHITE);
-        //DrawTextureEx(PinesFore, (Vector2){ PinesFore.width*2 + scrollingFore, 70 }, 0, 2, WHITE);
-
-        if (!new_game) {
-            DrawTexturePro(Fields, FieldsSrc, FieldsDst, Vector2{0,0}, 0, WHITE);
-            MountainDst.x -= MountainSpeed;
-            if (MountainDst.x + MountainDst.width < 0) MountainDst.x = GetScreenWidth();
-            DrawTexturePro(Mountain, MountainSrc, MountainDst, Vector2{0,0}, 0, WHITE);
-            SnowSrc.x -= SnowSpeed;
-            SnowSrc.y -= SnowSpeed;
-            DrawTexturePro(Snow, SnowSrc, SnowDst, Vector2{0,0}, 0, WHITE);
-            PinesMidSrc.x += PinesMidSpeed;
-            DrawTexturePro(PinesMid, PinesMidSrc, PinesMidDst, Vector2{0,0}, 0, WHITE);
-            PinesForeSrc.x += PinesForeSpeed;
-            DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
-            if (!settings) {
-                if (IsKeyPressed(KEY_DOWN)) {
-                    option = ((option+1)%OPTIONS);
-                    ObscureSelectionDst.y = 277 + (58.0f * option);
-                }
-                if (IsKeyPressed(KEY_UP)) {
-                    option = ((option-1)%OPTIONS + OPTIONS) % OPTIONS;
-                    ObscureSelectionDst.y = 277 + (58.0f * option);
-                }
-                DrawTexturePro(ObscureSelection, ObscureSelectionSrc, ObscureSelectionDst, Vector2{0,0}, 0, WHITE);
-                DrawTexturePro(Letter, LetterSrc, LetterDst, Vector2{0,0}, 0, WHITE);
-                SelectionHammer.Play({LetterWidthPos + 80, 282 + (58.0f * option)});
-                DrawTextEx(NES, "CONTINUE", {LetterWidthPos + 150, 282}, 35, 2, GRAY);
-                DrawTextEx(NES, "NEW GAME", {LetterWidthPos + 150, 340}, 35, 2, WHITE);
-                DrawTextEx(NES, "SETTINGS", {LetterWidthPos + 150, 398}, 35, 2, WHITE);
-                DrawTextEx(NES, "EXIT",     {LetterWidthPos + 150, 456}, 35, 2, WHITE);
-                DrawTexturePro(PinesFore, PinesForeSrc, PinesForeDst, Vector2{0,0}, 0, WHITE);
-                DrawTextEx(NES, "(C) 2023 NINTENDO", {LetterWidthPos + 80, 550}, 35, 2, WHITE);
-                DrawTextEx(NES, "Press [M] to mute",  {10, 10}, 20, 2, WHITE);
-            } else {
-                DrawTexturePro(Settings, SettingsSrc, SettingsDst, Vector2{0,0}, 0, WHITE);
-            }
-        } else {
-            DrawTextEx(NES, "NORMAL MODE",  {LetterWidthPos + 150, 282}, 35, 2, WHITE);
-            DrawTextEx(NES, "BRAWL MODE",   {LetterWidthPos + 150, 340}, 35, 2, GRAY);
-            DrawTextEx(NES, "ENDLESS MODE", {LetterWidthPos + 150, 398}, 35, 2, GRAY);
-        }
-        EndDrawing();
-
-        if (IsKeyPressed(KEY_ENTER)) {
-            switch(option) {
-                case 0:
-                    std::cout << "Hola!\n";
-                    break;
-                case 1: 
-                    StopMusicStream(ts_music);
-                    game();
-                    PlayMusicStream(ts_music);
-                    break;
-                case 2:
-                    settings = !settings;
-                    break;
-                case 3:
-                    closeWindow = true;
-                    break;
-            }
-
-        }
-    }
-
-    // Title screen.
-    UnloadFont(NES);
-    //UnloadTexture(ts_bg);
-    UnloadMusicStream(ts_music);
-    CloseAudioDevice();
-    CloseWindow();
-
-}
-*/

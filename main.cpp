@@ -1,119 +1,122 @@
 #include "EngineECS.h"
-#include "EngineUI.h"
-#include "Popo.h"
-#include "Topi.h"
-#include "Block.h"
-#include "settings.h"
+#include "./Assets/Scripts/settings.h"
+#include "./Assets/Scripts/Popo.h"
+#include "./Assets/Scripts/Grass_block.h"
+#include "./Assets/Scripts/Topi.h"
+
+class Flicker {
+private:
+    float current_time; // Current time in the current state.
+public:
+    bool  action;       // Indicates if is the moment to perform the action or not. 
+    float trigger_time; // Time for triggering into the next state.
+
+    Flicker() : action(false), current_time(0), trigger_time(0) {}
+    Flicker(float trigger_time) : action(false), current_time(0), trigger_time(trigger_time) {}
+
+    bool Trigger(float deltaTime) {
+        current_time += deltaTime;
+        if (current_time >= trigger_time) {
+            action = !action;
+            current_time = 0;
+        }
+        return action;
+    }
+};
 
 Font NES;
 
 void Game() {
 
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f};
+
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
-    MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
+    MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo;
-    GameObject Topi;
+    GameObject Popo("Popo");
+    GameObject Topi("Topi");
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>(Vector2{WINDOW_WIDTH / 2.0f,(WINDOW_HEIGHT - 24*2.0f)-170});
-    Topi.addComponent<Transform2D>(Vector2{-30, (WINDOW_HEIGHT - 16*2.0f)-110});
+    Popo.addComponent<Transform2D>();
+    Topi.addComponent<Transform2D>();
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
-    Popo.addComponent<Animator>("Idle", Animator::animator_map {
-        {"Idle", Animation("Assets/OLD SPRITES/Popo - Spritesheet 01 - Idle.png", 16, 24, 3, 0.75, true)},
-        {"Walk", Animation("Assets/OLD SPRITES/Popo - Spritesheet 02 - Walk.png", 16, 24, 3, 0.135, true)},
-        {"Brake", Animation("Assets/OLD SPRITES/Popo - Spritesheet 03 - Brake.png", 16, 24, 3, 0.3, true)},
-        {"Jump", Animation("Assets/OLD SPRITES/Popo - Spritesheet 04 - Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/OLD SPRITES/Popo - Spritesheet 05 - Attack.png", 21, 25, 3, 0.3, true)},
-        {"Stunned", Animation("Assets/OLD SPRITES/Popo - Spritesheet 06 - Stunned.png", 16, 24, 3, 0.3, true)},
-        {"Fall", Animation("Assets/OLD SPRITES/Popo - Spritesheet 07 - Fall.png", 20, 25, 3, 0.3, true)}
+    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 4, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 4, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 4, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 4, 0.9, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 4, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 24, 4, 0.3, false)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 4, 0.3, false)},
+        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
 
-    Topi.addComponent<Animator>("Walk", Animator::animator_map  {
-            {"Walk", Animation("Assets/OLD SPRITES/Topi - Spritesheet 01 - Walk.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/OLD SPRITES/Topi - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)}
+    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 4, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 4, 0.5, true)},
         }
     );
     // 3. Añadimos el componente de Audio:
-    Popo.addComponent<AudioPlayer>(AudioPlayer::audioplayer_map {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
+    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 98, Vector2{150,0}, Vector2{150,200});
+    Popo.addComponent<RigidBody2D>(1, 98, Vector2{100,0}, Vector2{100,210});
     Topi.addComponent<RigidBody2D>(1, 98, Vector2{60,0}, Vector2{100,0});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::PLAYER);
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions(), COLLIDER_ENUM::ENEMY);
+    Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
+    Topi.addComponent<Collider2D>(Topi.name, &Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
     Topi.addComponent<Script, MovementTopi>();
+    GameSystem::Instantiate(Popo, Vector2{WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y});
+    GameSystem::Instantiate(Topi, Vector2{WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y});
 
     // Rectangles = Sprites component?
     // Mountain background:
-    Texture2D Mountain_sprite = LoadTexture("Assets/OLD SPRITES/Mountain - Background 01.png");
-    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH;
-    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height, (float)Mountain_sprite.width, Mountain_view_height};
+    Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH/* + 40*/;
+    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height/* - 10*/, (float)Mountain_sprite.width, Mountain_view_height};
     Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     
     // PAUSE frame:
-    Texture2D Pause_frame = LoadTexture("Assets/OLD SPRITES/04-Small-frame.png");
+    Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
-    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
+    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*4.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*4.0f, Pause_frame.height*4.0f};
     
-
     GameObject Floor("Floor");
-    Floor.addComponent<Transform2D>(Vector2{-100,673});
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 100}, COLLIDER_ENUM::FLOOR);
-    std::vector<Collider2D*> colliders;
-    colliders.push_back(&Floor.getComponent<Collider2D>());
-    colliders.push_back(&Topi.getComponent<Collider2D>());
-    std::vector<Collider2D*> BlocksCollider;
-    std::vector<GameObject> Blocks;
-    //auto GreenBlock = WorldObject(Vector2{160.0f+ GreenBlock_sprite.width*5*i, 120.0f}, Vector2{float(GreenBlock_sprite.width*2-1), float(GreenBlock_sprite.height*2-1)}, GreenBlockAnimator);
-    for(int i = 5; i < 25; i++){
-        GameObject GreenBlock("GreenBlock");
-        GreenBlock.addComponent<Transform2D>(Vector2{96.0f+ 8.0f*4*i, 480.0f});
-        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
-        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
-            {"Idle", Animation("Assets/OLD SPRITES/Brick - Grass 01.png", 8, 8, 4, 0.2, true)}
-            }
-        );
-        GreenBlock.addComponent<Script, BlockActions>();
-        
-        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
-        Blocks.push_back(GreenBlock);
-    }
-    for(int i = 1; i < 17; i++){
-        GameObject GreenBlock("GreenBlock");
-        GreenBlock.addComponent<Transform2D>(Vector2{128.0f+ 8.0f*4*i, 288.0f});
-        GreenBlock.addComponent<Collider2D>(&GreenBlock.getComponent<Transform2D>().position, Vector2{float(8*4), float(8*4)}, COLLIDER_ENUM::PLATFORM);
-        GreenBlock.addComponent<Animator>("Idle", Animator::animator_map  {
-            {"Idle", Animation("Assets/OLD SPRITES/Brick - Dirt 01.png", 8, 8, 4, 0.2, true)}
-            }
-        );
-        GreenBlock.addComponent<Script, BlockActions>();
-        
-        colliders.push_back(&GreenBlock.getComponent<Collider2D>());
-        Blocks.push_back(GreenBlock);
+    Floor.addComponent<Transform2D>(Vector2{-100,levels[0]});
+    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 1}, PINK);
+
+    GameObject Block("Grass Block");
+    Block.addComponent<Transform2D>();
+    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
+    int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
+    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    Block.addComponent<Script, GrassBlockBehavior>();
+    for (int i = 5; i < 24; i++) {
+        GameSystem::Instantiate(Block, Vector2{block_width*4.0f + block_width * i, levels[1]});
     }
     
-    Popo.updateColliders(colliders);
-
     bool play_music = false;
     bool paused = false;
     BGM.Init();
+
+    //GameSystem::Printout();
+
+    //std::cout << GameSystem::GameObjects["Popo"][0]->getComponent<Animator>().GetViewDimensions() << "\n";
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         BeginDrawing();
@@ -134,12 +137,8 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            Popo.update();
-            Topi.update();
-            
-            for(auto block : Blocks) {
-                block.update();
-            }
+            //std::cout << "Original: " << Popo.getComponent<Transform2D>().position << ", Instance: " << GameSystem::GameObjects["Popo"][0]->getComponent<Transform2D>().position << "\n";
+            GameSystem::Update();
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -160,14 +159,17 @@ void Game() {
         if (IsKeyPressed(KEY_ESCAPE)) {
             break;
         }
+        if (IsKeyPressed(KEY_R)) {
+            Popo.getComponent<Transform2D>().position = Vector2{600,400};
+        }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        //Floor.getComponent<Collider2D>().Draw(PINK);
+        Floor.getComponent<Collider2D>().Draw();
         EndDrawing();
     }
     UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     //UnloadTexture(Snowball);
-    Popo.destroy();
+    Popo.Destroy();
     BGM.Unload();
 }
 
@@ -289,6 +291,8 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
+    Game();
+    /*
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -875,4 +879,5 @@ int main() {
     UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
+    */
 }
