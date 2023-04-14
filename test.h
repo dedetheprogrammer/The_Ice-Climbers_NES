@@ -1,8 +1,5 @@
 #pragma once
-#include "animator.h"
-#include "collider.h"
 #include "raylib.h"
-#include "audioplayer.h"
 #include <ctime>
 #include <random>
 

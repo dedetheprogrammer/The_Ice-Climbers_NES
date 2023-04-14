@@ -1,6 +1,6 @@
 #pragma once
 #include "EngineECS.h"
-#include "raylib.h"
+//#include "raylib.h"
 //#include "collider.h"
 
 class MovementTopi : public Script {
@@ -28,7 +28,7 @@ private:
     void Draw() {
         animator.Play();
         collider.Draw();
-        rigidbody.Draw(transform.position + animator.GetViewDimensions());
+        rigidbody.Draw();
     }
 
 public:

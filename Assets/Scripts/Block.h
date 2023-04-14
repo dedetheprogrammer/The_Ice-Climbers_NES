@@ -1,7 +1,6 @@
 #pragma once
 #include "EngineECS.h"
 #include "raylib.h"
-//#include "collider.h"
 
 class BlockActions : public Script {
 private:
@@ -27,7 +26,7 @@ public:
     Animator& animator;
     Collider2D& collider;
     Transform2D& transform;
-    std::vector<GameObject*>& gameObjects;
+    std::vector<GameObject*>& gameObjects; 
 
     BlockActions(GameObject& gameObject) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),

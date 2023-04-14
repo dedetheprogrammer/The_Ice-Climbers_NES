@@ -1,8 +1,8 @@
 #include "EngineECS.h"
-#include "./Assets/Scripts/settings.h"
-#include "./Assets/Scripts/Popo.h"
-#include "./Assets/Scripts/Grass_block.h"
-#include "./Assets/Scripts/Topi.h"
+#include "settings.h"
+#include "Popo.h"
+#include "Grass_block.h"
+#include "Topi.h"
 
 class Flicker {
 private:
@@ -38,7 +38,8 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block"});
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -75,15 +76,16 @@ void Game() {
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
-    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
+    Topi.addComponent<Script, MovementTopi>();
+    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y}});
 
     // Rectangles = Sprites component?
     // Mountain background:
     Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
-    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH/* + 40*/;
-    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height/* - 10*/, (float)Mountain_sprite.width, Mountain_view_height};
-    Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+    Background Background(Mountain_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
     
     // PAUSE frame:
     Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
@@ -95,18 +97,32 @@ void Game() {
     GameObject Floor("Base Floor", "Floor");
     Floor.addComponent<Transform2D>();
     Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
-    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,560}});
+    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,levels[0]}});
 
-    GameObject Block("Grass Block");
+    GameObject Block("Grass Block", "Floor");
     Block.addComponent<Transform2D>();
     Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
     int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     Block.addComponent<Script, GrassBlockBehavior>();
     for (int i = 5; i < 24; i++) {
-        GameSystem::Instantiate(Block, Vector2{block_width*4.0f + block_width * i, levels[1]});
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*4.0f + block_width * i, levels[1]}});
+    }
+    Block.removeComponent<Sprite>();
+    Block.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", Vector2{4.0f, 4.0f});
+    for(int i = 0; i < 16; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
+    }
+    for(int i = 0; i < 16; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
     }
     
+    /*GameObject Side("Base Floor", "Floor");
+    Side.addComponent<Transform2D>();
+    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, 30}, PINK);
+
+        GameSystem::Instantiate(Side, GameObjectOptions{.position{block_width*(-1)*i,levels[0]}});*/
+
     bool play_music = false;
     bool paused = false;
     BGM.Init();
@@ -125,7 +141,8 @@ void Game() {
             BGM.Play();
         }
     
-        DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
+        Background.Draw();
+
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;

@@ -8,33 +8,69 @@
 #include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "raylib.h"
 
-/**
- * @brief Engine GameObject
- * 
- */
+// Configuración de una instancia.
+struct GameObjectOptions {
+    // Nombre que queremos que reciba la nueva instancia.
+    std::string name      = "";
+    // Tag que queremos que reciba la nueva instancia.
+    std::string tag       = "";
+    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // tags secundarios para colisiones, etc.
+    std::unordered_set<std::string> second_tags;
+    // Tags que queremos que se comprueben en las colisiones.
+    std::unordered_set<std::string> related_tags = {};
+    // Posición en la que queremos que se instancie la nueva instancia.
+    Vector2 position      = {-1,-1};
+    // Color del colider para cuando se dibuje (de momento sin implementar).
+    // Color collider_color  = {-1,-1,-1,-1};
+};
+
+class Background {
+private:
+    Texture2D Texture;
+    float window_width;
+    float window_height;
+    float background_view_height;
+    float move;
+public:
+    void Draw();
+    Background(Texture2D Texture, int window_width, int window_height);
+};
+
 class Component;
 class Script;
 class Collision;
+
+// Un objeto del juego.
 class GameObject {
 private:
-    //...
+    // Clonar GameObject.
+    void Clone(GameObject& gameObject);
 public:
-    // Nombre de GameObject (puede englobar varios GameObject).
-    std::string tag;
     // Nombre del GameObject (unico por GameObject).
     std::string name;
+    // Tag de GameObject (puede englobar varios GameObject).
+    std::string tag;
+    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // tags secundarios para colisiones, etc.
+    std::unordered_set<std::string> second_tags;
+    // Tags a los que esta relacionado el GameObject actual. 
+    std::unordered_set<std::string> related_tags;
     // Para componentes que solo puede haber uno por GameObject.
     std::unordered_map<std::type_index, Component*> components;
     // Puede haber varios Scripts en un GameObject.
     std::unordered_map<std::type_index, Script*> scripts;
-    // Se puede discutir si permitir que haya varios componentes por gameObject..
+    // Se puede discutir si permitir que haya varios componentes por gameObject.
 
-    GameObject();
-    GameObject(std::string name);
+    GameObject(std::string name = "GameObject", std::string tag = "",
+        std::unordered_set<std::string> second_tags  = {},
+        std::unordered_set<std::string> related_tags = {});
     GameObject(GameObject& gameObject);
+    GameObject(GameObject& gameObject, const GameObjectOptions& options);
 
     template <typename T, typename... Args> void addComponent(Args&&... args) {
         components[typeid(T)] = new T(*this, std::forward<Args>(args)...);
@@ -96,10 +132,8 @@ public:
 // ----------------------------------------------------------------------------
 // Componente generico
 // ----------------------------------------------------------------------------
-/**
- * @brief A GameObject component.
- * 
- */
+
+// A GameObject component.
 class Component {
 private:
     // ...
@@ -117,9 +151,8 @@ public:
 //-----------------------------------------------------------------------------
 // Animations
 //-----------------------------------------------------------------------------
-/**
- * @brief An animation made of sprites.
- */
+
+// An animation made of sprites.
 class Animation {
 private:
     // Animation properties:
@@ -160,9 +193,7 @@ public:
 
 };
 
-/**
- * @brief Animator component
- */
+// Animator component
 class Animator : public Component {
 private:
     std::string entry_animation;   // (UNUSED) The entry animation of the whole stream.
@@ -170,113 +201,51 @@ private:
     std::string waiting_animation; // (UNUSED) Next animation that we want to play in some cases.
     std::unordered_map<std::string, Animation> Animations; // The animations perse.
 public:
-    /**
-     * @brief Construct a new Animator object
-     * 
-     * @param gameObject 
-     * @param entry_animation 
-     * @param Animations 
-     */
+    // Construct a new Animator object
     Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
     
-    /**
-     * @brief Construct a new Animator object
-     * 
-     * @param animator 
-     */
+    // Construct a new Animator object
     Animator(GameObject& gameObject, Animator& animator);
 
-    /**
-     * @brief Clones the current animator into a new one.
-     * 
-     * @return Component* 
-     */
+    // Clones the current animator into a new one.
     Component* Clone(GameObject& gameObject) override;
 
-    /**
-     * @brief Flips all the animations.
-     * 
-     */
+    // Flips all the animations.
     void Flip();
 
-    /**
-     * @brief Get the scale of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // @brief Gets the scale of the current animation.
     Vector2 GetScale();
 
-    /**
-     * @brief Get the dimensions of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // Gets the dimensions of the current animation.
     Vector2 GetDimensions();
 
-    /**
-     * @brief Get the scaled dimensions of the current animation.
-     * 
-     * @return Vector2 
-     */
+    // Gets the scaled dimensions of the current animation.
     Vector2 GetViewDimensions();
 
-    /**
-     * @brief Indicates if the current animation has finished.
-     * 
-     * @param animation 
-     * @return true 
-     * @return false 
-     */
+    // Indicates if the current animation has finished.
     bool HasFinished(std::string animation);
 
-    /**
-     * @brief Indicates if the current state animation is the given one.
-     * 
-     * @param animation 
-     * @return true 
-     * @return false 
-     */
+    // Indicates if the current state animation is the given one.
     bool InState(std::string animation);
 
-    /**
-     * @brief Plays the current animation.
-     * 
-     * @param position 
-     * @param deltaTime 
-     */
+    // Plays the current animation.
     void Play();
 
-    /**
-     * @brief If the entry animation is the current one, plays it and pass to the
-     * given next animation.
-     * 
-     * @param entry_animation 
-     * @param next_animation 
-     * @return true 
-     * @return false 
-     */
+    // If the entry animation is the current one, plays it and pass to the
     bool Trigger(std::string entry_animation, std::string next_animation);
 
-    /**
-     * @brief Unloads all the spritesheets.
-     * 
-     */
+    // Unloads all the spritesheets.
     void Unload() override;
 
-    /**
-     * @brief Stops the current animation and changes to the given one.
-     * 
-     * @param animation 
-     */
+    // Stops the current animation and changes to the given one.
     void operator[](std::string animation);
 };
 
 //-----------------------------------------------------------------------------
 // Audio
-//-----------------------------------------------------------------------------´
-/**
- * @brief Fahter class Audio, covers every type of audio.
- */
+//-----------------------------------------------------------------------------
+
+// Fahter class Audio, covers every type of audio.
 class AudioSource {
 private:
     // ...
@@ -287,9 +256,7 @@ public:
     virtual void Unload() = 0;
 };
 
-/**
- * @brief Audio type: sound.
- */
+// Audio type: sound.
 class SoundSource : public AudioSource {
 private:
     Sound source;
@@ -299,9 +266,7 @@ public:
     void Unload() override;
 };
 
-/**
- * @brief Audio type: music.
- */
+// Audio type: music.
 class MusicSource : public AudioSource {
 private:
     Music source;
@@ -312,9 +277,8 @@ public:
     void Unload() override;
 };
 
-/**
- * @brief Audioplayer component.
- */
+
+// Audioplayer component.
 class AudioPlayer : public Component {
 private:
     std::unordered_map<std::string, std::shared_ptr<AudioSource>> Audios;
@@ -326,23 +290,19 @@ public:
     void operator[ ](std::string audiosource);
 };
 
-/**
- * @brief GameObject physical limits.
- * 
- */
+// GameObject physical limits.
 class Collider2D : public Component {
 private:
-    Color color;
+    //...
 public:
-    enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
+    // enum COLLIDER_ENUM { UKNOWN = -1, PLAYER, ENEMY, PROJECTILE, WALL, FLOOR };
+    Color color;  // Color del collider.
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
     
     Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
-    Collider2D(GameObject& gameObject, std::string name, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Collider2D& collider);
     Component* Clone(GameObject& gameObject) override;
     void Draw();
@@ -351,10 +311,7 @@ public:
 //-----------------------------------------------------------------------------
 // Physics
 //-----------------------------------------------------------------------------
-/**
- * @brief GameObject physics behaviour.
- * 
- */
+// GameObject physics behaviour.
 class RigidBody2D : public Component{
 private:
     // ...
@@ -368,7 +325,7 @@ public:
     RigidBody2D(GameObject& gameObject, float mass, float gravity, Vector2 max_velocity, Vector2 acceleration);
     RigidBody2D(GameObject& gameObject, RigidBody2D& rigidbody);
     Component* Clone(GameObject& gameObject) override;
-    void Draw(Vector2 center);
+    void Draw();
 };
 
 //-----------------------------------------------------------------------------
@@ -411,10 +368,7 @@ public:
 //-----------------------------------------------------------------------------
 // Status
 //-----------------------------------------------------------------------------
-/**
- * @brief GameObject status properties
- * 
- */
+// GameObject status properties
 class Transform2D : public Component{
 private:
     // ...
@@ -428,7 +382,7 @@ public:
     Component* Clone(GameObject& gameObject) override;
 };
 
-// Hola
+// Devuelve si existe movimiento en alguno de los ejes.
 int GetAxis(std::string axis);
 
 // ============================================================================
@@ -437,23 +391,42 @@ int GetAxis(std::string axis);
 // ============================================================================
 // ============================================================================
 // ----------------------------------------------------------------------------
-// Collision System
+// Game System
+// /!\ Aunque no lo creais y no lo parezca, todo esto lo hago para encapsular 
+// el tratamiento a pelo de los colliders y de los objetos en escena, de manera
+// que con llamar a un par de funciones lo haga solo sin que vosotros tengais 
+// que controlarlo (+ reutilizacion de codigo + mantenimiento + generalizacion).
 // ----------------------------------------------------------------------------
-class Collision {
-private:
-    //...
-public:
+
+// Información de una colision resultante.
+struct Collision {
+    // GameObject con el que ha colisionado.
     GameObject& gameObject;
-    // enum
+    // Tiempo de colision
     float contact_time;
+    // Punto de intersección del rayo del objeto dinámico al estático
     Vector2 contact_point;
+    // Normal del punto de intersección (lado desde el que van a chocar).
     Vector2 contact_normal; // x=-1 (IZQ), x=1 (DCH), y=-1 (ARR), y=1 (ABJ)
+    // Constructor
     Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal);
 };
 
-class CollisionSystem {
+class GameSystem {
 private:
-    static std::unordered_map<std::string, Collider2D*> colliders;
+    // Instancia de la escena en el Game engine
+    struct GameObjectRef {
+        GameObject* original;   // Original GameObject.
+        GameObject* gameObject; // Instatiated GameObject.
+    };
+    // Spoiler, but not for now:
+    // - La idea es dividir el juego en escenas, por lo que cada escena tendrá
+    //   sus objetos, y ya, opcional, puede plantearse pero se deja en el aire.
+    // std::unordered_map<std::string, Scene> scenes;
+    // std::string current scene;
+    // Instances
+    static std::unordered_map<std::string, int> nGameObjects;
+    static std::unordered_map<std::string, std::unordered_map<std::string, GameObjectRef>> GameObjects;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla: 
@@ -468,24 +441,12 @@ private:
     // De momento A es dinamico y B es estatico, 
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
-
 public:
-    static void addCollider(std::string name, Collider2D* collider);
-    static void removeCollider(std::string name);
-    static void printout();
-    static void checkCollisions();
-    static void checkCollisions(GameObject& gameObject);
-};
-
-
-class GameSystem {
-private:
-public:
-    static std::unordered_map<std::string, std::vector<GameObject*>> GameObjects;
-    static void Instantiate(GameObject& gameObject, Vector2 position);
-    static void Update();
+    static void Collisions(GameObject& gameObject);
+    static void Instantiate(GameObject& gameObject, GameObjectOptions options);
     static void Printout();
+    static void Update();
+    static std::vector<GameObject> getObjects(std::string tag);
 };
-
 
 #endif

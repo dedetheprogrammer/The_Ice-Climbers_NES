@@ -1,7 +1,6 @@
 #pragma once
 #include "EngineECS.h"
 #include "raylib.h"
-//#include "collider.h"
 
 class LockedPlatform : public Script {
 private:
@@ -10,10 +9,10 @@ private:
         
     }
 
-    void Draw() {
-        //animator.Play(transform.position, GetFrameTime());
-        collider.Draw();
-    }
+    //void Draw() {
+    //    //animator.Play(transform.position, GetFrameTime());
+    //    collider.Draw();
+    //}
 
 public:
 
@@ -27,7 +26,7 @@ public:
 
     void Update() override {
         Move();
-        Draw();
+        //Draw();
     }
 
 };
