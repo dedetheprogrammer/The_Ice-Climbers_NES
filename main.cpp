@@ -38,8 +38,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo");
-    GameObject Topi("Topi");
+    GameObject Popo("Popo", "Player", {}, {"Floor"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -75,12 +74,9 @@ void Game() {
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(Popo.name, &Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Topi.addComponent<Collider2D>(Topi.name, &Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
-    Topi.addComponent<Script, MovementTopi>();
-    GameSystem::Instantiate(Popo, Vector2{WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y});
-    GameSystem::Instantiate(Topi, Vector2{WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y});
+    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -96,9 +92,10 @@ void Game() {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*4.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*4.0f, Pause_frame.height*4.0f};
     
-    GameObject Floor("Floor");
-    Floor.addComponent<Transform2D>(Vector2{-100,levels[0]});
-    Floor.addComponent<Collider2D>(Floor.name, &Floor.getComponent<Transform2D>().position, Vector2{1224, 1}, PINK);
+    GameObject Floor("Base Floor", "Floor");
+    Floor.addComponent<Transform2D>();
+    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
+    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,560}});
 
     GameObject Block("Grass Block");
     Block.addComponent<Transform2D>();
@@ -858,7 +855,8 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }
+    }*/
+    OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
     UnloadTexture(Sign);
@@ -879,5 +877,5 @@ int main() {
     UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
-    */
+    
 }

@@ -22,7 +22,9 @@ class GameObject {
 private:
     //...
 public:
-    // Nombre del GameObject.
+    // Nombre de GameObject (puede englobar varios GameObject).
+    std::string tag;
+    // Nombre del GameObject (unico por GameObject).
     std::string name;
     // Para componentes que solo puede haber uno por GameObject.
     std::unordered_map<std::type_index, Component*> components;

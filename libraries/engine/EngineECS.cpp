@@ -506,7 +506,6 @@ void CollisionSystem::checkCollisions(GameObject& gameObject) {
     // Iteramos sobre el hashmap de colliders
     if (gameObject.hasComponent<RigidBody2D>()) {
         for (auto const& [Collider_name, Collider] : colliders) {
-            std::cout << Collider_name << std::endl;
             if (Collider_name != gameObject.name) {
                 float ct = 0; Vector2 cp{0,0}, cn{0,0};
                 if (CollisionSystem::Collides(gameObject.getComponent<Collider2D>(), *Collider, cp, cn, ct)) {
@@ -529,6 +528,13 @@ void CollisionSystem::printout() {
 // ----------------------------------------------------------------------------
 // Game System
 // ----------------------------------------------------------------------------
+/**
+ * @brief Va a cambiar un poco la representación interna del sistema del juego:
+ *  - Los objetos se van a dividir por labels/tags: una tag es un nombre que puede englobar uno o varios gameobjects.
+ *  - A la hora de instanciar un GameObject, se puede decidir la configuración del mismo (tag, nombre, tags de comprobación).
+ *  - Si defines los tags, a la hora de comprobar las colisiones, comprobará solo las tags que se le han indicado en la configuración.
+ * 
+ */
 std::unordered_map<std::string, std::vector<GameObject*>> GameSystem::GameObjects;
 
 void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
@@ -546,31 +552,30 @@ void GameSystem::Instantiate(GameObject& gameObject, Vector2 position) {
 
 void GameSystem::Printout() {
     std::cout << ">>> Scene objects <<<\n";
-    for (auto const& [name, instances] : GameObjects) {
-        std::cout << name << ":\n";
-        for (auto const& instance : instances) {
-            std::cout << "  " << instance->name << "\n";
-            for (auto const& [type, _] : instance->scripts) {
-                std::cout << "    " << type.name() << "\n";
-            }
+    for (auto& [tag, tag_instances] : GameObjects) {
+        std::cout << ">>>> Tag: " << tag << "\n";
+        for (auto& [name, instance] : tag_instances) {
+            std::cout << ">>>>> Name: " << name << "\n";  
         }
     }
 }
 
 void GameSystem::Update() {
-    std::cout << "Comprobar colisiones" << std::flush << std::endl;
-    for (auto [_, instances] : GameObjects) {
-        for (auto instance : instances) {
-            instance->Update();
-            CollisionSystem::checkCollisions(*instance);
-            if (instance->hasComponent<Animator>()) {
-                instance->getComponent<Animator>().Play();
-            } else if (instance->hasComponent<Sprite>()) {
-                instance->getComponent<Sprite>().Draw();
+    for (auto& [_, gameObjectRefs] : GameObjects) {
+        for (auto& [_, ref] : gameObjectRefs) {
+            ref.gameObject->Update();
+            Collisions(*ref.gameObject);
+            if (ref.gameObject->hasComponent<Animator>()) {
+                ref.gameObject->getComponent<Animator>().Play();
+            } else if (ref.gameObject->hasComponent<Sprite>()) {
+                ref.gameObject->getComponent<Sprite>().Draw();
             }
-            //if (instance->hasComponent<Collider2D>()) {
-            //    instance->getComponent<Collider2D>().Draw();
-            //}
+            if (ref.gameObject->hasComponent<Collider2D>()) {
+                ref.gameObject->getComponent<Collider2D>().Draw();
+            }
+            if (ref.gameObject->hasComponent<RigidBody2D>()) {
+                ref.gameObject->getComponent<RigidBody2D>().Draw();
+            }
         }
     }
 }
