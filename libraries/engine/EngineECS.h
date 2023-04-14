@@ -36,6 +36,9 @@ private:
     float window_height;
     float background_view_height;
     float move;
+    bool top;
+    bool moving;
+    float max;
 public:
     void Draw();
     Background(Texture2D Texture, int window_width, int window_height);
@@ -426,7 +429,6 @@ private:
     // std::string current scene;
     // Instances
     static std::unordered_map<std::string, int> nGameObjects;
-    static std::unordered_map<std::string, std::unordered_map<std::string, GameObjectRef>> GameObjects;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla: 
@@ -442,11 +444,12 @@ private:
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
 public:
+    static std::unordered_map<std::string, std::unordered_map<std::string, GameObjectRef>> GameObjects;
     static void Collisions(GameObject& gameObject);
     static void Instantiate(GameObject& gameObject, GameObjectOptions options);
     static void Printout();
     static void Update();
-    static std::vector<GameObject> getObjects(std::string tag);
+    static std::vector<GameObject*> getObjectsByTag(std::string tag);
 };
 
 #endif

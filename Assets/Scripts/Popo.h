@@ -2,6 +2,7 @@
 #include "EngineECS.h"
 //#include "raylib.h"
 #include "raylibx.h"
+#include "Topi.h"
 
 class Movement : public Script {
 private:
@@ -9,6 +10,7 @@ private:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
+    bool isStunned;   // Telling us if the object is stunned.
 
 public:
 
@@ -31,6 +33,7 @@ public:
         isGrounded  = false;
         isRight     = true;
         isAttacking = false;
+        isStunned = false;
     }
     Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
@@ -42,6 +45,7 @@ public:
         isGrounded  = movement.isGrounded;
         isRight     = movement.isRight;
         isAttacking = movement.isAttacking;
+        isStunned   = movement.isStunned;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -78,9 +82,11 @@ public:
                             animator["Brake"];
                             collider.size = animator.GetViewDimensions();
                         } else {
-                            rigidbody.velocity.x = 0;
-                            animator["Idle"];
-                            collider.size = animator.GetViewDimensions();
+                            if(!isStunned) {
+                                rigidbody.velocity.x = 0;
+                                animator["Idle"];
+                                collider.size = animator.GetViewDimensions();
+                            }
                         }
                     }
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
@@ -90,6 +96,24 @@ public:
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
                     rigidbody.velocity.y *= -1;
                     animator["Fall"];
+                }
+            }
+        } else if (contact.gameObject.tag == "Enemy") {
+            std::cout << "Colision con enemigo " << std::endl;
+            if (!isAttacking) {
+                std::cout << "No estoy atacando me pongo en estado de stunned" << std::endl;
+                animator["Stunned"];
+                collider.size = animator.GetViewDimensions();
+                isStunned = true;
+                rigidbody.velocity.x = 0;
+            }else if(!animator.InState("Stunned")){
+                if ((contact.contact_normal.x > 0 && !isRight) || (contact.contact_normal.x < 0 && isRight)){
+                    std::cout << "Ataco pero me ha chocado por atras =D " << std::endl;
+                    animator["Stunned"];
+                }else {
+                    std::cout << "Se estunea el enemigo" << std::endl;
+                    contact.gameObject.getComponent<Animator>()["Stunned"];
+                    contact.gameObject.getComponent<Script, MovementTopi>().Flip();
                 }
             }
         }
@@ -104,6 +128,7 @@ public:
             // Horizontal movement:
             move = GetAxis("Horizontal");
             if (move) {
+                if(isStunned) isStunned = !isStunned;
                 rigidbody.velocity.x = move * rigidbody.acceleration.x;
                 if (isGrounded) {
                     animator["Walk"];

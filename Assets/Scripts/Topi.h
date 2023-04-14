@@ -66,12 +66,18 @@ public:
     }
 
     void OnCollision(Collision contact) {
-        
+        if (contact.gameObject.tag == "Floor") {
+
+        }
     }
 
     void Update() override {
         Move();
         //Draw();
+    }
+
+    void Flip() {
+        move *= -1;
     }
 
 };

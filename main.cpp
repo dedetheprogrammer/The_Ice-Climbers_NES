@@ -28,7 +28,7 @@ Font NES;
 
 void Game() {
 
-    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f};
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f};
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
@@ -38,7 +38,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy"});
     GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
@@ -49,19 +49,19 @@ void Game() {
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
     Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 4, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 4, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 4, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 4, 0.9, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 4, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 24, 4, 0.3, false)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 4, 0.3, false)},
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 3, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 3, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 3, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 3, 0.9, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 3, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 3, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 3, 0.3, false)},
         //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
 
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
-            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 4, 0.3, true)},
-            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 4, 0.5, true)},
+            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
         }
     );
     // 3. Añadimos el componente de Audio:
@@ -69,7 +69,7 @@ void Game() {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 98, Vector2{100,0}, Vector2{100,210});
+    Popo.addComponent<RigidBody2D>(1, 375, Vector2{150,0}, Vector2{150,400});
     Topi.addComponent<RigidBody2D>(1, 98, Vector2{60,0}, Vector2{100,0});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
@@ -113,15 +113,26 @@ void Game() {
     for(int i = 0; i < 16; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
     }
-    for(int i = 0; i < 16; i++){
+    for(int i = 0; i < 13; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
     }
     
-    /*GameObject Side("Base Floor", "Floor");
+    GameObject Side("Base Floor", "Floor");
     Side.addComponent<Transform2D>();
-    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, 30}, PINK);
-
-        GameSystem::Instantiate(Side, GameObjectOptions{.position{block_width*(-1)*i,levels[0]}});*/
+    float block_height = Block.getComponent<Sprite>().GetViewDimensions().y;
+    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, block_height}, PINK);
+    auto j = 5;
+    for(int i = 1; i < levels.size(); i++){
+        GameSystem::Instantiate(Side, GameObjectOptions{.position{block_width*(-1)*(j),levels[i]}});
+        if((i-1)%3 == 0)
+            j --;
+    }
+    j = 4;
+    for(int i = 1; i < levels.size(); i++){
+        GameSystem::Instantiate(Side, GameObjectOptions{.position{WINDOW_WIDTH - block_width*j,levels[i]}});
+        if((i-1)%3 == 0)
+            j ++;
+    }
 
     bool play_music = false;
     bool paused = false;

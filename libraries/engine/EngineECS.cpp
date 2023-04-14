@@ -11,15 +11,47 @@ std::unordered_map<std::string, std::unordered_map<std::string, GameSystem::Game
 // ============================================================================
 // ============================================================================
 Background::Background(Texture2D Texture, int window_width, int window_height):
-    Texture(Texture), window_width(window_width), window_height(window_height), move(0.0f){
+    Texture(Texture), window_width(window_width), window_height(window_height),
+    move(0.0f), top(false), moving(false), max(0.0f){
     background_view_height = (Texture.width * window_height)/(float)window_width;
 }
 
 void Background::Draw() {
-    for (auto player : GameSystem::getObjects("Player")) {
-        
-    }
+    if(!top && !moving) {
+        float lowestY = INFINITY;
+        float height = 0.0f;
+        for (auto player : GameSystem::getObjectsByTag("Player")) {
+            auto y = player->getComponent<Transform2D>().position.y;
+            height = player->getComponent<Collider2D>().size.y;
+            if(y < lowestY) lowestY = y;
+        }
 
+        if(lowestY <= (288.0f - height)) {
+            moving = true;
+        }
+
+        if(background_view_height + move > Texture.height) {
+            move = Texture.height - background_view_height;
+            top = true;
+        }
+    } else if(moving) {
+        max += 8;
+        if(max == 8.0f * 4 * 6) {
+            max = 0.0f;
+            moving = false;
+        }else {
+            move += 2;
+            for (auto& [_, ref] : GameSystem::GameObjects){
+                for(auto& [_, gameObject] : ref){
+                    gameObject.gameObject->getComponent<Transform2D>().position.y += 8;
+                    // Quitar los elementos que no se vean en pantalla por abajo
+                    /*if(gameObject.gameObject->getComponent<Transform2D>().position.y > window_height){
+                        gameObject.gameObject->Destroy();
+                    }*/
+                }
+            }
+        }
+    }
     Rectangle Mountain_src{0, Texture.height - background_view_height - move, (float)Texture.width, background_view_height};
     Rectangle Mountain_dst{0, 0, (float)window_width, (float)window_height};
     DrawTexturePro(Texture, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
@@ -511,6 +543,9 @@ void GameSystem::Collisions(GameObject& gameObject) {
                     auto Collider_A = gameObject.getComponent<Collider2D>();
                     auto Collider_B = check_ref.gameObject->getComponent<Collider2D>();
                     if (Collides(Collider_A, Collider_B, cp, cn, ct)) {
+                        if(check_ref.gameObject->tag == "Enemy") {
+                            std::cout << gameObject.tag << " colisiona con " << check_ref.gameObject->tag << std::endl;
+                        }
                         gameObject.OnCollision(Collision(*check_ref.gameObject, ct, cp, cn));
                         if (!check_ref.gameObject->hasComponent<RigidBody2D>()) {
                             check_ref.gameObject->OnCollision(Collision(gameObject, ct, cp, -cn));
@@ -595,11 +630,11 @@ void GameSystem::Update() {
     }
 }
 
-std::vector<GameObject> GameSystem::getObjects(std::string tag) {
-    std::vector<GameObject> ret;
-    for (auto& [_, ref] : GameObjects[tag]) {
-        ret.push_back(*ref.gameObject);
-    }
+
+std::vector<GameObject*> GameSystem::getObjectsByTag(std::string tag) {
+    std::vector<GameObject*> ret;
+    for (auto& [_, ref] : GameObjects[tag])
+        ret.push_back(ref.gameObject);
 
     return ret;
 }
