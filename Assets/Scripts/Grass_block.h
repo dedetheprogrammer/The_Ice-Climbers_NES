@@ -5,6 +5,7 @@ private:
     Sprite& sprite;
     Transform2D& transform;
     Collider2D& collider;
+    bool active = true;
 public:
     GrassBlockBehavior(GameObject& gameObject) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
@@ -15,12 +16,18 @@ public:
     }
 
     void Update() override {
-        sprite.Draw();
+
+        sprite.Draw(); 
         collider.Draw();
     }
 
     void OnCollision(Collision contact) override {
-        // Nada
+        if (contact.gameObject.tag == "Player") {
+            if (contact.contact_normal.y < 0) {
+                collider.active = false;
+                //sprite.Unload();
+                sprite.ChangeTexture("Assets/Sprites/block_invisible.png");
+            }
+        }
     }
-
 };

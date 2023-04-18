@@ -70,7 +70,7 @@ void Game() {
     });
     // 4. Añadimos el Rigidbody:
     Popo.addComponent<RigidBody2D>(1, 375, Vector2{150,0}, Vector2{150,400});
-    Topi.addComponent<RigidBody2D>(1, 98, Vector2{60,0}, Vector2{100,0});
+    Topi.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
@@ -79,8 +79,9 @@ void Game() {
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
     Popo.addComponent<Script, Movement>();
     Topi.addComponent<Script, MovementTopi>();
-    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y}});
+    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y -1}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y -1}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[1] - Topi.getComponent<Animator>().GetViewDimensions().y -1}});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -105,16 +106,25 @@ void Game() {
     int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     Block.addComponent<Script, GrassBlockBehavior>();
-    for (int i = 5; i < 24; i++) {
+    for (int i = 0; i < 24; i++) {
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*4.0f + block_width * i, levels[1]}});
     }
     Block.removeComponent<Sprite>();
     Block.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 16; i++){
+    for(int i = 0; i < 24; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
     }
-    for(int i = 0; i < 13; i++){
+    for(int i = 0; i < 24; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
+    }
+    for(int i = 0; i < 24; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[4]}});
+    }
+    for(int i = 0; i < 24; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[5]}});
+    }
+    for(int i = 0; i < 24; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[6]}});
     }
     
     GameObject Side("Base Floor", "Floor");

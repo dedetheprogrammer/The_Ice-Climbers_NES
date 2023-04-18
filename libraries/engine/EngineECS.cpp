@@ -330,13 +330,13 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // Collider
 // ----------------------------------------------------------------------------
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color)
-    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}) {}
+    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}), active(true) {}
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color)
-    : Component(gameObject), color(color), pos(pos), size(size) {}
-Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject) {
+    : Component(gameObject), color(color), pos(pos), size(size), active(true) {}
+Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject), active(true) {
     color = collider.color;
     pos   = &gameObject.getComponent<Transform2D>().position;
-    size  = collider.size; 
+    size  = collider.size;
 }
 Component* Collider2D::Clone(GameObject& gameObject) {
     return new Collider2D(gameObject, *this);
@@ -420,6 +420,10 @@ void Sprite::Draw() {
 }
 void Sprite::Unload() {
     UnloadTexture(img);
+}
+
+void Sprite::ChangeTexture(const char* path){
+    img = LoadTexture(path);
 }
 
 //-----------------------------------------------------------------------------

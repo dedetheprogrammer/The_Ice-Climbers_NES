@@ -7,23 +7,9 @@ class MovementTopi : public Script {
 private:
     // Variables para Popo:
     bool isGrounded;  // Telling us if the object is on the ground.
-    int move;     // Telling us if the object is facing to the right.
-
-    void Move() {
-        float deltaTime = GetFrameTime();
-        // Horizontal movement:
-        auto dims = animator.GetViewDimensions();
-        if ((transform.position.x + dims.x) < 0 || transform.position.x > GetScreenWidth()) {
-            animator.Flip();
-            move *= -1;
-            if(animator.InState("Stunned")) {
-                animator["Walk"];
-            }
-        }
-        rigidbody.velocity.x = move * rigidbody.acceleration.x;
-        transform.position.x += rigidbody.velocity.x * deltaTime;
-        //hitbox.Move(position);
-    }
+    bool isRunning;
+    int move;     // Telling us if the objsdect is facing to the right.
+    Vector2 initialPos;
 
     void Draw() {
         animator.Play();
@@ -49,7 +35,9 @@ public:
         transform(gameObject.getComponent<Transform2D>())
     {
         isGrounded  = false;
+        isRunning   = false;
         move        = 1;
+        initialPos  = {0,0};
     }
     MovementTopi(GameObject& gameObject, MovementTopi& movement) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
@@ -59,6 +47,8 @@ public:
     {
         isGrounded  = movement.isGrounded;
         move        = movement.move;
+        isRunning   = movement.isRunning;
+        initialPos  = movement.initialPos;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -67,13 +57,53 @@ public:
 
     void OnCollision(Collision contact) {
         if (contact.gameObject.tag == "Floor") {
-
+            if (contact.contact_normal.y < 0) {
+                if(!contact.gameObject.getComponent<Collider2D>().active) {
+                    if(isRunning) {
+                        animator["Stunned"];
+                    } else {
+                        rigidbody.max_velocity.x *= 2;
+                        isRunning = true;
+                        animator.Flip();
+                        move *= -1;
+                    }
+                } else {
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+                }
+            }
+        } else if (contact.gameObject.tag == "Player") { // Se ocupa el player
+            
         }
     }
 
     void Update() override {
-        Move();
-        //Draw();
+        float deltaTime = GetFrameTime();
+        // Horizontal movement:
+        auto dims = animator.GetViewDimensions();
+        if ((transform.position.x + dims.x) < 0 || transform.position.x > GetScreenWidth()) {
+            if(isRunning) {
+                isRunning = false;
+                rigidbody.max_velocity.x /= 2; 
+            }
+            animator.Flip();
+            move *= -1;
+            
+            std::cout << "Está fuera" << std::endl;
+            if(animator.InState("Stunned")) {
+                transform.position = initialPos;
+                animator["Walk"];
+            } else {
+                initialPos = transform.position;
+            }
+        }
+        
+        rigidbody.max_velocity.x = abs(rigidbody.max_velocity.x);
+        rigidbody.max_velocity.x *= move;
+        transform.position.x += rigidbody.max_velocity.x * deltaTime;
+
+        
+        transform.position.y += rigidbody.velocity.y * deltaTime;
+        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
     void Flip() {

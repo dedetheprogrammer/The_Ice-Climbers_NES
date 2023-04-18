@@ -14,7 +14,7 @@ private:
     }
 
     void Draw() {
-        animator.Play(transform.position, GetFrameTime());
+        animator.Play();
         //collider.Draw(RED);
     }
 
@@ -25,14 +25,12 @@ public:
     // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     Collider2D& collider;
-    Transform2D& transform;
-    std::vector<GameObject*>& gameObjects; 
+    Transform2D& transform; 
 
     BlockActions(GameObject& gameObject) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
-        transform(gameObject.getComponent<Transform2D>()),
-        gameObjects(gameObject.gameObjects)
+        transform(gameObject.getComponent<Transform2D>())
     {
         isGrounded  = false;
         isRight     = true;

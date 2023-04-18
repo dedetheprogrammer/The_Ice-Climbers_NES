@@ -303,6 +303,7 @@ public:
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
     Vector2 size; // Dimensiones del collider.
+    bool active;
     
     Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
@@ -365,6 +366,7 @@ public:
     Component* Clone(GameObject& gameObject) override;
     void Draw();
     void Unload() override;
+    void ChangeTexture(const char* path);
 
 };
 
