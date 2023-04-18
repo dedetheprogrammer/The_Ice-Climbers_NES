@@ -41,7 +41,7 @@ void Game() {
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
     GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall"});
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -262,9 +262,6 @@ void Game() {
         }
         if (IsKeyPressed(KEY_ESCAPE)) {
             break;
-        }
-        if (IsKeyPressed(KEY_R)) {
-            Popo.getComponent<Transform2D>().position = Vector2{600,400};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         Floor.getComponent<Collider2D>().Draw();

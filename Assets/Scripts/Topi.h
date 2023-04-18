@@ -64,7 +64,7 @@ public:
                     if(isRunning) {
                         animator["Stunned"];
                     } else {
-                        rigidbody.max_velocity.x *= 2;
+                        rigidbody.velocity.x = rigidbody.max_velocity.x * 2;
                         isRunning = true;
                         animator.Flip();
                         move *= -1;
@@ -99,9 +99,9 @@ public:
             }
         }
         
-        rigidbody.max_velocity.x = abs(rigidbody.max_velocity.x);
-        rigidbody.max_velocity.x *= move;
-        transform.position.x += rigidbody.max_velocity.x * deltaTime;
+        rigidbody.velocity.x = abs(rigidbody.max_velocity.x);
+        rigidbody.velocity.x *= move;
+        transform.position.x += rigidbody.velocity.x * deltaTime;
 
         
         transform.position.y += rigidbody.velocity.y * deltaTime;
