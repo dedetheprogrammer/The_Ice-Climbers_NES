@@ -547,9 +547,8 @@ void GameSystem::Collisions(GameObject& gameObject) {
                     auto Collider_A = gameObject.getComponent<Collider2D>();
                     auto Collider_B = check_ref.gameObject->getComponent<Collider2D>();
                     if (Collides(Collider_A, Collider_B, cp, cn, ct)) {
-                        if(check_ref.gameObject->tag == "Enemy") {
+                        if(check_ref.gameObject->tag != "Floor" && gameObject.tag != "Floor")
                             std::cout << gameObject.tag << " colisiona con " << check_ref.gameObject->tag << std::endl;
-                        }
                         gameObject.OnCollision(Collision(*check_ref.gameObject, ct, cp, cn));
                         if (!check_ref.gameObject->hasComponent<RigidBody2D>()) {
                             check_ref.gameObject->OnCollision(Collision(gameObject, ct, cp, -cn));

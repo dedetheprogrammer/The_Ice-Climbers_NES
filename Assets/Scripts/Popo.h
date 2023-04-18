@@ -52,7 +52,9 @@ public:
         return new Movement(gameObject, *this);
     }
 
-    void OnCollision(Collision contact) {
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag != "Floor") std::cout << "Soy Popo, me choco con: " << contact.gameObject.tag << std::endl;
+
         if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
@@ -92,10 +94,12 @@ public:
                     
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                     isGrounded = true;
-                } else {
+                } else if (contact.contact_normal.y > 0) {
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
                     rigidbody.velocity.y *= -1;
                     animator["Fall"];
+                } else {
+                    std::cout << "Me he chocado? No me he chocado?" << std::endl;
                 }
             }else if(!contact.gameObject.getComponent<Collider2D>().active) {
                 isGrounded = false;
@@ -105,7 +109,7 @@ public:
             }
         } else if (contact.gameObject.tag == "Enemy") {
             std::cout << "Colision con enemigo " << std::endl;
-            if (!isAttacking) {
+            if (!isAttacking && !isStunned) {
                 std::cout << "No estoy atacando me pongo en estado de stunned" << std::endl;
                 animator["Stunned"];
                 collider.size = animator.GetViewDimensions();
@@ -115,11 +119,19 @@ public:
                 if ((contact.contact_normal.x > 0 && !isRight) || (contact.contact_normal.x < 0 && isRight)){
                     std::cout << "Ataco pero me ha chocado por atras =D " << std::endl;
                     animator["Stunned"];
+                    isStunned = true;
                 }else {
                     std::cout << "Se estunea el enemigo" << std::endl;
                     contact.gameObject.getComponent<Animator>()["Stunned"];
                     contact.gameObject.getComponent<Script, MovementTopi>().Flip();
                 }
+            }
+        }else if (contact.gameObject.tag == "Wall") {
+            if (!contact.contact_normal.x) {
+                rigidbody.velocity.x *= -1;
+            }else{
+                rigidbody.velocity.y *= -1;
+                animator["Fall"];
             }
         }
     }
@@ -129,10 +141,10 @@ public:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
         
-        /*std::cout << "deltatime = " << deltaTime << std::endl;
+        // std::cout << "deltatime = " << deltaTime << std::endl;
         if(deltaTime > 0.2){
-            deltaTime = 0.0333;
-        }*/
+            deltaTime = 1.0 / GetFPS();   // Fix deltaTime to the period of one frame
+        }
 
         if (!isAttacking) {
             // Horizontal movement:
@@ -157,7 +169,7 @@ public:
             }
 
             // Vertical movement:
-            if (isGrounded) {
+            if (isGrounded && !isStunned) {
                 if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
                     rigidbody.velocity.y = -rigidbody.acceleration.y;

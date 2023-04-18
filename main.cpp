@@ -3,6 +3,7 @@
 #include "Popo.h"
 #include "Grass_block.h"
 #include "Topi.h"
+#include "Ice_cone.h"
 
 class Flicker {
 private:
@@ -28,7 +29,8 @@ Font NES;
 
 void Game() {
 
-    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, 864.0f};
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, -864.0f};
+    std::vector<float> levelsWall{-1056.0f, -1250.0f, -1484.0f, -1704.0f, -1924.0f, -2150.0f, -2300.0f};
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
@@ -38,7 +40,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall"});
     GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
@@ -66,7 +68,7 @@ void Game() {
     );
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
     Popo.addComponent<RigidBody2D>(1, 375, Vector2{150,0}, Vector2{150,400});
@@ -103,9 +105,9 @@ void Game() {
     GameObject Block("Grass Block", "Floor");
     Block.addComponent<Transform2D>();
     Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
-    int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
+    float block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    Block.addComponent<Script, GrassBlockBehavior>();
+    Block.addComponent<Script, GrassBlockBehavior>("Assets/Sprites/Grass_block_large.png");
     for (int i = 0; i < 24; i++) {
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*4.0f + block_width * i, levels[1]}});
     }
@@ -129,7 +131,7 @@ void Game() {
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
     }
     for(int i = 0; i < 24; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[7]}});
     }
     
     GameObject Side("Base Floor", "Floor");
@@ -147,6 +149,68 @@ void Game() {
         GameSystem::Instantiate(Side, GameObjectOptions{.position{WINDOW_WIDTH - block_width*j,levels[i]}});
         if((i-1)%3 == 0)
             j ++;
+    }
+
+    GameObject Platform("Final Floor", "Floor"); 
+    Platform.addComponent<Transform2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*6.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{285,levels[8]}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{540,levels[8]}});
+
+    
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{412,-995.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380.0f,-1540.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{640.0f,-2305.0f}});
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*4.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{192,-995.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{702,-995.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{570,-1345.0f}}); 
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{510,-1860.0f}}); 
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{445,-2145.0f}}); 
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*3.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{670,-1505.0f}}); 
+     
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{255,-1890.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380,-2050.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{605,-1985.0f}});
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*7.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{155.0f,-1380.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{190.0f,-2305.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1180.0f}}); ///nube?
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1720.0f}}); ///nube?
+
+    
+    GameObject Wall("Wall", "Wall");
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*5}, PINK);
+    for(int i = 0; i < levelsWall.size()-1; i++){
+        GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*i, levelsWall[i]}});
+        GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*i,levelsWall[i]}});
+    }
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*3}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*(levelsWall.size()-1), -2300.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*(levelsWall.size()-1), -2300.0f}});
+    
+    GameObject Cone("Topi cone", "Cone");
+    Cone.addComponent<Transform2D>();
+    Cone.addComponent<Sprite>("Assets/Sprites/Ice_cone.png", Vector2{4.0f, 4.0f});
+    Vector2 cone_size = Cone.getComponent<Sprite>().GetViewDimensions();
+    Cone.addComponent<Collider2D>(&Cone.getComponent<Transform2D>().position, Vector2{cone_size.x, cone_size.y}, BLUE);
+    Cone.addComponent<RigidBody2D>(1, 0, Vector2{100,0}, Vector2{0,0});
+    Cone.addComponent<Script, MovementCone>();
+
+    for(int i = 1; i < levels.size(); i+=2){
+        GameSystem::Instantiate(Cone, GameObjectOptions{.position{WINDOW_WIDTH - cone_size.x, levels[i] - cone_size.y + 1}});
     }
 
     bool play_music = false;

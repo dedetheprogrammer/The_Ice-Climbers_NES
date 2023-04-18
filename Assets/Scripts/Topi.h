@@ -55,7 +55,9 @@ public:
         return new MovementTopi(gameObject, *this);
     }
 
-    void OnCollision(Collision contact) {
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag != "Floor") std::cout << "Soy Topi, me choco con: " << contact.gameObject.tag << std::endl;
+
         if (contact.gameObject.tag == "Floor") {
             if (contact.contact_normal.y < 0) {
                 if(!contact.gameObject.getComponent<Collider2D>().active) {
@@ -83,12 +85,12 @@ public:
         if ((transform.position.x + dims.x) < 0 || transform.position.x > GetScreenWidth()) {
             if(isRunning) {
                 isRunning = false;
-                rigidbody.max_velocity.x /= 2; 
+                collider.active = true;
+                rigidbody.max_velocity.x /= 2;
             }
             animator.Flip();
             move *= -1;
             
-            std::cout << "Está fuera" << std::endl;
             if(animator.InState("Stunned")) {
                 transform.position = initialPos;
                 animator["Walk"];
