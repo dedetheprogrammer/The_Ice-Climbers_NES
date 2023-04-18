@@ -28,7 +28,7 @@ Font NES;
 
 void Game() {
 
-    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f};
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, 864.0f};
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
@@ -123,8 +123,13 @@ void Game() {
     for(int i = 0; i < 24; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[5]}});
     }
+    Block.removeComponent<Sprite>();
+    Block.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", Vector2{4.0f, 4.0f});
     for(int i = 0; i < 24; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[6]}});
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
+    }
+    for(int i = 0; i < 24; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
     }
     
     GameObject Side("Base Floor", "Floor");

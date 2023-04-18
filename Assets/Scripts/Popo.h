@@ -62,7 +62,6 @@ public:
                 }
             }
         } else if (contact.gameObject.tag == "Floor") {
-            std::cout << "Colision con " << contact.gameObject.name << " en " << contact.contact_point.y << std::endl;
             int move = GetAxis("Horizontal");
             float deltaTime = GetFrameTime();
             if (!contact.contact_normal.x && contact.gameObject.getComponent<Collider2D>().active) {
@@ -90,11 +89,8 @@ public:
                             }
                         }
                     }
-                    std::cout << "Velocidad antes = " << rigidbody.velocity.y << std::endl;
                     
-                    std::cout << "Posición = " << transform.position.y << std::endl;
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-                    std::cout << "Velocidad despues = " << rigidbody.velocity.y << std::endl;
                     isGrounded = true;
                 } else {
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
@@ -104,9 +100,8 @@ public:
             }else if(!contact.gameObject.getComponent<Collider2D>().active) {
                 isGrounded = false;
             } else if(!isGrounded){
-                std::cout << "Colisiono saltando lateralmente" << std::endl;
                 rigidbody.velocity.x *= -1;
-                animator.Flip();
+                //animator.Flip();
             }
         } else if (contact.gameObject.tag == "Enemy") {
             std::cout << "Colision con enemigo " << std::endl;
@@ -134,10 +129,10 @@ public:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
         
-        std::cout << "deltatime = " << deltaTime << std::endl;
+        /*std::cout << "deltatime = " << deltaTime << std::endl;
         if(deltaTime > 0.2){
             deltaTime = 0.0333;
-        }
+        }*/
 
         if (!isAttacking) {
             // Horizontal movement:
@@ -185,12 +180,8 @@ public:
         }
         
         // Colissions:
-        std::cout << "Velocidad pre gravedad = " << rigidbody.velocity.y << std::endl;
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-        
-        std::cout << transform.position.y << std::endl;
-        std::cout << "Velocidad post gravedad = " << rigidbody.velocity.y << std::endl;
     }
 
     bool getIsAttacking() {

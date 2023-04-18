@@ -16,14 +16,13 @@ public:
     }
 
     void Update() override {
-
         sprite.Draw(); 
         collider.Draw();
     }
 
     void OnCollision(Collision contact) override {
         if (contact.gameObject.tag == "Player") {
-            if (contact.contact_normal.y < 0) {
+            if (contact.contact_normal.y < 0 && collider.active) {
                 collider.active = false;
                 //sprite.Unload();
                 sprite.ChangeTexture("Assets/Sprites/block_invisible.png");
