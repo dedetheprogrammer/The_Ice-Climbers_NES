@@ -88,7 +88,7 @@ public:
             animator.Flip();
             move *= -1;
             
-            std::cout << "Está fuera" << std::endl;
+           // std::cout << "Está fuera" << std::endl;
             if(animator.InState("Stunned")) {
                 transform.position = initialPos;
                 animator["Walk"];

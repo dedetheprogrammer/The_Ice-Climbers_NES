@@ -23,6 +23,8 @@ public:
     RigidBody2D& rigidbody;
     Transform2D& transform;
 
+    int deadX, deadY;
+
     Movement(GameObject& gameObject) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
@@ -34,6 +36,8 @@ public:
         isRight     = true;
         isAttacking = false;
         isStunned = false;
+        deadX = 0;
+        deadY = 0;
     }
     Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
@@ -46,6 +50,8 @@ public:
         isRight     = movement.isRight;
         isAttacking = movement.isAttacking;
         isStunned   = movement.isStunned;
+        deadX = 0;
+        deadY = 0;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -64,7 +70,7 @@ public:
         } else if (contact.gameObject.tag == "Floor") {
             int move = GetAxis("Horizontal");
             float deltaTime = GetFrameTime();
-            if (!contact.contact_normal.x && contact.gameObject.getComponent<Collider2D>().active) {
+            if (!contact.contact_normal.x && contact.gameObject.getComponent<Collider2D>().active && collider.active) {
                 if (contact.contact_normal.y < 0) {
                     if (!isAttacking && !move) {
                         if (rigidbody.velocity.x > 0) {
@@ -108,6 +114,9 @@ public:
             if (!isAttacking) {
                 std::cout << "No estoy atacando me pongo en estado de stunned" << std::endl;
                 animator["Stunned"];
+                collider.active = false;
+                deadX = transform.position.x;
+                deadY = transform.position.y;
                 collider.size = animator.GetViewDimensions();
                 isStunned = true;
                 rigidbody.velocity.x = 0;
@@ -115,12 +124,18 @@ public:
                 if ((contact.contact_normal.x > 0 && !isRight) || (contact.contact_normal.x < 0 && isRight)){
                     std::cout << "Ataco pero me ha chocado por atras =D " << std::endl;
                     animator["Stunned"];
+                    collider.active = false;
+                    deadX = transform.position.x;
+                    deadY = transform.position.y;
                 }else {
                     std::cout << "Se estunea el enemigo" << std::endl;
                     contact.gameObject.getComponent<Animator>()["Stunned"];
                     contact.gameObject.getComponent<Script, MovementTopi>().Flip();
                 }
             }
+        }else if (contact.gameObject.tag == "Wall") {
+            rigidbody.velocity.y *= -1;
+                    animator["Fall"];
         }
     }
 
@@ -152,8 +167,15 @@ public:
             }
             if (transform.position.x > GetScreenWidth()) {
                 transform.position.x = -animator.GetViewDimensions().x;
+                std::cout << "Popo salio " << std::endl;
             } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
                 transform.position.x = GetScreenWidth();
+            }
+            if(transform.position.y >GetScreenHeight()){
+                collider.active = true;
+                transform.position.x = deadX;
+                transform.position.y = deadY-20;
+                animator["Idle"];
             }
 
             // Vertical movement:

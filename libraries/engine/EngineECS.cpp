@@ -30,10 +30,10 @@ void Background::Draw() {
             moving = true;
         }
 
-        if(background_view_height + move > Texture.height) {
+        /*if(background_view_height + move > Texture.height) {
             move = Texture.height - background_view_height;
             top = true;
-        }
+        }*/
     } else if(moving) {
         max += 8;
         if(max == 8.0f * 4 * 6) {

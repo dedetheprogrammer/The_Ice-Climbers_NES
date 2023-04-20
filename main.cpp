@@ -3,6 +3,7 @@
 #include "Popo.h"
 #include "Grass_block.h"
 #include "Topi.h"
+#include "Cloud.h"
 
 class Flicker {
 private:
@@ -28,7 +29,8 @@ Font NES;
 
 void Game() {
 
-    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, 864.0f};
+    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, -864.0f};
+    std::vector<float> levelsWall{-1056.0f, -1250.0f, -1484.0f, -1704.0f, -1924.0f, -2150.0f, -2300.0f};
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
@@ -38,7 +40,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall"});
     GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
@@ -111,31 +113,31 @@ void Game() {
     }
     Block.removeComponent<Sprite>();
     Block.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[4]}});
-    }
-    for(int i = 0; i < 24; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[5]}});
     }
     Block.removeComponent<Sprite>();
     Block.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 20; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[5]}});
+    }
+    for(int i = 0; i < 20; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
     }
-    for(int i = 0; i < 24; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
+    for(int i = 0; i < 20; i++){
+        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[7]}});
     }
     
     GameObject Side("Base Floor", "Floor");
     Side.addComponent<Transform2D>();
     float block_height = Block.getComponent<Sprite>().GetViewDimensions().y;
-    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, block_height}, PINK);
+    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, block_height-4}, PINK);
     auto j = 5;
     for(int i = 1; i < levels.size(); i++){
         GameSystem::Instantiate(Side, GameObjectOptions{.position{block_width*(-1)*(j),levels[i]}});
@@ -143,11 +145,63 @@ void Game() {
             j --;
     }
     j = 4;
+    
     for(int i = 1; i < levels.size(); i++){
         GameSystem::Instantiate(Side, GameObjectOptions{.position{WINDOW_WIDTH - block_width*j,levels[i]}});
         if((i-1)%3 == 0)
             j ++;
     }
+
+    GameObject Platform("Final Floor", "Floor"); 
+    Platform.addComponent<Transform2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*6.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{285,levels[8]}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{540,levels[8]}});
+
+    
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{412,-995.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380.0f,-1540.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{640.0f,-2305.0f}});
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*4.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{192,-995.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{702,-995.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{570,-1345.0f}}); 
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{510,-1860.0f}}); 
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{445,-2145.0f}}); 
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*3.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{670,-1505.0f}}); 
+     
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{255,-1890.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380,-2050.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{605,-1985.0f}});
+
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*7.0f)+4, block_height-4}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{155.0f,-1380.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{190.0f,-2305.0f}});
+
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1180.0f}}); ///nube?
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1720.0f}}); ///nube?
+
+    
+    GameObject Wall("Wall", "Wall");
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*5}, PINK);
+    for(int i = 0; i < levelsWall.size()-1; i++){
+        GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*i, levelsWall[i]}});
+        GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*i,levelsWall[i]}});
+    }
+    Block.removeComponent<Collider2D>();
+    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*3}, PINK);
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*(levelsWall.size()-1), -2300.0f}});
+    GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*(levelsWall.size()-1), -2300.0f}});
+
 
     bool play_music = false;
     bool paused = false;
