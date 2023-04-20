@@ -24,7 +24,7 @@ public:
     RigidBody2D& rigidbody;
     Transform2D& transform;
 
-    int deadX, deadY;
+    int deadX, deadY, groundX, groundY, isRightGround;
 
     Movement(GameObject& gameObject) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
@@ -39,6 +39,9 @@ public:
         isStunned = false;
         deadX = 0;
         deadY = 0;
+        groundX = 0;
+        groundY = 0;
+        isRightGround = 0;
         isRebound = false;
     }
     Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
@@ -54,6 +57,7 @@ public:
         isStunned   = movement.isStunned;
         deadX = 0;
         deadY = 0;
+        isRightGround = 0;
         isRebound   = movement.isRebound;
     }
 
@@ -63,7 +67,7 @@ public:
 
     void OnCollision(Collision contact) override {
         
-        if(contact.gameObject.tag != "Floor") std::cout << "Popo colisiona con " << contact.gameObject.name << std::endl;
+        if(contact.gameObject.tag != "Floor") std::cout << "";
         if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
@@ -103,6 +107,9 @@ public:
                     
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                     isGrounded = true;
+                    groundX = transform.position.x;
+                    groundY = transform.position.y;
+                    isRightGround = isRight;
                     isRebound = false;
                 } else if (contact.contact_normal.y > 0) {
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
@@ -189,15 +196,23 @@ public:
             }
             if (transform.position.x > GetScreenWidth()) {
                 transform.position.x = -animator.GetViewDimensions().x;
-                std::cout << "Popo salio " << std::endl;
+                
             } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
                 transform.position.x = GetScreenWidth();
             }
             if(transform.position.y >GetScreenHeight()){
-                collider.active = true;
-                transform.position.x = deadX;
-                transform.position.y = deadY-20;
-                animator["Idle"];
+                if(animator.InState("Stunned")){
+                    collider.active = true;
+                    transform.position.x = deadX;
+                    transform.position.y = deadY-20;
+                    animator["Idle"];
+                }else{
+                    transform.position.x = groundX;
+                    transform.position.y = groundY - 20;//+ isRightGround*40;
+                    std::cout << "GroundX: " << groundX << " GroundY: " << groundY << std::endl;
+                    std::cout << "GroundX: " << transform.position.x << " GroundY: " << transform.position.y << std::endl;
+                    rigidbody.velocity.x = 0;
+                }
             }
 
             // Vertical movement:
