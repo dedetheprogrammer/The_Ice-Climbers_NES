@@ -191,16 +191,6 @@ void Game() {
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1180.0f}}); ///nube?
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1720.0f}}); ///nube?
 
-
-
-    GameObject Cloud("Cloud", "Floor");
-    Cloud.addComponent<Transform2D>();
-    Cloud.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
-    Cloud.addComponent<Script, MovementCloud>();
-    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_light.png", Vector2{4.0f, 4.0f});
-    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{150.0f,300.0f}});
-
-
     
     GameObject Wall("Wall", "Wall");
     Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*5}, PINK);

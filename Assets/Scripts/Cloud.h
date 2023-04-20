@@ -3,13 +3,11 @@
 
 class MovementCloud : public Script {
 private:
-
-public:
-
     Sprite& sprite;
     Collider2D& collider;
     RigidBody2D& rigidbody;
     Transform2D& transform; 
+public:
 
     MovementCloud(GameObject& gameObject) : Script(gameObject), 
         sprite(gameObject.getComponent<Sprite>()),

@@ -9,7 +9,6 @@ private:
     // Variables para Popo:
     bool isGrounded;  // Telling us if the object is on the ground.
     bool isRunning;
-    int move;     // Telling us if the objsdect is facing to the right.
     bool isOut;
     Vector2 initialPos;
 
@@ -38,7 +37,6 @@ public:
     {
         isGrounded  = false;
         isRunning   = false;
-        move        = 1;
         initialPos  = {0,0};
         rigidbody.velocity.x = rigidbody.max_velocity.x;
         collider.active = false;
@@ -51,7 +49,6 @@ public:
         transform(gameObject.getComponent<Transform2D>())
     {
         isGrounded  = movement.isGrounded;
-        move        = movement.move;
         isRunning   = movement.isRunning;
         initialPos  = movement.initialPos;
         rigidbody.velocity.x = rigidbody.max_velocity.x;
@@ -111,11 +108,13 @@ public:
         // Horizontal movement:
         auto dims = animator.GetViewDimensions();
         if ((transform.position.x + dims.x) < 0 || transform.position.x > GetScreenWidth()) {
-            std::cout << "Sale" << std::endl;
+            std::cout << "Sale, isOut = " << isOut << std::endl;
             if(isOut) {
                 std::cout << "Estado Fuera" << std::endl;
                 isOut = false;
+                std::cout << "V antes = " << rigidbody.velocity.x << std::endl;
                 Flip();
+                std::cout << "V despues = " << rigidbody.velocity.x << std::endl;
                 if(isRunning) {
                     isRunning = false;
                     collider.active = true;
@@ -138,14 +137,12 @@ public:
         //if(rigidbody.velocity.x > 0) rigidbody.velocity.x *= move;
         transform.position.x += rigidbody.velocity.x * deltaTime;
 
-        
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
     void Flip() {
         animator.Flip();
-        move *= -1;
-        rigidbody.velocity.x *= move;
+        rigidbody.velocity.x *= -1;
     }
 };

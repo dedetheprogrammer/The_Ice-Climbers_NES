@@ -77,8 +77,8 @@ public:
             std::cout << "Mi collider activo? " << collider.active << std::endl;
             std::cout << "Collider del topi activo? " << topiCollider.active << std::endl;
 
-            if (!collider.active && topiCollider.active && transform.position.x == initialPos.x) {
-                std::cout << "Topi starts moving" << std::endl;
+            if (!collider.active && topiCollider.active/* && transform.position.x == initialPos.x*/) {
+                std::cout << "Cone starts moving" << std::endl;
                 rigidbody.velocity.x = rigidbody.max_velocity.x;
 
                 float displacement = (move == 1)? topiCollider.size.x + 2 : -(collider.size.x + 2);
