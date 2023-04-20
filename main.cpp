@@ -40,8 +40,8 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall"});
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall", "Cone"});
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player", "Cone"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -102,7 +102,7 @@ void Game() {
     Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
     GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,levels[0]}});
 
-    GameObject Block("Grass Block", "Floor");
+    GameObject Block("Grass Block", "Block", {}, {"Player", "Cone"});
     Block.addComponent<Transform2D>();
     Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
     float block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
@@ -113,24 +113,24 @@ void Game() {
     }
     Block.removeComponent<Sprite>();
     Block.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[4]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 22; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[5]}});
     }
     Block.removeComponent<Sprite>();
     Block.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 20; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
     }
-    for(int i = 0; i < 24; i++){
+    for(int i = 0; i < 20; i++){
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[7]}});
     }
     
@@ -201,7 +201,7 @@ void Game() {
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*(levelsWall.size()-1), -2300.0f}});
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*(levelsWall.size()-1), -2300.0f}});
     
-    GameObject Cone("Topi cone", "Cone");
+    GameObject Cone("Topi cone", "Cone", {}, {"Topi"});
     Cone.addComponent<Transform2D>();
     Cone.addComponent<Sprite>("Assets/Sprites/Ice_cone.png", Vector2{4.0f, 4.0f});
     Vector2 cone_size = Cone.getComponent<Sprite>().GetViewDimensions();
@@ -210,7 +210,7 @@ void Game() {
     Cone.addComponent<Script, MovementCone>();
 
     for(int i = 1; i < levels.size(); i+=2){
-        GameSystem::Instantiate(Cone, GameObjectOptions{.position{WINDOW_WIDTH - cone_size.x, levels[i] - cone_size.y + 1}});
+        GameSystem::Instantiate(Cone, GameObjectOptions{.position{WINDOW_WIDTH - cone_size.x-2, levels[i] - cone_size.y + 1}});
     }
 
     bool play_music = false;

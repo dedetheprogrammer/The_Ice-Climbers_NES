@@ -11,6 +11,7 @@ private:
     bool isRight;     // Telling us if the object is facing to the right.
     bool isAttacking; // Telling us if the object is attacking.
     bool isStunned;   // Telling us if the object is stunned.
+    bool isRebound;   // Telling us if the object is rebounded.
 
 public:
 
@@ -34,6 +35,7 @@ public:
         isRight     = true;
         isAttacking = false;
         isStunned = false;
+        isRebound = false;
     }
     Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
@@ -46,6 +48,7 @@ public:
         isRight     = movement.isRight;
         isAttacking = movement.isAttacking;
         isStunned   = movement.isStunned;
+        isRebound   = movement.isRebound;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -53,8 +56,8 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        if (contact.gameObject.tag != "Floor") std::cout << "Soy Popo, me choco con: " << contact.gameObject.tag << std::endl;
-
+        
+        if(contact.gameObject.tag != "Floor") std::cout << "Popo colisiona con " << contact.gameObject.name << std::endl;
         if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
@@ -63,7 +66,7 @@ public:
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
                 }
             }
-        } else if (contact.gameObject.tag == "Floor") {
+        } else if (contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Block") {
             int move = GetAxis("Horizontal");
             float deltaTime = GetFrameTime();
             if (!contact.contact_normal.x && contact.gameObject.getComponent<Collider2D>().active) {
@@ -94,36 +97,46 @@ public:
                     
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                     isGrounded = true;
+                    isRebound = false;
                 } else if (contact.contact_normal.y > 0) {
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
                     rigidbody.velocity.y *= -1;
                     animator["Fall"];
+                    if (contact.gameObject.tag == "Block") {
+                        contact.gameObject.getComponent<Collider2D>().active = false;
+                        //sprite.Unload();
+                        contact.gameObject.getComponent<Sprite>().ChangeTexture("Assets/Sprites/block_invisible.png");
+                    }
                 } else {
                     std::cout << "Me he chocado? No me he chocado?" << std::endl;
                 }
             }else if(!contact.gameObject.getComponent<Collider2D>().active) {
                 isGrounded = false;
-            } else if(!isGrounded){
+            } else if(!isGrounded || animator.InState("Fall")){
                 rigidbody.velocity.x *= -1;
-                //animator.Flip();
+                isRebound = true;
+                animator.Flip();
             }
         } else if (contact.gameObject.tag == "Enemy") {
-            std::cout << "Colision con enemigo " << std::endl;
-            if (!isAttacking && !isStunned) {
-                std::cout << "No estoy atacando me pongo en estado de stunned" << std::endl;
-                animator["Stunned"];
-                collider.size = animator.GetViewDimensions();
-                isStunned = true;
-                rigidbody.velocity.x = 0;
-            }else if(!animator.InState("Stunned")){
-                if ((contact.contact_normal.x > 0 && !isRight) || (contact.contact_normal.x < 0 && isRight)){
-                    std::cout << "Ataco pero me ha chocado por atras =D " << std::endl;
+            auto animatorEnemy = contact.gameObject.getComponent<Animator>();
+            if(!animatorEnemy.InState("Stunned")) {
+                if (!isAttacking && !isStunned) {
+                    std::cout << "\tNo estoy atacando me pongo en estado de stunned" << std::endl;
                     animator["Stunned"];
+                    collider.size = animator.GetViewDimensions();
                     isStunned = true;
-                }else {
-                    std::cout << "Se estunea el enemigo" << std::endl;
-                    contact.gameObject.getComponent<Animator>()["Stunned"];
-                    contact.gameObject.getComponent<Script, MovementTopi>().Flip();
+                    rigidbody.velocity.x = 0;
+                }else if(!animator.InState("Stunned")){
+                    if ((contact.contact_normal.x < 0 && !isRight) || (contact.contact_normal.x > 0 && isRight)){
+                        std::cout << "\tAtaco pero me ha chocado por atras =D " << std::endl;
+                        animator["Stunned"];
+                        collider.size = animator.GetViewDimensions();
+                        isStunned = true;
+                    }else {
+                        std::cout << "\tSe estunea el enemigo" << std::endl;
+                        contact.gameObject.getComponent<Animator>()["Stunned"];
+                        contact.gameObject.getComponent<Script, MovementTopi>().Flip();
+                    }
                 }
             }
         }else if (contact.gameObject.tag == "Wall") {
@@ -149,7 +162,7 @@ public:
         if (!isAttacking) {
             // Horizontal movement:
             move = GetAxis("Horizontal");
-            if (move) {
+            if (move && !isRebound) {
                 if(isStunned) isStunned = !isStunned;
                 rigidbody.velocity.x = move * rigidbody.acceleration.x;
                 if (isGrounded) {
@@ -196,8 +209,12 @@ public:
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
-    bool getIsAttacking() {
-        return isAttacking;
+    bool getIsRight() {
+        return isRight;
+    }
+
+    void setStunned(bool stunned) {
+        isStunned = stunned;
     }
 };
 

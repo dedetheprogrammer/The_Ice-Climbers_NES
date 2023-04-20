@@ -33,7 +33,8 @@ public:
         transform(gameObject.getComponent<Transform2D>())
     {
         move        = 1;
-        initialPos  = {0,0};
+        initialPos  = transform.position;
+        collider.active = false;
     }
     MovementCone(GameObject& gameObject, MovementCone& movement) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
@@ -43,6 +44,7 @@ public:
     {
         move        = movement.move;
         initialPos  = movement.initialPos;
+        collider.active = false;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -73,7 +75,7 @@ public:
             std::cout << "Collider del topi activo? " << topiCollider.active << std::endl;
 
             if (!collider.active && topiCollider.active && transform.position.x == initialPos.x) {
-                // Topi starts moving, starting from in front of topi's position
+                std::cout << "Topi starts moving" << std::endl;
                 rigidbody.velocity.x = rigidbody.max_velocity.x;
 
                 float displacement = (move == 1)? topiCollider.size.x + 2 : -(collider.size.x + 2);
@@ -84,6 +86,8 @@ public:
                 transform.position.x = initialPos.x;
                 sprite.ChangeTexture("Assets/Sprites/Ice_cone.png");
                 topiCollider.active = false;
+            } else {
+                std::cout << "No hace nada" << std::endl;
             }
 
         } else if (contact.gameObject.tag == "Player" && collider.active) { // Se ocupa el player

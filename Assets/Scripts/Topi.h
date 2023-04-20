@@ -1,5 +1,6 @@
 #pragma once
 #include "EngineECS.h"
+#include "Popo.h"
 //#include "raylib.h"
 //#include "collider.h"
 
@@ -56,9 +57,9 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        if (contact.gameObject.tag != "Floor") std::cout << "Soy Topi, me choco con: " << contact.gameObject.tag << std::endl;
+        if (contact.gameObject.tag != "Floor" && contact.gameObject.tag != "Block") std::cout << "Soy Topi, me choco con: " << contact.gameObject.tag << std::endl;
 
-        if (contact.gameObject.tag == "Floor") {
+        if (contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Block") {
             if (contact.contact_normal.y < 0) {
                 if(!contact.gameObject.getComponent<Collider2D>().active) {
                     if(isRunning) {
@@ -74,7 +75,26 @@ public:
                 }
             }
         } else if (contact.gameObject.tag == "Player") { // Se ocupa el player
-            
+            /*auto animatorPlayer = contact.gameObject.getComponent<Animator>();
+            auto scriptPlayer = contact.gameObject.getComponent<Script, Movement>();
+            auto isRight = scriptPlayer.getIsRight();
+            if (!animatorPlayer.InState("Attack") && !animatorPlayer.InState("Stunned")) {
+                std::cout << "\tNo está atacando lo pongo en estado de stunned" << std::endl;
+                animatorPlayer["Stunned"];
+                collider.size = animator.GetViewDimensions();
+                scriptPlayer.setStunned(true);
+                rigidbody.velocity.x = 0;
+            }else if(!animator.InState("Stunned")){
+                if ((contact.contact_normal.x < 0 && !isRight) || (contact.contact_normal.x > 0 && isRight)){
+                    std::cout << "\tAtaco pero me ha chocado por atras =D " << std::endl;
+                    animator["Stunned"];
+                    scriptPlayer.setStunned(true);
+                }else {
+                    std::cout << "\tSe estunea el enemigo" << std::endl;
+                    animator["Stunned"];
+                    Flip();
+                }
+            }*/
         }
     }
 
@@ -109,6 +129,7 @@ public:
     }
 
     void Flip() {
+        animator.Flip();
         move *= -1;
     }
 

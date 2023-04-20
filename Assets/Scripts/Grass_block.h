@@ -25,11 +25,11 @@ public:
 
     void OnCollision(Collision contact) override {
         if (contact.gameObject.tag == "Player") {
-            if (contact.contact_normal.y < 0 && collider.active) {
+            /*if (contact.contact_normal.y < 0 && collider.active) {
                 collider.active = false;
                 //sprite.Unload();
                 sprite.ChangeTexture("Assets/Sprites/block_invisible.png");
-            }
+            }*/
         }
         else if (contact.gameObject.tag == "Cone") {
             if (!collider.active) {
