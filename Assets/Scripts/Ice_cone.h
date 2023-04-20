@@ -11,6 +11,7 @@ private:
     Vector2 initialPos;
 
     void Draw() {
+        if(initialPos != Vector2{0,0}) initialPos = transform.position;
         collider.Draw();
         sprite.Draw();
     }
@@ -35,6 +36,7 @@ public:
         move        = 1;
         initialPos  = transform.position;
         collider.active = false;
+        std::cout << initialPos << std::endl;
     }
     MovementCone(GameObject& gameObject, MovementCone& movement) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
@@ -43,8 +45,9 @@ public:
         transform(gameObject.getComponent<Transform2D>())
     {
         move        = movement.move;
-        initialPos  = movement.initialPos;
+        initialPos  = gameObject.getComponent<Transform2D>().position;
         collider.active = false;
+        std::cout << initialPos << std::endl;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -79,9 +82,9 @@ public:
                 rigidbody.velocity.x = rigidbody.max_velocity.x;
 
                 float displacement = (move == 1)? topiCollider.size.x + 2 : -(collider.size.x + 2);
-                transform.position.x = topiTransform.position.x + displacement;
+                //transform.position.x = topiTransform.position.x + displacement;
                 collider.active = true;
-            } else if (!collider.active && transform.position.x != initialPos.x) {
+            } else if (!collider.active && topiCollider.active && transform.position.x != initialPos.x) {
                 // Topi contact after having placed the block
                 transform.position.x = initialPos.x;
                 sprite.ChangeTexture("Assets/Sprites/Ice_cone.png");

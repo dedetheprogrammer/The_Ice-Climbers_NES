@@ -52,8 +52,8 @@ public:
         isRight     = movement.isRight;
         isAttacking = movement.isAttacking;
         isStunned   = movement.isStunned;
-        deadX = 0;
-        deadY = 0;
+        deadX       = 0;
+        deadY       = 0;
         isRebound   = movement.isRebound;
     }
 
@@ -130,18 +130,18 @@ public:
                     std::cout << "\tNo estoy atacando me pongo en estado de stunned" << std::endl;
                     animator["Stunned"];
                     collider.active = false;
-                    deadX = transform.position.x;
-                    deadY = transform.position.y;
+                    deadX = transform.position.x + 2;
+                    deadY = transform.position.y + 2;
                     collider.size = animator.GetViewDimensions();
                     isStunned = true;
                     rigidbody.velocity.x = 0;
-                }else if(!animator.InState("Stunned")){
+                }else if(!isStunned){
                     if ((contact.contact_normal.x < 0 && !isRight) || (contact.contact_normal.x > 0 && isRight)){
                         std::cout << "\tAtaco pero me ha chocado por atras =D " << std::endl;
                         animator["Stunned"];
                         collider.active = false;
-                        deadX = transform.position.x;
-                        deadY = transform.position.y;
+                        deadX = transform.position.x + 2;
+                        deadY = transform.position.y + 2;
                         collider.size = animator.GetViewDimensions();
                         isStunned = true;
                     }else {
