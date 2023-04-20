@@ -72,7 +72,17 @@ public:
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y < 0) {
                     rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
-                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
+                    int move = GetAxis("Horizontal");
+                    float deltaTime = GetFrameTime();
+                    if (!isAttacking && !move) {
+                        if(!isStunned) {
+                            animator["Idle"];
+                            collider.size = animator.GetViewDimensions();
+                        }
+                    }
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+                    isGrounded = true;
+                    isRebound = false;
                 } else {
                     rigidbody.velocity.y *= -1;
                 }
@@ -124,12 +134,15 @@ public:
                 } else {
                     std::cout << "Me he chocado? No me he chocado?" << std::endl;
                 }
-            }else if(!contact.gameObject.getComponent<Collider2D>().active) {
+            } else if(!contact.gameObject.getComponent<Collider2D>().active && !animator.InState("Jump")) {
+                animator["Fall"];
                 isGrounded = false;
             } else if(!isGrounded || animator.InState("Fall")){
                 rigidbody.velocity.x *= -1;
                 isRebound = true;
                 animator.Flip();
+            } else if(isGrounded) {
+                rigidbody.velocity.x = 0;
             }
         } else if (contact.gameObject.tag == "Enemy") {
             auto animatorEnemy = contact.gameObject.getComponent<Animator>();
@@ -160,12 +173,14 @@ public:
                 }
             }
         }else if (contact.gameObject.tag == "Wall") {
-            if (!contact.contact_normal.x) {
+            if (contact.contact_normal.x && !isGrounded) {
                 rigidbody.velocity.x *= -1;
-            }else{
+                isRebound = true;
+                animator.Flip();
+            }/*else{
                 rigidbody.velocity.y *= -1;
                 animator["Fall"];
-            }
+            }*/
         }
     }
 

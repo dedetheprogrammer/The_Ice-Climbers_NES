@@ -195,9 +195,9 @@ void Game() {
     Cloud.addComponent<Transform2D>();
     Cloud.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
     Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_light.png", Vector2{4.0f, 4.0f});
-    float cloud_width = Block.getComponent<Sprite>().GetViewDimensions().y;
-    float cloud_height = Block.getComponent<Sprite>().GetViewDimensions().x;
-    Cloud.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(cloud_width*6.0f)+4, cloud_height-4}, BLUE);
+    float cloud_width = Cloud.getComponent<Sprite>().GetViewDimensions().x;
+    float cloud_height = Cloud.getComponent<Sprite>().GetViewDimensions().y;
+    Cloud.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{cloud_width, cloud_height}, BLUE);
     Cloud.addComponent<Script, MovementCloud>();
     GameSystem::Instantiate(Cloud, GameObjectOptions{.position{150.0f,330.0f}});
 
