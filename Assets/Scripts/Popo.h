@@ -15,8 +15,8 @@ private:
 
 public:
 
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
-    // eficiente que acceder una y otra vez a los componentes cada vez que 
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
+    // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     AudioPlayer& audioplayer;
@@ -24,9 +24,9 @@ public:
     RigidBody2D& rigidbody;
     Transform2D& transform;
 
-    int deadX, deadY;
+    int deadX, deadY, groundX, groundY, isRightGround;
 
-    Movement(GameObject& gameObject) : Script(gameObject), 
+    Movement(GameObject& gameObject) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
@@ -39,6 +39,9 @@ public:
         isStunned = false;
         deadX = 0;
         deadY = 0;
+        groundX = 0;
+        groundY = 0;
+        isRightGround = 0;
         isRebound = false;
     }
     Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
@@ -52,8 +55,9 @@ public:
         isRight     = movement.isRight;
         isAttacking = movement.isAttacking;
         isStunned   = movement.isStunned;
-        deadX       = 0;
-        deadY       = 0;
+        deadX = 0;
+        deadY = 0;
+        isRightGround = 0;
         isRebound   = movement.isRebound;
     }
 
@@ -62,8 +66,8 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        
-        if(contact.gameObject.tag != "Floor") std::cout << "Popo colisiona con " << contact.gameObject.name << std::endl;
+
+        if(contact.gameObject.tag != "Floor") std::cout << "";
         if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
                 if (contact.contact_normal.y > 0) {
@@ -100,9 +104,12 @@ public:
                             }
                         }
                     }
-                    
+
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                     isGrounded = true;
+                    groundX = transform.position.x;
+                    groundY = transform.position.y;
+                    isRightGround = isRight;
                     isRebound = false;
                 } else if (contact.contact_normal.y > 0) {
                     //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
@@ -165,7 +172,7 @@ public:
         // Auxiliar variables:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
-        
+
         // std::cout << "deltatime = " << deltaTime << std::endl;
         if(deltaTime > 0.2){
             deltaTime = 1.0 / GetFPS();   // Fix deltaTime to the period of one frame
@@ -189,15 +196,23 @@ public:
             }
             if (transform.position.x > GetScreenWidth()) {
                 transform.position.x = -animator.GetViewDimensions().x;
-                std::cout << "Popo salio " << std::endl;
+
             } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
                 transform.position.x = GetScreenWidth();
             }
             if(transform.position.y >GetScreenHeight()){
-                collider.active = true;
-                transform.position.x = deadX;
-                transform.position.y = deadY-20;
-                animator["Idle"];
+                if(animator.InState("Stunned")){
+                    collider.active = true;
+                    transform.position.x = deadX;
+                    transform.position.y = deadY-20;
+                    animator["Idle"];
+                }else{
+                    transform.position.x = groundX;
+                    transform.position.y = groundY - 20;//+ isRightGround*40;
+                    std::cout << "GroundX: " << groundX << " GroundY: " << groundY << std::endl;
+                    std::cout << "GroundX: " << transform.position.x << " GroundY: " << transform.position.y << std::endl;
+                    rigidbody.velocity.x = 0;
+                }
             }
 
             // Vertical movement:
@@ -222,7 +237,7 @@ public:
             collider.size = animator.GetViewDimensions();
             transform.position.y += 3;
         }
-        
+
         // Colissions:
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
