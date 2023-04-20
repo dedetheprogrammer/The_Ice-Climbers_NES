@@ -41,7 +41,7 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall", "Cone"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall", "Cone", "Cloud"});
     GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player", "Cone"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
@@ -193,12 +193,15 @@ void Game() {
 
 
 
-    GameObject Cloud("Cloud", "Floor");
+    GameObject Cloud("Cloud", "Cloud");
     Cloud.addComponent<Transform2D>();
     Cloud.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
-    Cloud.addComponent<Script, MovementCloud>();
+    Cloud.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*6.0f)+4, block_height-4}, BLUE);
     Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_light.png", Vector2{4.0f, 4.0f});
-    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{150.0f,300.0f}});
+    Cloud.addComponent<Script, MovementCloud>();
+    float cloud_width = Block.getComponent<Sprite>().GetViewDimensions().x;
+    float cloud_height = Block.getComponent<Sprite>().GetViewDimensions().x;
+    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{150.0f,330.0f}});
 
 
     

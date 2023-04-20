@@ -70,10 +70,11 @@ public:
         if(contact.gameObject.tag != "Floor") std::cout << "";
         if (contact.gameObject.tag == "Cloud") {
             if (!contact.contact_normal.x) {
-                if (contact.contact_normal.y > 0) {
+                if (contact.contact_normal.y < 0) {
                     rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
-                } else {
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
+                } else {
+                    rigidbody.velocity.y *= -1;
                 }
             }
         } else if (contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Block") {
