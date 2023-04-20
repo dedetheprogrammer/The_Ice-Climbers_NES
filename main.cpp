@@ -3,6 +3,7 @@
 #include "Popo.h"
 #include "Grass_block.h"
 #include "Topi.h"
+#include "Ice_cone.h"
 #include "Cloud.h"
 
 class Flicker {
@@ -40,8 +41,8 @@ void Game() {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall"});
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall", "Cone"});
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player", "Cone"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -68,7 +69,7 @@ void Game() {
     );
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
     Popo.addComponent<RigidBody2D>(1, 375, Vector2{150,0}, Vector2{150,400});
@@ -102,12 +103,12 @@ void Game() {
     Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
     GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,levels[0]}});
 
-    GameObject Block("Grass Block", "Floor");
+    GameObject Block("Grass Block", "Block", {}, {"Player", "Cone"});
     Block.addComponent<Transform2D>();
     Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
-    int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
+    float block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
     Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    Block.addComponent<Script, GrassBlockBehavior>();
+    Block.addComponent<Script, GrassBlockBehavior>("Assets/Sprites/Grass_block_large.png");
     for (int i = 0; i < 24; i++) {
         GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*4.0f + block_width * i, levels[1]}});
     }
@@ -201,7 +202,18 @@ void Game() {
     Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*3}, PINK);
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*(levelsWall.size()-1), -2300.0f}});
     GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*(levelsWall.size()-1), -2300.0f}});
+    
+    GameObject Cone("Topi cone", "Cone", {}, {"Topi"});
+    Cone.addComponent<Transform2D>();
+    Cone.addComponent<Sprite>("Assets/Sprites/Ice_cone.png", Vector2{4.0f, 4.0f});
+    Vector2 cone_size = Cone.getComponent<Sprite>().GetViewDimensions();
+    Cone.addComponent<Collider2D>(&Cone.getComponent<Transform2D>().position, Vector2{cone_size.x, cone_size.y}, BLUE);
+    Cone.addComponent<RigidBody2D>(1, 0, Vector2{100,0}, Vector2{0,0});
+    Cone.addComponent<Script, MovementCone>();
 
+    for(int i = 1; i < levels.size(); i+=2){
+        GameSystem::Instantiate(Cone, GameObjectOptions{.position{WINDOW_WIDTH - cone_size.x-2, levels[i] - cone_size.y + 1}});
+    }
 
     bool play_music = false;
     bool paused = false;
@@ -252,9 +264,6 @@ void Game() {
         }
         if (IsKeyPressed(KEY_ESCAPE)) {
             break;
-        }
-        if (IsKeyPressed(KEY_R)) {
-            Popo.getComponent<Transform2D>().position = Vector2{600,400};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         Floor.getComponent<Collider2D>().Draw();

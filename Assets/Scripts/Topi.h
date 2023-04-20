@@ -1,5 +1,6 @@
 #pragma once
 #include "EngineECS.h"
+#include "Popo.h"
 //#include "raylib.h"
 //#include "collider.h"
 
@@ -55,14 +56,16 @@ public:
         return new MovementTopi(gameObject, *this);
     }
 
-    void OnCollision(Collision contact) {
-        if (contact.gameObject.tag == "Floor") {
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag != "Floor" && contact.gameObject.tag != "Block") std::cout << "Soy Topi, me choco con: " << contact.gameObject.tag << std::endl;
+
+        if (contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Block") {
             if (contact.contact_normal.y < 0) {
                 if(!contact.gameObject.getComponent<Collider2D>().active) {
                     if(isRunning) {
                         animator["Stunned"];
                     } else {
-                        rigidbody.max_velocity.x *= 2;
+                        rigidbody.velocity.x = rigidbody.max_velocity.x * 2;
                         isRunning = true;
                         animator.Flip();
                         move *= -1;
@@ -72,7 +75,26 @@ public:
                 }
             }
         } else if (contact.gameObject.tag == "Player") { // Se ocupa el player
-            
+            /*auto animatorPlayer = contact.gameObject.getComponent<Animator>();
+            auto scriptPlayer = contact.gameObject.getComponent<Script, Movement>();
+            auto isRight = scriptPlayer.getIsRight();
+            if (!animatorPlayer.InState("Attack") && !animatorPlayer.InState("Stunned")) {
+                std::cout << "\tNo está atacando lo pongo en estado de stunned" << std::endl;
+                animatorPlayer["Stunned"];
+                collider.size = animator.GetViewDimensions();
+                scriptPlayer.setStunned(true);
+                rigidbody.velocity.x = 0;
+            }else if(!animator.InState("Stunned")){
+                if ((contact.contact_normal.x < 0 && !isRight) || (contact.contact_normal.x > 0 && isRight)){
+                    std::cout << "\tAtaco pero me ha chocado por atras =D " << std::endl;
+                    animator["Stunned"];
+                    scriptPlayer.setStunned(true);
+                }else {
+                    std::cout << "\tSe estunea el enemigo" << std::endl;
+                    animator["Stunned"];
+                    Flip();
+                }
+            }*/
         }
     }
 
@@ -83,12 +105,12 @@ public:
         if ((transform.position.x + dims.x) < 0 || transform.position.x > GetScreenWidth()) {
             if(isRunning) {
                 isRunning = false;
-                rigidbody.max_velocity.x /= 2; 
+                collider.active = true;
+                rigidbody.max_velocity.x /= 2;
             }
             animator.Flip();
             move *= -1;
             
-           // std::cout << "Está fuera" << std::endl;
             if(animator.InState("Stunned")) {
                 transform.position = initialPos;
                 animator["Walk"];
@@ -97,9 +119,9 @@ public:
             }
         }
         
-        rigidbody.max_velocity.x = abs(rigidbody.max_velocity.x);
-        rigidbody.max_velocity.x *= move;
-        transform.position.x += rigidbody.max_velocity.x * deltaTime;
+        rigidbody.velocity.x = abs(rigidbody.max_velocity.x);
+        rigidbody.velocity.x *= move;
+        transform.position.x += rigidbody.velocity.x * deltaTime;
 
         
         transform.position.y += rigidbody.velocity.y * deltaTime;
@@ -107,6 +129,7 @@ public:
     }
 
     void Flip() {
+        animator.Flip();
         move *= -1;
     }
 
