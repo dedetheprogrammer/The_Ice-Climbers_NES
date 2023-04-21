@@ -1,45 +1,37 @@
-#pragma once
 #include "EngineECS.h"
-#include "raylib.h"
+#include "Popo.h"
+#include <iostream>
 
-class BlockActions : public Script {
+class BlockBehavior : public Script {
 private:
-    // Variables para Popo:
-    bool isGrounded;  // Telling us if the object is on the ground.
-    bool isRight;     // Telling us if the object is facing to the right.
-    bool isAttacking; // Telling us if the object is attacking.
-
-    void Move() {
-        
-    }
-
-    void Draw() {
-        animator.Play();
-        //collider.Draw(RED);
-    }
-
+    Sprite& sprite;
+    Transform2D& transform;
+    GameObject hole;
 public:
-
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
-    // eficiente que acceder una y otra vez a los componentes cada vez que 
-    // necesitamos hacer algo con uno de ellos.
-    Animator& animator;
-    Collider2D& collider;
-    Transform2D& transform; 
-
-    BlockActions(GameObject& gameObject) : Script(gameObject), 
-        animator(gameObject.getComponent<Animator>()),
-        collider(gameObject.getComponent<Collider2D>()),
+    BlockBehavior(GameObject& gameObject) : Script(gameObject),
+        sprite(gameObject.getComponent<Sprite>()),
         transform(gameObject.getComponent<Transform2D>())
     {
-        isGrounded  = false;
-        isRight     = true;
-        isAttacking = false;
+        hole = GameObject(gameObject.name + " Hole", "Hole");
+        hole.addComponent<Collider2D>(&transform.position, sprite.GetViewDimensions(), RED);
+    }
+    Component* Clone(GameObject& gameObject) {
+        return new BlockBehavior(gameObject);
     }
 
     void Update() override {
-        Move();
-        Draw();
+
+    }
+
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag == "Player") {
+            if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
+                contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
+                contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
+                GameSystem::Instantiate(hole, GameObjectOptions{.position = transform.position});
+                gameObject.Destroy();
+            }
+        }
     }
 
 };

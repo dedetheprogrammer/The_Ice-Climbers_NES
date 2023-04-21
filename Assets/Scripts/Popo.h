@@ -1,187 +1,242 @@
 #pragma once
 #include "EngineECS.h"
-//#include "raylib.h"
+#include "controllers.h"
+#include "raylib.h"
 #include "raylibx.h"
-#include "Topi.h"
 
-class Movement : public Script {
+class PopoBehavior : public Script {
 private:
+
     // Variables para Popo:
-    bool isGrounded;  // Telling us if the object is on the ground.
-    bool isRight;     // Telling us if the object is facing to the right.
-    bool isAttacking; // Telling us if the object is attacking.
-    bool isStunned;   // Telling us if the object is stunned.
-    bool isRebound;   // Telling us if the object is rebounded.
-
+    bool hasBounced;
+    bool isJumping;
+    bool onCloud;
+    Vector2 last_save_position;
+    float momentum;
+    std::string last_tag;
+    bool hasCollisioned;
 public:
-
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
-    // eficiente que acceder una y otra vez a los componentes cada vez que
+    bool isBraking;
+    int lifes;
+    bool brokeBlock;
+    bool isAttacking; // Telling us if the object is attacking.
+    bool isRight;     // Telling us if the object is facing to the right.
+    bool isStunned;
+    int frutasRecogidas;
+    int bloquesDestruidos;
+    bool victory;
+    bool puntuacion;
+    Vector2 collider_size;
+    Vector2 collider_offset;
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
+    // eficiente que acceder una y otra vez a los componentes cada vez que 
     // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     AudioPlayer& audioplayer;
     Collider2D& collider;
     RigidBody2D& rigidbody;
+    bool isGrounded;  // Telling us if the object is on the ground.
     Transform2D& transform;
+    Controller& controller; // Pointer to the controller instance.
 
-    int deadX, deadY, groundX, groundY, isRightGround;
-
-    Movement(GameObject& gameObject) : Script(gameObject),
+    PopoBehavior(GameObject& gameObject, Controller& c) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        controller(c)
     {
+        lifes = 3;
         isGrounded  = false;
+        isJumping   = false;
         isRight     = true;
         isAttacking = false;
+        hasBounced  = false;
+        onCloud = false;
         isStunned = false;
-        deadX = 0;
-        deadY = 0;
-        groundX = 0;
-        groundY = 0;
-        isRightGround = 0;
-        isRebound = false;
+        brokeBlock = false;
+        collider_size = collider.size;
+        collider_offset = collider.offset;
+        isBraking = false;
+        last_tag = "";
+        hasCollisioned = false;
+        victory = false;
+        puntuacion = false;
+        bloquesDestruidos = 0;
+        frutasRecogidas = 0;
     }
-    Movement(GameObject& gameObject, Movement& movement) : Script(gameObject),
+    
+    PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        controller(behavior.controller)
     {
-        isGrounded  = movement.isGrounded;
-        isRight     = movement.isRight;
-        isAttacking = movement.isAttacking;
-        isStunned   = movement.isStunned;
-        deadX = 0;
-        deadY = 0;
-        isRightGround = 0;
-        isRebound   = movement.isRebound;
+        lifes       = behavior.lifes;
+        isJumping   = behavior.isJumping;
+        hasBounced  = behavior.hasBounced;
+        isGrounded  = behavior.isGrounded;
+        isRight     = behavior.isRight;
+        isAttacking = behavior.isAttacking;
+        onCloud     = behavior.onCloud;
+        isStunned   = behavior.isStunned;
+        brokeBlock  = behavior.brokeBlock;
+        collider_size = behavior.collider_size;
+        collider_offset = behavior.collider_offset;
+        isBraking = behavior.isBraking;
+        last_tag = behavior.last_tag;
+        hasCollisioned = behavior.hasCollisioned;
+        victory     = behavior.victory;
+        puntuacion = false;
+        bloquesDestruidos = 0;
+        frutasRecogidas = 0;
     }
 
     Component* Clone(GameObject& gameObject) override {
-        return new Movement(gameObject, *this);
+        return new PopoBehavior(gameObject, *this);
     }
 
-    void OnCollision(Collision contact) override {
+    void OnCollision(Collision contact) {
+        float deltaTime = GetFrameTime();
+        //int move = GetAxis("Horizontal");
+        int move = 0;
+        if (controller.isDown(Controller::LEFT)) move -= 1;
+        if (controller.isDown(Controller::RIGHT)) move += 1;
 
-        if(contact.gameObject.tag != "Floor") std::cout << "";
-        if (contact.gameObject.tag == "Cloud") {
-            if (!contact.contact_normal.x) {
+        if (contact.gameObject.tag == "Floor") {
+            int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
+                pos_p2 = transform.position.x + collider.size.x;
+            if (contact.contact_normal.y != 0 && ((transform.position.x > pos_x1 && transform.position.x < pos_x2) || (pos_p2 > pos_x1 && pos_p2 < pos_x2))) {
                 if (contact.contact_normal.y < 0) {
-                    rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
-                    int move = GetAxis("Horizontal");
-                    float deltaTime = GetFrameTime();
-                    if (!isAttacking && !move) {
-                        if(!isStunned) {
-                            animator["Idle"];
-                            collider.size = animator.GetViewDimensions();
-                        }
-                    }
-                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-                    isGrounded = true;
-                    isRebound = false;
-                } else {
-                    rigidbody.velocity.y *= -1;
-                }
-            }
-        } else if (contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Block") {
-            int move = GetAxis("Horizontal");
-            float deltaTime = GetFrameTime();
-            if (!contact.contact_normal.x && contact.gameObject.getComponent<Collider2D>().active && collider.active) {
-                if (contact.contact_normal.y < 0) {
-                    if (!isAttacking && !move) {
+                    if (isJumping || isBraking) {
+                        isBraking = true;
                         if (rigidbody.velocity.x > 0) {
-                            rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                            rigidbody.velocity.x -= rigidbody.acceleration.x * deltaTime;
+                            momentum -= rigidbody.acceleration.x * deltaTime;
                             if (rigidbody.velocity.x < 0) {
                                 rigidbody.velocity.x = 0;
                             }
+                            if (momentum < 0) {
+                                momentum = 0;
+                            }
                             animator["Brake"];
-                            collider.size = animator.GetViewDimensions();
                         } else if (rigidbody.velocity.x < 0) {
-                            rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
+                            rigidbody.velocity.x += rigidbody.acceleration.x * deltaTime;
+                            momentum += rigidbody.acceleration.x * deltaTime;
                             if (rigidbody.velocity.x > 0) {
                                 rigidbody.velocity.x = 0;
                             }
-                            animator["Brake"];
-                            collider.size = animator.GetViewDimensions();
-                        } else {
-                            if(!isStunned) {
-                                rigidbody.velocity.x = 0;
-                                animator["Idle"];
-                                collider.size = animator.GetViewDimensions();
+                            if (momentum > 0) {
+                                momentum = 0;
                             }
+                            animator["Brake"];
+                        } else {
+                            isBraking = false;
+                        }
+                    } else {
+                        if (!isStunned && !isAttacking && !move) {
+                            rigidbody.velocity.x = 0;
+                            animator["Idle"];
                         }
                     }
-
-                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+                    isJumping  = false;
+                    hasBounced = false;
                     isGrounded = true;
-                    groundX = transform.position.x;
-                    groundY = transform.position.y;
-                    isRightGround = isRight;
-                    isRebound = false;
-                } else if (contact.contact_normal.y > 0) {
-                    //rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 2;
-                    rigidbody.velocity.y *= -1;
+                    brokeBlock = false;
+                    last_save_position = transform.position;
+                }else{
+                    if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
+                    std::cout << contact.gameObject.name << std::endl;
                     animator["Fall"];
-                    if (contact.gameObject.tag == "Block") {
-                        contact.gameObject.getComponent<Collider2D>().active = false;
-                        //sprite.Unload();
-                        contact.gameObject.getComponent<Sprite>().ChangeTexture("Assets/Sprites/block_invisible.png");
-                    }
-                } else {
-                    std::cout << "Me he chocado? No me he chocado?" << std::endl;
                 }
-            } else if(!contact.gameObject.getComponent<Collider2D>().active && !animator.InState("Jump")) {
-                animator["Fall"];
-                isGrounded = false;
-            } else if(!isGrounded || animator.InState("Fall")){
-                rigidbody.velocity.x *= -1;
-                isRebound = true;
-                animator.Flip();
-            } else if(isGrounded) {
-                rigidbody.velocity.x = 0;
+                rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+            } 
+            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
+                (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y)))
+            {
+                rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.02;
+                if (!isGrounded) {
+                    hasBounced = true;
+                    rigidbody.velocity.x *= -1;
+                    if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                } 
             }
-        } else if (contact.gameObject.tag == "Enemy") {
-            auto animatorEnemy = contact.gameObject.getComponent<Animator>();
-            if(!animatorEnemy.InState("Stunned")) {
-                if (!isAttacking && !isStunned) {
-                    std::cout << "\tNo estoy atacando me pongo en estado de stunned" << std::endl;
+        }
+
+        if (contact.gameObject.tag == "Wall") {
+            rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
+        }
+
+        if (contact.gameObject.tag == "Cloud") {
+            if (contact.contact_normal.y < 0) {
+                isGrounded = true;
+                isJumping  = false;
+                onCloud = false;//true;
+                if (!move) {
+                    animator["Idle"];
+                } else {
+                    animator["Walk"];
+                    if ((move > 0 && !isRight) || (move < 0 && isRight)) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                }
+                rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().velocity.x);
+            }
+            if (contact.contact_normal.x != 0) {
+                rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().velocity.x);
+                if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
+            }
+            rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
+        } else {
+            onCloud = false;
+        }
+
+        if (contact.gameObject.tag == "Enemy") {
+            if (!isStunned) {
+                if (!isAttacking) {
+                    lifes--;
                     animator["Stunned"];
-                    collider.active = false;
-                    deadX = transform.position.x + 2;
-                    deadY = transform.position.y + 2;
-                    collider.size = animator.GetViewDimensions();
                     isStunned = true;
                     rigidbody.velocity.x = 0;
-                }else if(!isStunned){
-                    if ((contact.contact_normal.x < 0 && !isRight) || (contact.contact_normal.x > 0 && isRight)){
-                        std::cout << "\tAtaco pero me ha chocado por atras =D " << std::endl;
+                } else {
+                    if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
+                        lifes--;
                         animator["Stunned"];
-                        collider.active = false;
-                        deadX = transform.position.x + 2;
-                        deadY = transform.position.y + 2;
-                        collider.size = animator.GetViewDimensions();
                         isStunned = true;
-                    }else {
-                        std::cout << "\tSe estunea el enemigo" << std::endl;
-                        contact.gameObject.getComponent<Animator>()["Stunned"];
-                        contact.gameObject.getComponent<Script, MovementTopi>().Flip();
+                        rigidbody.velocity.x = 0;
+                    } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
+                        lifes--;
+                        animator["Stunned"];
+                        isStunned = true;
+                        rigidbody.velocity.x = 0;
                     }
-                }
+                } 
             }
-        }else if (contact.gameObject.tag == "Wall") {
-            if (contact.contact_normal.x && !isGrounded) {
-                rigidbody.velocity.x *= -1;
-                isRebound = true;
-                animator.Flip();
-            }/*else{
-                rigidbody.velocity.y *= -1;
-                animator["Fall"];
-            }*/
         }
+
+        if (contact.gameObject.tag == "Goal") {
+            if (contact.contact_normal.y > 0) {
+                victory = true;
+                std::cout << "VICTORY!";
+                //exit(0);
+            }
+        }
+
+        if (contact.gameObject.tag == "Fruit") {
+            frutasRecogidas += 1;
+        }
+        last_tag = contact.gameObject.tag;
+        hasCollisioned = true;
     }
 
     void Update() override {
@@ -189,82 +244,117 @@ public:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
 
-        // std::cout << "deltatime = " << deltaTime << std::endl;
-        if(deltaTime > 0.2){
-            deltaTime = 1.0 / GetFPS();   // Fix deltaTime to the period of one frame
-        }
-
         if (!isAttacking) {
             // Horizontal movement:
-            move = GetAxis("Horizontal");
-            if (move && !isRebound) {
-                if(isStunned) isStunned = !isStunned;
-                rigidbody.velocity.x = move * rigidbody.acceleration.x;
-                if (isGrounded) {
-                    animator["Walk"];
-                    collider.size = animator.GetViewDimensions();
-                }
-            }
+            //move = GetAxis("Horizontal");
+            if (controller.isDown(Controller::LEFT)) move -= 1;
+            if (controller.isDown(Controller::RIGHT)) move += 1;
+            
             transform.position.x += rigidbody.velocity.x * deltaTime;
-            if ((move > 0 && !isRight) || (move < 0 && isRight)) {
-                isRight = !isRight;
-                animator.Flip();
+            if (!hasBounced && !onCloud) {
+                if (move) {
+                    if (!isJumping) {
+                        isBraking = false;
+                        isStunned = false;
+                        rigidbody.velocity.x = move * rigidbody.acceleration.x;
+                        momentum += move * rigidbody.acceleration.x/1.5 * deltaTime;
+                        if (momentum < -rigidbody.max_velocity.x) {
+                            momentum = -rigidbody.max_velocity.x;
+                        } else if (momentum > rigidbody.max_velocity.x) {
+                            momentum = rigidbody.max_velocity.x;
+                        }
+                        if (isGrounded) {
+                            isJumping = false;
+                            animator["Walk"];
+                        }
+                    } else {
+                        rigidbody.velocity.x += move * rigidbody.acceleration.x/4 * deltaTime;
+                        if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                            rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                        } else if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                            rigidbody.velocity.x = rigidbody.max_velocity.x;
+                        }
+                    }
+                } else {
+                    if (!isJumping) {
+                        momentum = 0;
+                    }
+                }
+                if ((move > 0 && !isRight) || (move < 0 && isRight)) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
             }
             if (transform.position.x > GetScreenWidth()) {
                 transform.position.x = -animator.GetViewDimensions().x;
-
             } else if (transform.position.x + animator.GetViewDimensions().x < 0) {
                 transform.position.x = GetScreenWidth();
             }
-            if(transform.position.y >GetScreenHeight()){
-                if(animator.InState("Stunned")){
-                    collider.active = true;
-                    transform.position.x = deadX;
-                    transform.position.y = deadY-20;
-                    animator["Idle"];
-                }else{
-                    transform.position.x = groundX;
-                    transform.position.y = groundY - 20;//+ isRightGround*40;
-                    std::cout << "GroundX: " << groundX << " GroundY: " << groundY << std::endl;
-                    std::cout << "GroundX: " << transform.position.x << " GroundY: " << transform.position.y << std::endl;
-                    rigidbody.velocity.x = 0;
-                }
-            }
+
 
             // Vertical movement:
-            if (isGrounded && !isStunned) {
-                if (IsKeyDown(KEY_SPACE)) {
+            if (!isJumping && isGrounded) {
+                if (controller.isDown(Controller::JUMP)) {
+                //if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
+                    isJumping  = true;
+                    rigidbody.velocity.x = momentum;
+                    if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = rigidbody.max_velocity.x;
+                    } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                    }
+
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
                     audioplayer["Jump"];
-                    collider.size = animator.GetViewDimensions();
-                } else if (IsKeyDown(KEY_E)) {
+                } else if (controller.isDown(Controller::ATTACK)) {
+                //} else if (IsKeyDown(KEY_E)) {
                     isAttacking = true;
-                    transform.position.y -= 3;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
-                    collider.size = animator.GetViewDimensions();
+                    collider.size.x = animator.GetViewDimensions().x;
+                    collider.offset = {0,0};
                 }
             }
         } else if (animator.HasFinished("Attack")) {
             isAttacking = false;
             animator["Idle"];
-            collider.size = animator.GetViewDimensions();
-            transform.position.y += 3;
+            collider.size = collider_size;
+            collider.offset = collider_offset;
         }
 
         // Colissions:
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
+        if (transform.position.y > GetScreenHeight() && !victory) {
+            lifes--;
+            isJumping = false;
+            isGrounded = true;
+            rigidbody.velocity = {0,0};
+            transform.position = last_save_position;
+            transform.position.y -= 150;
+            animator["Fall"];
+        }
+
+        if (hasCollisioned) {
+            hasCollisioned = false; 
+        } else {
+            if (last_tag == "Floor") {
+                if (isGrounded) {
+                    isGrounded = false;
+                    animator["Fall"];
+                    rigidbody.velocity.x = momentum;
+                    if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = rigidbody.max_velocity.x;
+                    } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                    }
+                    isJumping = true;
+                }
+            }
+        }
     }
 
-    bool getIsRight() {
-        return isRight;
-    }
-
-    void setStunned(bool stunned) {
-        isStunned = stunned;
-    }
 };
 

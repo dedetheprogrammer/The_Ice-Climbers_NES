@@ -1,20 +1,21 @@
 #include "EngineECS.h"
 #include "settings.h"
-#include "Popo.h"
-#include "Grass_block.h"
-#include "Topi.h"
-#include "Ice_cone.h"
+
+#include "Block.h"
 #include "Cloud.h"
+#include "Enemies.h"
+#include "Popo.h"
+#include "Fruit.h"
 
 class Flicker {
 private:
     float current_time; // Current time in the current state.
 public:
-    bool  action;       // Indicates if is the moment to perform the action or not.
+    bool  action;       // Indicates if is the moment to perform the action or not. 
     float trigger_time; // Time for triggering into the next state.
 
-    Flicker() : action(false), current_time(0), trigger_time(0) {}
-    Flicker(float trigger_time) : action(false), current_time(0), trigger_time(trigger_time) {}
+    Flicker() : current_time(0), action(false), trigger_time(0) {}
+    Flicker(float trigger_time) : current_time(0), action(false), trigger_time(trigger_time) {}
 
     bool Trigger(float deltaTime) {
         current_time += deltaTime;
@@ -30,209 +31,236 @@ Font NES;
 
 void Game() {
 
-    std::vector<float> levels{672.0f, 480.0f, 288.0f, 96.0f, -96.0f, -288.0f, -480.0f, -672.0f, -864.0f};
-    std::vector<float> levelsWall{-1056.0f, -1250.0f, -1484.0f, -1704.0f, -1924.0f, -2150.0f, -2300.0f};
+    int level_phase = 0;
+    bool acabar = false;
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
-    // ¿Como construyo un GameObject para Popo?
-    // 1. Creamos el GameObject. Recuerda:
-    //  - El GameObject no tiene ningún componente nada más crearlo.
-    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
-    //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Block", "Enemy", "Wall", "Cone", "Cloud"});
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Block", "Player", "Cone"});
-    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
-    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>();
-    Topi.addComponent<Transform2D>();
-    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
-    // GameObject Popo(Vector2{600,500});
-    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
-    // si no, dará error.
-    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 3, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 3, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 3, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 3, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 3, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 3, 0.3, false)},
-        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
-    });
-
-    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
-            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
-        }
-    );
-    // 3. Añadimos el componente de Audio:
-    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/NES - Ice Climber - Sound Effects/09-Jump.wav"))},
-    });
-    // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 375, Vector2{150,0}, Vector2{150,400});
-    Topi.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
-    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
-    //  - El Transform2D que tiene la posición del objeto.
-    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
-    //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
-    Popo.addComponent<Script, Movement>();
-    Topi.addComponent<Script, MovementTopi>();
-    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Popo.getComponent<Animator>().GetViewDimensions().y -1}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[0] - Topi.getComponent<Animator>().GetViewDimensions().y -1}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position = {WINDOW_WIDTH / 2.0f, levels[1] - Topi.getComponent<Animator>().GetViewDimensions().y -1}});
+    Canvas Mountain("Assets/Sprites/00_Mountain.png", {0,-1560}, {(float)WINDOW_WIDTH, WINDOW_HEIGHT*3.65f});
 
     // Rectangles = Sprites component?
     // Mountain background:
-    Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
-    Background Background(Mountain_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
-
+    //Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
+    //Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     // PAUSE frame:
     Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
-    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*4.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*4.0f, Pause_frame.height*4.0f};
+    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
 
-    GameObject Floor("Base Floor", "Floor");
-    Floor.addComponent<Transform2D>();
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
-    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,levels[0]}});
+    GameObject BaseFloor("Base Floor", "Floor");
+    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224,30}, PINK);
+    GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,560}});
 
-    GameObject Block("Grass Block", "Block", {}, {"Player", "Cone"});
-    Block.addComponent<Transform2D>();
-    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{4.0f, 4.0f});
-    float block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
-    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    Block.addComponent<Script, GrassBlockBehavior>("Assets/Sprites/Grass_block_large.png");
+    GameObject LevelFloor_0("Level Floor 0", "Floor");
+    GameObject LevelFloor_1("Level Floor 1", "Floor");
+    GameObject LevelFloor_2("Level Floor 2", "Floor");
+    GameObject LevelFloor_3("Level Floor 3", "Floor");
+    GameObject LevelFloor_4("Level Floor 4", "Floor");
+    GameObject LevelWall_0("Level Wall 0", "Wall");
+    GameObject LevelWall_1("Level Wall 1", "Wall");
+    GameObject LevelWall_2("Level Wall 2", "Wall");
+    GameObject Death("Death", "Death");
+
+    // Scene:
+    GameObject GrassBlock("Grass Block", "Floor", {"Block"});
+    GrassBlock.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", 3.62f, 3.0f);
+    int block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x, block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
+    float collider_width  = block_width-5.0f;
+    float collider_offset = (collider_width)/2;
+    
+    float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
+        LevelFloor_4_width = block_width * 7.0f;
+    LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width,25}, PINK);
+    LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width,25}, PINK);
+    LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width,25}, PINK);
+    LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width,25}, PINK);
+    LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width,25}, PINK);
+    LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{25, block_height * 6.0f}, YELLOW);
+    LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{25, block_height * 7.0f}, YELLOW);
+    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
+    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
+    Death.addComponent<Collider2D>(&Death.getComponent<Transform2D>().position, Vector2{block_height * 10.0f, 25}, RED);
+
+    GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    GrassBlock.addComponent<Script, BlockBehavior>();
     for (int i = 0; i < 24; i++) {
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*4.0f + block_width * i, levels[1]}});
+        GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{113.0f + block_width * i, 423}});
     }
-    Block.removeComponent<Sprite>();
-    Block.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 22; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[2]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width, 423}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*24, 423}});
+
+    GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
+    DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
+    DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    DirtBlock.addComponent<Script, BlockBehavior>();
+    for (int i = 0; i < 22; i++) {
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 287}});
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 150}});
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i,  14}});
     }
-    for(int i = 0; i < 22; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[3]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 287}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 287}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 150}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 150}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 14}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 14}});
+
+    GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
+    IceBlock.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", 3.62f, 3.0f);
+    IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    IceBlock.addComponent<Script, BlockBehavior>();
+    for (int i = 0; i < 20; i++) {
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -123}});
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -260}});
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -397}});
     }
-    for(int i = 0; i < 22; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*5.0f + block_width * i, levels[4]}});
-    }
-    Block.removeComponent<Sprite>();
-    Block.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", Vector2{4.0f, 4.0f});
-    for(int i = 0; i < 20; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[5]}});
-    }
-    for(int i = 0; i < 20; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[6]}});
-    }
-    for(int i = 0; i < 20; i++){
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{block_width*6.0f + block_width * i, levels[7]}});
-    }
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -123}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -123}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -260}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -260}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -397}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -397}});
 
-    GameObject Side("Base Floor", "Floor");
-    Side.addComponent<Transform2D>();
-    float block_height = Block.getComponent<Sprite>().GetViewDimensions().y;
-    Side.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width*9.0f, block_height-4}, PINK);
-    auto j = 5;
-    for(int i = 1; i < levels.size(); i++){
-        GameSystem::Instantiate(Side, GameObjectOptions{.position{block_width*(-1)*(j),levels[i]}});
-        if((i-1)%3 == 0)
-            j --;
-    }
-    j = 4;
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f + block_width*21, -533}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - LevelFloor_0_width + 3*block_width, -533}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*5, -533}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*13, -533}});
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{115.0f - 2*block_width, -624.0f - 2*block_height}});
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{114.0f + block_width*25, -624.0f - 2*block_height}});
 
-    for(int i = 1; i < levels.size(); i++){
-        GameSystem::Instantiate(Side, GameObjectOptions{.position{WINDOW_WIDTH - block_width*j,levels[i]}});
-        if((i-1)%3 == 0)
-            j ++;
-    }
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*2, -626}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + block_width*9, -626}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*18, -626}});
 
-    GameObject Platform("Final Floor", "Floor");
-    Platform.addComponent<Transform2D>();
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*6.0f)+4, block_height-4}, PINK);
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{285,levels[8]}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{540,levels[8]}});
-
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{412,-995.0f}});
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380.0f,-1540.0f}});
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{640.0f,-2305.0f}});
-
-    Block.removeComponent<Collider2D>();
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*4.0f)+4, block_height-4}, PINK);
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{192,-995.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{702,-995.0f}});
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{570,-1345.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{510,-1860.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{445,-2145.0f}});
-
-    Block.removeComponent<Collider2D>();
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*3.0f)+4, block_height-4}, PINK);
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{670,-1505.0f}});
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{255,-1890.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{380,-2050.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{605,-1985.0f}});
-
-    Block.removeComponent<Collider2D>();
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{(block_width*7.0f)+4, block_height-4}, PINK);
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{155.0f,-1380.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{190.0f,-2305.0f}});
-
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1180.0f}}); ///nube?
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{150.0f,-1720.0f}}); ///nube?
-
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f - block_width, -620.0f - 9*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*24, -620.0f - 9*block_height}});
     GameObject Cloud("Cloud", "Cloud");
-    Cloud.addComponent<Transform2D>();
-    Cloud.addComponent<RigidBody2D>(1, 375, Vector2{100,0}, Vector2{0,0});
-    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_light.png", Vector2{4.0f, 4.0f});
-    float cloud_width = Cloud.getComponent<Sprite>().GetViewDimensions().x;
-    float cloud_height = Cloud.getComponent<Sprite>().GetViewDimensions().y;
-    Cloud.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{cloud_width, cloud_height}, BLUE);
-    Cloud.addComponent<Script, MovementCloud>();
-    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{150.0f,330.0f}});
+    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", 3.62f, 3.0f);
+    Cloud.addComponent<Collider2D>(&Cloud.getComponent<Transform2D>().position, Cloud.getComponent<Sprite>().GetViewDimensions());
+    Cloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Cloud.addComponent<Script, CloudBehavior>();
+    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*5}});
 
-    GameObject Wall("Wall", "Wall");
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*5}, PINK);
-    for(int i = 0; i < levelsWall.size()-1; i++){
-        GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*i, levelsWall[i]}});
-        GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*i,levelsWall[i]}});
-    }
-    Block.removeComponent<Collider2D>();
-    Platform.addComponent<Collider2D>(&Side.getComponent<Transform2D>().position, Vector2{block_width, block_height*3}, PINK);
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{65+block_width*(levelsWall.size()-1), -2300.0f}});
-    GameSystem::Instantiate(Platform, GameObjectOptions{.position{925-block_width*(levelsWall.size()-1), -2300.0f}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f, -615.0f - 16*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*23, -615.0f - 16*block_height}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - block_width, -612.0f - 12*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 14*block_width, -612.0f - 11*block_height}});
 
-    GameObject Cone("Topi cone", "Cone", {}, {"Topi"});
-    Cone.addComponent<Transform2D>();
-    Cone.addComponent<Sprite>("Assets/Sprites/Ice_cone.png", Vector2{4.0f, 4.0f});
-    Vector2 cone_size = Cone.getComponent<Sprite>().GetViewDimensions();
-    Cone.addComponent<Collider2D>(&Cone.getComponent<Transform2D>().position, Vector2{cone_size.x, cone_size.y}, BLUE);
-    Cone.addComponent<RigidBody2D>(1, 0, Vector2{100,0}, Vector2{0,0});
-    Cone.addComponent<Script, MovementCone>();
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width, -629.0f - 22*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*22, -629.0f - 22*block_height}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + 8*block_width, -606.0f - 17*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{115.0f + 17*block_width, -607.0f - 16*block_height}});
 
-    for(int i = 1; i < levels.size(); i+=2){
-        GameSystem::Instantiate(Cone, GameObjectOptions{.position{WINDOW_WIDTH - cone_size.x-2, levels[i] - cone_size.y + 1}});
-    }
+    GameObject SmallCloud("Small Cloud", "Cloud");
+    SmallCloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Short.png", 3.62f, 3.0f);
+    SmallCloud.addComponent<Collider2D>(&SmallCloud.getComponent<Transform2D>().position, SmallCloud.getComponent<Sprite>().GetViewDimensions());
+    SmallCloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    SmallCloud.addComponent<Script, CloudBehavior>();
+    GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*18}});
 
-    bool play_music = false;
-    bool paused = false;
-    BGM.Init();
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*2, -620.0f - 29*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*21, -620.0f - 29*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{113.0f + 4*block_width, -614.0f - 27*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 12*block_width, -617.0f - 26*block_height}});
+    
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*3, -634.0f - 35*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*20, -634.0f - 35*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 8*block_width, -610.0f - 32*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 15*block_width, -612.0f - 30*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 10*block_width, -608.0f - 35*block_height}});
+
+    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{116.0f + block_width*4, -629.0f - 38*block_height}});
+    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{115.0f + block_width*19, -629.0f - 38*block_height}});
+    GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{114.0f + 2*block_width, -624.0f - 39*block_height}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + 16*block_width, -624.0f - 39*block_height}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f - 6*block_width, -624.0f - 38*block_height}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f + 22*block_width, -624.0f - 38*block_height}});
+
+    GameObject Condor("Red Condor", "Goal");
+    Condor.addComponent<Animator>("Fly", std::unordered_map<std::string, Animation> {
+        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, 2.7, 0.75, true)}
+    });
+    Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
+    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Condor.addComponent<Script, RedCondorBehavior>();
+    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, -624.0f - 49*block_height}});
+
+    GameObject Fruit("Fruit", "Fruit");
+    Fruit.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", 3.62f, 3.0f);
+    Fruit.addComponent<Collider2D>(&Fruit.getComponent<Transform2D>().position, Fruit.getComponent<Sprite>().GetViewDimensions(), ORANGE);
+    Fruit.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Fruit.addComponent<Script, FruitBehavior>();
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={400, -1055}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={550, -1380}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1430}});
+
+
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
+    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
+        }
+    );
+    Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
+    Topi.addComponent<Script, TopiBehavior>();
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,210}});
+
+        // ¿Como construyo un GameObject para Popo?
+    // 1. Creamos el GameObject. Recuerda:
+    //  - El GameObject no tiene ningún componente nada más crearlo.
+    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
+    //    a meter otro, perderá el primero.
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Fruit"});
+    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
+    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
+    Popo.addComponent<Transform2D>();
+    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
+    // GameObject Popo(Vector2{600,500});
+    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
+    // si no, dará error.
+    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 2.5, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 2.5, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 2.5, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 2.5, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 2.5, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 2.5, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 2.5, 0.3, false)},
+        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
+    });
+    // 3. Añadimos el componente de Audio:
+    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+    });
+    // 4. Añadimos el Rigidbody:
+    Popo.addComponent<RigidBody2D>(1, 500, Vector2{60,0}, Vector2{200,400});
+    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
+    //  - El Transform2D que tiene la posición del objeto.
+    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
+    //    caso, es la animación inicial.
+
+    Vector2 popo_size = Popo.getComponent<Animator>().GetViewDimensions();
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Vector2{collider_width, popo_size.y}, Vector2{popo_size.x/2 - collider_offset, 0});
+    Popo.addComponent<Script, PopoBehavior>(Controller_0);
+    GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     //GameSystem::Printout();
+    float timeToShowScores = 0.0f;
+    bool finished = false;
+    bool play_music = false;
+    bool paused = false;
+    bool moving_camera = false;
+    float objects_offset = 80, current_objects_offset = 0;
+    BGM.Init();
 
-    //std::cout << GameSystem::GameObjects["Popo"][0]->getComponent<Animator>().GetViewDimensions() << "\n";
-    while(!WindowShouldClose()) {
-        float deltaTime = GetFrameTime();
+    while(!WindowShouldClose() && !finished) {
+        
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -241,9 +269,8 @@ void Game() {
         if (play_music) {
             BGM.Play();
         }
-
-        Background.Draw();
-
+    
+        Mountain.Draw();
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;
@@ -252,8 +279,70 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            //std::cout << "Original: " << Popo.getComponent<Transform2D>().position << ", Instance: " << GameSystem::GameObjects["Popo"][0]->getComponent<Transform2D>().position << "\n";
-            GameSystem::Update();
+
+            if (!moving_camera && Player.getComponent<Script, PopoBehavior>().isGrounded && Player.getComponent<Transform2D>().position.y < 150) {
+                moving_camera = true;
+                switch (level_phase) {
+                case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                    level_phase++;
+                    break;
+                }
+                //if (level_phase++ == 8) {
+                //    objects_offset = 150;
+                //} else {
+                //    objects_offset = 80;
+                //}
+            }
+            if(acabar){
+                if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
+                else {
+                    DrawText("WIN", 400, 100, 100, GREEN);
+                    DrawText("Victoria 3000", 250, 200, 60, WHITE);
+                    DrawText(("Frutas x " +  std::to_string(Player.getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
+                    DrawText(("Bloques rotos x " + std::to_string(Player.getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
+                    DrawText(("Puntuación: " + std::to_string(3000 + Player.getComponent<Script, PopoBehavior>().frutasRecogidas * 300 + 
+                        Player.getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+                    
+                    if(IsKeyPressed(KEY_ENTER)){
+                        finished = true;
+                    }
+                }
+            }
+            if (!moving_camera) {
+                GameSystem::Update();
+                if (Player.getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
+                    std::cout << "GAME OVER!\n";
+                    return;
+                }
+                if(Player.getComponent<Script, PopoBehavior>().victory){
+
+                    std::cout << "muevo camara puntuacions" << std::endl;
+                    Player.getComponent<Script, PopoBehavior>().victory;
+                    float shift = 300 * GetFrameTime();
+                    current_objects_offset  += shift;
+                    if (current_objects_offset <= objects_offset) {
+                        GameSystem::Move({0,shift});
+                        Mountain.Move({0,shift});
+                    }else{
+                        acabar = true;
+                        current_objects_offset = 0;
+                    }
+                    
+                    
+                    }
+            } else {
+                std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
+                float shift = 100 * GetFrameTime();
+                current_objects_offset  += shift;
+                if (current_objects_offset <= objects_offset) {
+                    GameSystem::Move({0,shift});
+                    Mountain.Move({0,shift});
+                } else {
+                    current_objects_offset = 0;
+                    moving_camera = false;
+                }
+                GameSystem::Render();
+            }
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -274,14 +363,19 @@ void Game() {
         if (IsKeyPressed(KEY_ESCAPE)) {
             break;
         }
+        if (IsKeyPressed(KEY_R)) {
+            Player.getComponent<Transform2D>().position = Vector2{600,70};
+        }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
-        Floor.getComponent<Collider2D>().Draw();
+                 
         EndDrawing();
     }
-    UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
-    //UnloadTexture(Snowball);
     Popo.Destroy();
+    LevelFloor_0.Destroy();
+    LevelFloor_1.Destroy();
+    LevelFloor_2.Destroy();
+    GrassBlock.Destroy();
     BGM.Unload();
 }
 
@@ -296,15 +390,16 @@ int main() {
     std::random_device rd;
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> D(0, (float)WINDOW_WIDTH);
-    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES.otf");
+    NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     // ---- Music
-    Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
-    ts_music.looping = true;
-    bool play_music = false;
+    // Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    //ts_music.looping = true;
+    // bool play_music = false;
 
     // Initial trailer --------------------------------------------------------
-    int state = 0, shown = 0;
+    // int state = 0, shown = 0;
+    /*
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -375,9 +470,9 @@ int main() {
     Rectangle CopyDst{(WINDOW_WIDTH - Copy.width*3.0f)/2.0f, WINDOW_HEIGHT + (float)Copy.height*3.0f, Copy.width * 3.0f, Copy.height * 3.0f};
 
     // UI
-    Texture2D Cross = LoadTexture("Assets/SPRITES/UI_Cross.png");
+    Texture2D Cross = LoadTexture("Assets/SPRITES/UI_Cross.png"); 
     Rectangle CrossSrc{0, 0, (float)Cross.width,  (float)Cross.height};
-    Texture2D Transparent = LoadTexture("Assets/SPRITES/UI_Transparent.png");
+    Texture2D Transparent = LoadTexture("Assets/SPRITES/UI_Transparent.png"); 
     Rectangle TransparentSrc{0, 0, (float)Transparent.width,  (float)Transparent.height};
     Rectangle TransparentDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     Texture2D Arrow = LoadTexture("Assets/SPRITES/UI_Arrow.png");
@@ -403,6 +498,7 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
+    */
     Game();
     /*
     while(!WindowShouldClose() && !close_window) {
@@ -514,7 +610,7 @@ int main() {
                             PlayMusicStream(ts_music);
                             play_music = true;
                         }
-                    }
+                    } 
                 }
                 DrawTexturePro(Copy, CopySrc, CopyDst, {0,0}, 0, WHITE);
                 if (CopyDst.y > copy_height_dst) {
@@ -573,7 +669,7 @@ int main() {
                         CURRENT_MENU   = NEW_GAME;
                         current_option = 0;
                         break;
-                    case 2:
+                    case 2: 
                         CURRENT_MENU   = SETTINGS;
                         current_option = 0;
                         break;
@@ -592,7 +688,7 @@ int main() {
                 DrawTextEx(NES, "RETURN",       {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
-                    case 0:
+                    case 0: 
                         CURRENT_MENU = NORMAL_GAME;
                         OPTIONS = 3;
                         current_option = 0;
@@ -644,7 +740,7 @@ int main() {
                     case 1:
                         speed_run = !speed_run;
                         break;
-                    case 2:
+                    case 2: 
                         CURRENT_MENU   = NEW_GAME;
                         OPTIONS = 4;
                         option_offset  = menu_height/(OPTIONS+1);
@@ -667,28 +763,21 @@ int main() {
                 DrawTextEx(NES, "SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
                 DrawTextEx(NES, "VIDEO",    {500, menu_start + (float)option_offset}, 35, 2, WHITE);
                 DrawTextEx(NES, "AUDIO",    {500, menu_start + (option_offset * 2.0f)}, 35, 2, GRAY);
-                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, WHITE);
+                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, GRAY);
                 DrawTextEx(NES, "RETURN",   {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
-                    case 0:
-                        CURRENT_MENU   = VIDEO_SETTINGS;
+                    case 0: 
+                        CURRENT_MENU   = VIDEO_SETTINGS; 
                         OPTIONS        = 6;
                         current_option = 0;
                         option_offset  = menu_height/(OPTIONS+1);
                         option_drift   = 3;
                         break;
-                    case 1:
+                    case 1: case 2:
                         std::cout << "Hola\n";
                         break;
-                    case 2:
-                        CURRENT_MENU   = CONTROL_SETTINGS;
-                        OPTIONS = 4;
-                        current_option = 0;
-                        option_offset  = menu_height/(OPTIONS+1);
-                        option_drift   = 3;
-                        break;
-                    case 3:
+                    case 3: 
                         CURRENT_MENU   = MAIN_MENU;
                         current_option = 2;
                         break;
@@ -722,7 +811,7 @@ int main() {
                 DrawTextEx(NES, "RESOLUTION", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
                 DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
                 DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTextEx(NES, (std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]))).c_str(),
+                DrawTextEx(NES, (std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]))).c_str(), 
                     {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
 
                 // VSYNC:
@@ -839,130 +928,19 @@ int main() {
                     option_drift   = 0;
                 }
                 break;
-            case AUDIO_SETTINGS:
-                break;
-            case CONTROL_SETTINGS:
-                // MENU TITLE:
-                DrawTextEx(NES, "CONTROL SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
-
-                // CURRENT PLAYER: 0, 1, 2, 3
-                static int currPlyr = 0;
-                DrawTextEx(NES, "PLAYER:", {500, menu_start + (option_offset * 1.0f)}, 30, 1, WHITE);
-                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTextEx(NES, std::to_string(currPlyr).c_str(), {770, menu_start + (option_offset * 1.0f) + 5}, 17, 1, WHITE);
-
-                // CURRENT CONTROLLER: 0, 1, 2, 3
-                static int currCont = Controller::KEYBOARD;
-                std::string currContStr;
-                switch (currCont) {
-                    case Controller::CONTROLLER_0: currContStr = "JOY 0"; break;
-                    case Controller::CONTROLLER_1: currContStr = "JOY 1"; break;
-                    case Controller::CONTROLLER_2: currContStr = "JOY 2"; break;
-                    case Controller::CONTROLLER_3: currContStr = "JOY 3"; break;
-                    case Controller::KEYBOARD: currContStr = "KEYBOARD"; break;
-                    default: currContStr = "NO JOY"; break;
-                }
-                DrawTextEx(NES, "CONTROLLER:", {500, menu_start + (option_offset * 2.0f)}, 30, 1, WHITE);
-                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTextEx(NES, currContStr.c_str(), {770, menu_start + (option_offset * 2.0f) + 5}, 17, 1, WHITE);
-
-                // CURRENT ACTION
-                static int currAction = Controller::LEFT;
-                std::string currActionStr;
-                switch (currAction) {
-                    case Controller::LEFT: currActionStr = "GO LEFT"; break;
-                    case Controller::RIGHT: currActionStr = "GO RIGHT"; break;
-                    case Controller::DOWN: currActionStr = "GO DOWN"; break;
-                    case Controller::UP: currActionStr = "GO UP"; break;
-                    case Controller::JUMP: currActionStr = "JUMP"; break;
-                    case Controller::ATTACK: currActionStr = "ATTACK"; break;
-                    default: currActionStr = "No Action"; break;
-                }
-                DrawTextEx(NES, "ACTION:", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
-                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTextEx(NES, currActionStr.c_str(), {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
-
-                // CURRENT ACTION BINDING
-                static bool selected = false;
-                DrawTextEx(NES, "KEYBINDING:", {500, menu_start + (option_offset * 4.0f)}, 30, 1, WHITE);
-                if (selected) {
-                    DrawTexturePro(Arrow, ArrowSrcInv, {750, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                    DrawTexturePro(Arrow, ArrowSrc, {870, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                }
-                DrawTextEx(NES, "XD", {770, menu_start + (option_offset * 4.0f) + 5}, 17, 1, WHITE);
-                switch (current_option) {
-                    case 0:
-                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currPlyr = mod(currPlyr-1, 4);
-                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currPlyr = mod(currPlyr+1, 4);
-                        break;
-                    case 1:
-                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT))
-                        { currCont = mod(currCont-1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
-                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT))
-                        { currCont = mod(currCont+1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
-                        break;
-                    case 2:
-                        if (IsKeyPressed(KEY_LEFT) || controllers[currPlyr]->isPressed(Controller::LEFT)) currAction = mod(currAction-1, 6);
-                        else if (IsKeyPressed(KEY_RIGHT) || controllers[currPlyr]->isPressed(Controller::RIGHT)) currAction = mod(currAction+1, 6);
-                        break;
-                    case 3:
-                        if (!selected && IsKeyPressed(KEY_ENTER)) {
-                            selected = true;
-                        } else if (selected) {
-                            bool keyboard = (controllers[currPlyr]->type == Controller::Type::KEYBOARD);
-                            int binding = 0;
-                            int axisOffset = 0;
-                            //Keyboard
-                            if (keyboard) binding = GetKeyPressed();
-                            //Gamepad Trigger
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5)
-                            { binding = GAMEPAD_AXIS_LEFT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5)
-                            { binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            //Gamepad Axis
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) < -0.5)
-                            { binding = GAMEPAD_AXIS_LEFT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) < -0.5)
-                            { binding = GAMEPAD_AXIS_LEFT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) < -0.5)
-                            { binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) < -0.5)
-                            { binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
-                            //Gamepad Button
-                            else binding = GetGamepadButtonPressed();
-
-                            if (binding != 0) {
-                                controllers[currPlyr]->controls[(Controller::Control)currAction] = binding;
-                                if (axisOffset != 0) controllers[currPlyr]->controls[(Controller::Control)(currAction + axisOffset)] = binding;
-                                selected = false;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    CURRENT_MENU   = SETTINGS;
-                    OPTIONS        = 4;
-                    current_option = 0;
-                    option_offset  = menu_height/(OPTIONS+1);
-                    option_drift   = 0;
-                }
+            case AUDIO_SETTINGS: case CONTROL_SETTINGS:
                 break;
             }
 
             if (IsKeyPressed(KEY_DOWN)) {
-                current_option = mod(current_option+1, OPTIONS);
+                current_option = ((current_option+1)%OPTIONS);
             }
             if (IsKeyPressed(KEY_UP)) {
-                current_option = mod(current_option-1, OPTIONS);
+                current_option = ((current_option-1)%OPTIONS + OPTIONS) % OPTIONS;
             }
-
+            
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
-                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)}, deltaTime);
+                OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)});
             } else {
                 DrawTexturePro(OldOptionHammer, OldOptionHammerSrc,
                     {450, (float)menu_start + (option_offset * (current_option+1) - option_drift), OldOptionHammer.width * 4.0f, OldOptionHammer.height * 4.0f}, {0,0}, 0, WHITE);
@@ -970,7 +948,7 @@ int main() {
             DrawText("Elements in gray are not available yet.", 20, 20, 25, WHITE);
         }
         EndDrawing();
-    }*/
+    }
     OptionHammer.Unload();
     UnloadTexture(NintendoLogo);
     UnloadTexture(TeamLogo);
@@ -988,9 +966,9 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
+    */
     UnloadFont(NES);
-    UnloadMusicStream(ts_music);
+    //UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
-
 }
