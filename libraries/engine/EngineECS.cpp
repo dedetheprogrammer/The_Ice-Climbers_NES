@@ -98,6 +98,12 @@ void GameObject::Printout() {
     std::cout << "  Tag: " << tag << "\n";
 }
 
+void GameObject::Start() {
+    for (auto &[_, Script] : scripts) {
+        Script->Start();
+    }
+}
+
 void GameObject::Update() {
     for (auto &[_, Script] : scripts) {
         Script->Update();
@@ -391,7 +397,9 @@ void RigidBody2D::Draw() {
 // Scripts
 //-----------------------------------------------------------------------------
 Script::Script(GameObject& gameObject) : Component(gameObject) {}
-
+void Script::Start() {}
+void Script::OnCollision(Collision contact) {}
+void Script::Update() {}
 //-----------------------------------------------------------------------------
 // Sprites
 //-----------------------------------------------------------------------------
@@ -499,7 +507,7 @@ bool GameSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     const Collider2D& target, Vector2& contact_point, Vector2& contact_normal,
     float& contact_time)
 {
-    DrawLineEx(ray_o, ray_o + (10000 * ray_d), 2.0f, PINK);
+    //DrawLineEx(ray_o, ray_o + (10000 * ray_d), 2.0f, PINK);
     Vector2 ray_i = 1.0f/ray_d;
     Vector2 t_near = (target.Pos() - ray_o) * ray_i;
     Vector2 t_far  = (target.Pos() + target.size - ray_o) * ray_i;
@@ -517,7 +525,7 @@ bool GameSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     if (t_hit_far < 0) return false;
     contact_point  = ray_o + (contact_time * ray_d);
 
-    DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
+    //DrawCircleV(ray_o + t_hit_far * ray_d, 10.0f, RED);
     if (t_near.x > t_near.y) {
         if (ray_i.x < 0) {
             contact_normal = {1,0};
@@ -565,12 +573,18 @@ void GameSystem::Collisions(GameObject& gameObject) {
             for (auto& [check_name, check_ref] : GameObjects[rel_tag]) {
                 if (gameObject.name != check_name && check_ref->hasComponent<Collider2D>()) {
                     float ct = 0; Vector2 cp{0,0}, cn{0,0};
+                    if (!gameObject.hasComponent<Collider2D>()) {
+                        return;
+                    }
+                    if (!check_ref->hasComponent<Collider2D>()) {
+                        return;
+                    }
                     auto Collider_A = gameObject.getComponent<Collider2D>();
                     auto Collider_B = check_ref->getComponent<Collider2D>();
                     if (Collides(Collider_A, Collider_B, cp, cn, ct)) {
                         gameObject.OnCollision(Collision(*check_ref, ct, cp, cn));
                         //if (!check_ref->hasComponent<RigidBody2D>()) {
-                            check_ref->OnCollision(Collision(gameObject, ct, cp, -cn));
+                        check_ref->OnCollision(Collision(gameObject, ct, cp, -cn));
                         //}
                     }
                 }
@@ -580,10 +594,12 @@ void GameSystem::Collisions(GameObject& gameObject) {
 }
 
 void GameSystem::Destroy(GameObject& gameObject) {
-    nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
+    //if (nGameObjects[GameObjects[gameObject.tag][gameObject.name]->prefab->name]-- <= 0) {
+    //}
     GameObjects[gameObject.tag].erase(gameObject.name);
     if (GameObjects[gameObject.tag].empty()) {
         GameObjects.erase(gameObject.tag);
+        nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
     }
 }
 
@@ -661,6 +677,14 @@ void GameSystem::Render() {
             if (gameObject->hasComponent<RigidBody2D>()) {
                 gameObject->getComponent<RigidBody2D>().Draw();
             }
+        }
+    }
+}
+
+void GameSystem::Start() {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->Start();
         }
     }
 }

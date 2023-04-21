@@ -67,7 +67,11 @@ void Game() {
     int block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x, block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
     float collider_width  = block_width-5.0f;
     float collider_offset = (collider_width)/2;
-    
+
+    GameObject GrassHole("Grass Hole", "Hole");
+    GrassHole.addComponent<Collider2D>(&GrassHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
+    GrassHole.addComponent<Script, HoleBehavior>();
+
     float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
         LevelFloor_4_width = block_width * 7.0f;
     LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width,25}, PINK);
@@ -83,6 +87,9 @@ void Game() {
 
     GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlock.addComponent<Script, BlockBehavior>();
+
+    GrassBlock.getComponent<Script, BlockBehavior>().hole = &GrassHole;
+    GrassHole.getComponent<Script, HoleBehavior>().original_block = &GrassBlock;
     for (int i = 0; i < 24; i++) {
         GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{113.0f + block_width * i, 423}});
     }
@@ -90,9 +97,18 @@ void Game() {
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*24, 423}});
 
     GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
+    GameObject DirtHole("Dirt Hole", "Hole");
+    DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
+    DirtHole.addComponent<Script, HoleBehavior>();
+    
     DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
     DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlock.addComponent<Script, BlockBehavior>();
+
+    DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+    DirtHole.getComponent<Script, HoleBehavior>().original_block = &DirtBlock;
+    
+
     for (int i = 0; i < 22; i++) {
         GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 287}});
         GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 150}});
@@ -106,9 +122,16 @@ void Game() {
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 14}});
 
     GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
+    GameObject IceHole("Dirt Hole", "Hole");
+    IceHole.addComponent<Collider2D>(&IceHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
+    IceHole.addComponent<Script, HoleBehavior>();
+
     IceBlock.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", 3.62f, 3.0f);
     IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlock.addComponent<Script, BlockBehavior>();
+
+    IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
+    IceHole.getComponent<Script, HoleBehavior>().original_block = &IceBlock;
     for (int i = 0; i < 20; i++) {
         GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -123}});
         GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -260}});
@@ -185,8 +208,13 @@ void Game() {
     Condor.addComponent<Script, RedCondorBehavior>();
     GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, -624.0f - 49*block_height}});
 
+    GameObject Icicle("Icicle", "Icicle", {}, {"Hole", "Player", "Floor"});
+    Icicle.addComponent<Sprite>("Assets/Sprites/Icicle.png", 3, 3);
+    Icicle.addComponent<Collider2D>(&Icicle.getComponent<Transform2D>().position, Icicle.getComponent<Sprite>().GetViewDimensions());
+    Icicle.addComponent<RigidBody2D>(1, 98, Vector2{0,0}, Vector2{0,0});
+    Icicle.addComponent<Script, IcicleBehavior>();
 
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
+    GameObject Topi("Topi", "Enemy", {"Topi"}, {"Floor", "Hole", "Player", "Icicle"});
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
             {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
@@ -195,16 +223,16 @@ void Game() {
     Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
     Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
-    Topi.addComponent<Script, TopiBehavior>();
+    Topi.addComponent<Script, TopiBehavior>(Icicle);
     GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,210}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,220}});
 
-        // ¿Como construyo un GameObject para Popo?
+    // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -227,7 +255,7 @@ void Game() {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 500, Vector2{60,0}, Vector2{200,400});
+    Popo.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
@@ -245,6 +273,7 @@ void Game() {
     float objects_offset = 80, current_objects_offset = 0;
     BGM.Init();
 
+    GameSystem::Start();
     while(!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -296,6 +325,8 @@ void Game() {
                 }
                 GameSystem::Render();
             }
+            //GameSystem::Printout();
+
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {

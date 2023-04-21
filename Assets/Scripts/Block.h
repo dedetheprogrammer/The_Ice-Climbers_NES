@@ -2,25 +2,50 @@
 #include "Popo.h"
 #include <iostream>
 
+class HoleBehavior : public Script {
+private:
+    Transform2D& transform;
+public:
+    GameObject* original_block;
+
+    HoleBehavior(GameObject& gameObject) : Script(gameObject),
+        transform(gameObject.getComponent<Transform2D>()) {}
+
+    HoleBehavior(GameObject& gameObject, HoleBehavior& behavior) : Script(gameObject),
+        transform(gameObject.getComponent<Transform2D>()),
+        original_block(behavior.original_block) {}
+
+
+    Component* Clone(GameObject& gameObject) {
+        return new HoleBehavior(gameObject, *this);
+    }
+
+    void OnCollision(Collision contact) override {
+       //if (contact.gameObject.tag == "Icicle") {
+       //    GameSystem::Instantiate(original_block, GameObjectOptions{.position=transform.position});
+       //    //gameObject.Destroy();
+       //    //contact.gameObject.Destroy();
+       //}
+    }
+};
+
 class BlockBehavior : public Script {
 private:
     Sprite& sprite;
     Transform2D& transform;
-    GameObject hole;
 public:
+    GameObject* hole;
     BlockBehavior(GameObject& gameObject) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>())
-    {
-        hole = GameObject(gameObject.name + " Hole", "Hole");
-        hole.addComponent<Collider2D>(&transform.position, sprite.GetViewDimensions(), RED);
-    }
+        transform(gameObject.getComponent<Transform2D>()) {}
+ 
+    BlockBehavior(GameObject& gameObject, BlockBehavior& behavior) : Script(gameObject),
+        sprite(gameObject.getComponent<Sprite>()),
+        transform(gameObject.getComponent<Transform2D>()),
+        hole(behavior.hole) {}
+
     Component* Clone(GameObject& gameObject) {
-        return new BlockBehavior(gameObject);
-    }
-
-    void Update() override {
-
+        return new BlockBehavior(gameObject, *this);
     }
 
     void OnCollision(Collision contact) override {
@@ -28,7 +53,7 @@ public:
             if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
                 contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
                 contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
-                GameSystem::Instantiate(hole, GameObjectOptions{.position = transform.position});
+                GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
                 gameObject.Destroy();
             }
         }

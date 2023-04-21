@@ -239,7 +239,7 @@ public:
                             animator["Walk"];
                         }
                     } else {
-                        rigidbody.velocity.x += move * rigidbody.acceleration.x/16 * deltaTime;
+                        rigidbody.velocity.x += move * rigidbody.acceleration.x/10 * deltaTime;
                         if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
                             rigidbody.velocity.x = -rigidbody.max_velocity.x;
                         } else if (rigidbody.velocity.x > rigidbody.max_velocity.x) {

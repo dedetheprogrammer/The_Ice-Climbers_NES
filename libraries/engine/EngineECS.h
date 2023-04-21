@@ -132,6 +132,8 @@ public:
         }
     }
 
+    void Start();
+
     void Update();
 };
 
@@ -352,9 +354,9 @@ private:
 public:
     Script(GameObject& gameObject);
     virtual Component* Clone(GameObject& gameObject) = 0;
-    // virtual void Start() = 0;
-    virtual void OnCollision(Collision contact) = 0;
-    virtual void Update() = 0;
+    virtual void Start();
+    virtual void OnCollision(Collision contact);
+    virtual void Update();
 };
 
 //-----------------------------------------------------------------------------
@@ -460,6 +462,7 @@ public:
     static void Move(Vector2 translation);
     static void Printout();
     static void Render();
+    static void Start();
     static void Update();
 };
 

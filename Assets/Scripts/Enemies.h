@@ -31,7 +31,6 @@ public:
         return new RedCondorBehavior(gameObject);
     }
 
-    void OnCollision(Collision contact) {}
     void Update() {
         transform.position.x += rigidbody.velocity.x * GetFrameTime();
         if (!turning) {
@@ -55,9 +54,54 @@ public:
     }
 };
 
+class IcicleBehavior : public Script {
+private:
+    RigidBody2D& rigidbody;
+    Transform2D& transform;
+public:
+    IcicleBehavior(GameObject& gameObject) : Script(gameObject),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        
+    }
+
+    IcicleBehavior(GameObject& gameObject, IcicleBehavior& behavior) : Script(gameObject),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+
+    }
+
+    Component* Clone(GameObject& gameObject) override {
+        return new IcicleBehavior(gameObject, *this);
+    }
+
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag == "Floor") {
+            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+        }
+        if (contact.gameObject.tag == "Hole") {
+            auto position = contact.gameObject.getComponent<Transform2D>().position;
+            GameSystem::Instantiate(*contact.gameObject.getComponent<Script, HoleBehavior>().original_block, GameObjectOptions{.position=position});
+            contact.gameObject.Destroy();
+            gameObject.Destroy();
+        }
+    }
+
+    void Update() override {
+        float deltaTime = GetFrameTime();
+        transform.position.x += rigidbody.velocity.x * deltaTime;
+        transform.position.y += rigidbody.velocity.y * deltaTime;
+        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
+    }
+
+};
+
 class TopiBehavior : public Script {
 private:
     // Variables para Popo:
+    int original_level;
     float current_cooldown;
     float cooldown;
     bool started;
@@ -66,6 +110,11 @@ private:
     bool isRunning;
     bool isRight;     // Telling us if the objsdect is facing to the right.
     bool isStunned;
+    bool ignoreFloor;
+    int last_sense;
+    bool hasFallen;
+
+    GameObject& Icicle;
 
     int random_sense() {
         std::random_device rd;
@@ -83,12 +132,14 @@ public:
     RigidBody2D& rigidbody;
     Transform2D& transform;
 
-    TopiBehavior(GameObject& gameObject) : Script(gameObject), 
+    TopiBehavior(GameObject& gameObject, GameObject& Icicle) : Script(gameObject),
+        Icicle(Icicle), 
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>())
     {
+        original_level = transform.position.y;
         cooldown = current_cooldown = 3.0f;
         started     = false;
         spawned     = false;
@@ -96,50 +147,98 @@ public:
         isRunning   = false;
         isRight     = true;
         isStunned   = false;
+        ignoreFloor = false;
+        last_sense  = 0;
+        hasFallen = false;
+
     }
 
     TopiBehavior(GameObject& gameObject, TopiBehavior& behavior) : Script(gameObject),
+        Icicle(behavior.Icicle),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>())
     {
         cooldown = current_cooldown = 3.0f;
-        started     = false;
-        spawned     = false;
+        original_level = transform.position.y;
+        ignoreFloor = behavior.ignoreFloor;
+        started     = behavior.started;
+        spawned     = behavior.spawned;
         isGrounded  = behavior.isGrounded;
         isRight     = behavior.isRight;
         isRunning   = behavior.isRunning;
         isStunned   = behavior.isStunned;
+        last_sense  = behavior.last_sense;
+        hasFallen   = behavior.hasFallen;
+
     }
 
     Component* Clone(GameObject& gameObject) override {
         return new TopiBehavior(gameObject, *this);
     }
 
+    void Start() override {
+        original_level = transform.position.y;
+        rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
+        if (rigidbody.velocity.x < 0) {
+            transform.position.x = GetScreenWidth() + 70;
+            if (isRight) {
+                isRight = !isRight;
+                animator.Flip();
+            }
+        } else {
+            transform.position.x = -(animator.GetViewDimensions().x + 70);
+        }
+    }
+
     void OnCollision(Collision contact) override {
 
-        if (contact.gameObject.tag == "Floor") {
+        if (contact.gameObject.tag == "Floor" && !ignoreFloor) {
             rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             isGrounded = true;
+            if (hasFallen) {
+                rigidbody.velocity.x = last_sense * rigidbody.acceleration.x;
+            }
         }
         if (contact.gameObject.tag == "Hole") {
             int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
-                pos_p2 = transform.position.x + collider.size.x;
-            if (pos_p2 <= pos_x1 || transform.position.x >= pos_x2) {
-                rigidbody.velocity.x *= -2;
-                if (rigidbody.velocity.x > 0 && !isRight) {
-                    isRight = !isRight;
-                    animator.Flip();
-                }
-                if (rigidbody.velocity.x < 0 && isRight) {
-                    isRight = !isRight;
-                    animator.Flip();
-                }
-                if (isGrounded && animator.GetViewDimensions().x > contact.gameObject.getComponent<Transform2D>().position.x) {
-                    animator["Fall"];
+                dis_x1x2_2 = (pos_x2 - pos_x1)/2,
+                pos_p2 = collider.Pos().x + collider.size.x;
+            if (!hasFallen) {
+                std::cout << collider.Pos().x << "," << pos_x2 << "," << isRight << "\n";
+                if (((isRight && (pos_p2 <= pos_x1-1)) || (!isRight && (collider.Pos().x >= pos_x2)))) {
+                    rigidbody.velocity.x *= -2;
+                    if (rigidbody.velocity.x > 0 && !isRight) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                    if (rigidbody.velocity.x < 0 && isRight) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                    isRunning = true;
+                    last_sense = sgn(rigidbody.velocity.x);
+                } else {
+                    animator["Stunned"];
+                    last_sense = sgn(rigidbody.velocity.x);
                     rigidbody.velocity.x = 0;
+                    isGrounded = false;
+                    hasFallen = true;
+                    ignoreFloor = true;
                 }
+            } else {
+                if ((isRight && (pos_p2 < pos_x2 && pos_p2 >= (pos_x1+dis_x1x2_2)))
+                    || (!isRight && (collider.Pos().x > pos_x1 && collider.Pos().x <= (pos_x1+dis_x1x2_2))))
+                {
+                    animator["Stunned"];
+                    last_sense = sgn(rigidbody.velocity.x);
+                    rigidbody.velocity.x = 0;
+                    isGrounded = false;
+                    ignoreFloor = true;
+                } else {
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+                } 
             }
         }
         if (contact.gameObject.tag == "Player") {
@@ -156,28 +255,9 @@ public:
                 }
             }
         }
-        /*
-        if (contact.gameObject.tag != "Floor") std::cout << "Soy Topi, me choco con: " << contact.gameObject.tag << std::endl;
-
-        if (contact.gameObject.tag == "Floor") {
-            if (contact.contact_normal.y < 0) {
-                if(!contact.gameObject.getComponent<Collider2D>().active) {
-                    if(isRunning) {
-                        animator["Stunned"];
-                    } else {
-                        rigidbody.velocity.x = rigidbody.max_velocity.x * 2;
-                        isRunning = true;
-                        animator.Flip();
-                        move *= -1;
-                    }
-                } else {
-                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-                }
-            }
-        } else if (contact.gameObject.tag == "Player") { // Se ocupa el player
-            
+        if (contact.gameObject.tag == "Icicle") {
+            contact.gameObject.getComponent<RigidBody2D>().velocity.x = rigidbody.velocity.x;
         }
-        */
     }
 
     void Update() override {
@@ -187,21 +267,44 @@ public:
                 current_cooldown = 0.0f;
                 started = true;
                 isStunned = false;
+                hasFallen = false;
                 animator["Walk"];
-                rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
-                if (rigidbody.velocity.x < 0) {
-                    transform.position.x = GetScreenWidth() + 10;
-                    if (isRight) {
-                        isRight = !isRight;
-                        animator.Flip();
+                if (isRunning) {
+                    isRunning = false;
+                    rigidbody.velocity.x = -last_sense * rigidbody.acceleration.x;
+                    if (last_sense > 0) {
+                        transform.position.x = GetScreenWidth() + 70;
+                        GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, transform.position.y + 15}});
+                        if (isRight) {
+                            isRight = !isRight;
+                            animator.Flip();
+                        }
+                    } else {
+                        transform.position.x = -(animator.GetViewDimensions().x + 70);
+                        GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, transform.position.y + 15}});
+                        if (!isRight) {
+                            isRight = !isRight;
+                            animator.Flip();
+                        }
                     }
                 } else {
-                    transform.position.x = -(animator.GetViewDimensions().x + 10);
-                    if (!isRight) {
-                        isRight = !isRight;
-                        animator.Flip();
+                    rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
+                    if (rigidbody.velocity.x < 0) {
+                        transform.position.x = GetScreenWidth() + 40;
+                        if (isRight) {
+                            isRight = !isRight;
+                            animator.Flip();
+                        }
+                    } else {
+                        transform.position.x = -(animator.GetViewDimensions().x + 40);
+                        if (!isRight) {
+                            isRight = !isRight;
+                            animator.Flip();
+                        }
                     }
                 }
+
+                transform.position.y = original_level;
             } else {
                 current_cooldown += GetFrameTime();
             }
@@ -225,5 +328,8 @@ public:
         }
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
+        if (ignoreFloor) {
+            ignoreFloor = !ignoreFloor;
+        }
     }
 };
