@@ -38,7 +38,7 @@ public:
     BlockBehavior(GameObject& gameObject) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
         transform(gameObject.getComponent<Transform2D>()) {}
- 
+
     BlockBehavior(GameObject& gameObject, BlockBehavior& behavior) : Script(gameObject),
         sprite(gameObject.getComponent<Sprite>()),
         transform(gameObject.getComponent<Transform2D>()),

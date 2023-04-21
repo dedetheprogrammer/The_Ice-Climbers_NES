@@ -63,7 +63,7 @@ public:
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>())
     {
-        
+
     }
 
     IcicleBehavior(GameObject& gameObject, IcicleBehavior& behavior) : Script(gameObject),
@@ -124,8 +124,8 @@ private:
     }
 
 public:
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
-    // eficiente que acceder una y otra vez a los componentes cada vez que 
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
+    // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     Collider2D& collider;
@@ -133,7 +133,7 @@ public:
     Transform2D& transform;
 
     TopiBehavior(GameObject& gameObject, GameObject& Icicle) : Script(gameObject),
-        Icicle(Icicle), 
+        Icicle(Icicle),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -238,7 +238,7 @@ public:
                     ignoreFloor = true;
                 } else {
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-                } 
+                }
             }
         }
         if (contact.gameObject.tag == "Player") {

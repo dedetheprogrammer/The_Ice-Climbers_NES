@@ -5,12 +5,13 @@
 #include "Cloud.h"
 #include "Enemies.h"
 #include "Popo.h"
+#include "Fruit.h"
 
 class Flicker {
 private:
     float current_time; // Current time in the current state.
 public:
-    bool  action;       // Indicates if is the moment to perform the action or not. 
+    bool  action;       // Indicates if is the moment to perform the action or not.
     float trigger_time; // Time for triggering into the next state.
 
     Flicker() : current_time(0), action(false), trigger_time(0) {}
@@ -31,6 +32,8 @@ Font NES;
 void Game() {
 
     int level_phase = 0;
+    bool acabar = false;
+
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
@@ -100,14 +103,14 @@ void Game() {
     GameObject DirtHole("Dirt Hole", "Hole");
     DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
     DirtHole.addComponent<Script, HoleBehavior>();
-    
+
     DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
     DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlock.addComponent<Script, BlockBehavior>();
 
     DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
     DirtHole.getComponent<Script, HoleBehavior>().original_block = &DirtBlock;
-    
+
 
     for (int i = 0; i < 22; i++) {
         GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 287}});
@@ -185,7 +188,7 @@ void Game() {
     GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*21, -620.0f - 29*block_height}});
     GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{113.0f + 4*block_width, -614.0f - 27*block_height}});
     GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 12*block_width, -617.0f - 26*block_height}});
-    
+
     GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*3, -634.0f - 35*block_height}});
     GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*20, -634.0f - 35*block_height}});
     GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 8*block_width, -610.0f - 32*block_height}});
@@ -215,6 +218,17 @@ void Game() {
     Icicle.addComponent<Script, IcicleBehavior>();
 
     GameObject Topi("Topi", "Enemy", {"Topi"}, {"Floor", "Hole", "Player", "Icicle"});
+    GameObject Fruit("Fruit", "Fruit");
+    Fruit.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", 3.62f, 3.0f);
+    Fruit.addComponent<Collider2D>(&Fruit.getComponent<Transform2D>().position, Fruit.getComponent<Sprite>().GetViewDimensions(), ORANGE);
+    Fruit.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Fruit.addComponent<Script, FruitBehavior>();
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={400, -1055}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={550, -1380}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1430}});
+
+
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
             {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
@@ -230,9 +244,9 @@ void Game() {
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
     //  - El GameObject no tiene ningún componente nada más crearlo.
-    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
+    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -263,10 +277,12 @@ void Game() {
 
     Vector2 popo_size = Popo.getComponent<Animator>().GetViewDimensions();
     Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Vector2{collider_width, popo_size.y}, Vector2{popo_size.x/2 - collider_offset, 0});
-    Popo.addComponent<Script, PopoBehavior>();
+    Popo.addComponent<Script, PopoBehavior>(Controller_0);
     GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     //GameSystem::Printout();
+    float timeToShowScores = 0.0f;
+    bool finished = false;
     bool play_music = false;
     bool paused = false;
     bool moving_camera = false;
@@ -274,7 +290,7 @@ void Game() {
     BGM.Init();
 
     GameSystem::Start();
-    while(!WindowShouldClose()) {
+    while(!WindowShouldClose() && !finished) {
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -283,7 +299,7 @@ void Game() {
         if (play_music) {
             BGM.Play();
         }
-    
+
         Mountain.Draw();
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
@@ -307,13 +323,45 @@ void Game() {
                 //    objects_offset = 80;
                 //}
             }
+            if(acabar){
+                if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
+                else {
+                    DrawText("WIN", 400, 100, 100, GREEN);
+                    DrawText("Victoria 3000", 250, 200, 60, WHITE);
+                    DrawText(("Frutas x " +  std::to_string(Player.getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
+                    DrawText(("Bloques rotos x " + std::to_string(Player.getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
+                    DrawText(("Puntuación: " + std::to_string(3000 + Player.getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
+                        Player.getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+
+                    if(IsKeyPressed(KEY_ENTER)){
+                        finished = true;
+                    }
+                }
+            }
             if (!moving_camera) {
                 GameSystem::Update();
-                if (Player.getComponent<Script, PopoBehavior>().lifes <= 0) {
+                if (Player.getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
                     std::cout << "GAME OVER!\n";
                     return;
                 }
+                if(Player.getComponent<Script, PopoBehavior>().victory){
+
+                    std::cout << "muevo camara puntuacions" << std::endl;
+                    Player.getComponent<Script, PopoBehavior>().victory;
+                    float shift = 300 * GetFrameTime();
+                    current_objects_offset  += shift;
+                    if (current_objects_offset <= objects_offset) {
+                        GameSystem::Move({0,shift});
+                        Mountain.Move({0,shift});
+                    }else{
+                        acabar = true;
+                        current_objects_offset = 0;
+                    }
+
+
+                    }
             } else {
+                std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
                 float shift = 100 * GetFrameTime();
                 current_objects_offset  += shift;
                 if (current_objects_offset <= objects_offset) {
@@ -325,8 +373,6 @@ void Game() {
                 }
                 GameSystem::Render();
             }
-            //GameSystem::Printout();
-
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -453,9 +499,9 @@ int main() {
     Rectangle CopyDst{(WINDOW_WIDTH - Copy.width*3.0f)/2.0f, WINDOW_HEIGHT + (float)Copy.height*3.0f, Copy.width * 3.0f, Copy.height * 3.0f};
 
     // UI
-    Texture2D Cross = LoadTexture("Assets/SPRITES/UI_Cross.png"); 
+    Texture2D Cross = LoadTexture("Assets/SPRITES/UI_Cross.png");
     Rectangle CrossSrc{0, 0, (float)Cross.width,  (float)Cross.height};
-    Texture2D Transparent = LoadTexture("Assets/SPRITES/UI_Transparent.png"); 
+    Texture2D Transparent = LoadTexture("Assets/SPRITES/UI_Transparent.png");
     Rectangle TransparentSrc{0, 0, (float)Transparent.width,  (float)Transparent.height};
     Rectangle TransparentDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     Texture2D Arrow = LoadTexture("Assets/SPRITES/UI_Arrow.png");
@@ -593,7 +639,7 @@ int main() {
                             PlayMusicStream(ts_music);
                             play_music = true;
                         }
-                    } 
+                    }
                 }
                 DrawTexturePro(Copy, CopySrc, CopyDst, {0,0}, 0, WHITE);
                 if (CopyDst.y > copy_height_dst) {
@@ -652,7 +698,7 @@ int main() {
                         CURRENT_MENU   = NEW_GAME;
                         current_option = 0;
                         break;
-                    case 2: 
+                    case 2:
                         CURRENT_MENU   = SETTINGS;
                         current_option = 0;
                         break;
@@ -671,7 +717,7 @@ int main() {
                 DrawTextEx(NES, "RETURN",       {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
-                    case 0: 
+                    case 0:
                         CURRENT_MENU = NORMAL_GAME;
                         OPTIONS = 3;
                         current_option = 0;
@@ -723,7 +769,7 @@ int main() {
                     case 1:
                         speed_run = !speed_run;
                         break;
-                    case 2: 
+                    case 2:
                         CURRENT_MENU   = NEW_GAME;
                         OPTIONS = 4;
                         option_offset  = menu_height/(OPTIONS+1);
@@ -750,8 +796,8 @@ int main() {
                 DrawTextEx(NES, "RETURN",   {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
-                    case 0: 
-                        CURRENT_MENU   = VIDEO_SETTINGS; 
+                    case 0:
+                        CURRENT_MENU   = VIDEO_SETTINGS;
                         OPTIONS        = 6;
                         current_option = 0;
                         option_offset  = menu_height/(OPTIONS+1);
@@ -760,7 +806,7 @@ int main() {
                     case 1: case 2:
                         std::cout << "Hola\n";
                         break;
-                    case 3: 
+                    case 3:
                         CURRENT_MENU   = MAIN_MENU;
                         current_option = 2;
                         break;
@@ -794,7 +840,7 @@ int main() {
                 DrawTextEx(NES, "RESOLUTION", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
                 DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
                 DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
-                DrawTextEx(NES, (std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]))).c_str(), 
+                DrawTextEx(NES, (std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]))).c_str(),
                     {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
 
                 // VSYNC:
@@ -921,7 +967,7 @@ int main() {
             if (IsKeyPressed(KEY_UP)) {
                 current_option = ((current_option-1)%OPTIONS + OPTIONS) % OPTIONS;
             }
-            
+
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
                 OptionHammer.Play({420, (float)menu_start + (option_offset * (current_option+1) - option_drift)});
             } else {

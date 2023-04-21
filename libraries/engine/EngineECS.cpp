@@ -23,7 +23,7 @@ void Canvas::Move(Vector2 translation) {
 }
 
 GameObject::GameObject(std::string name, std::string tag, std::unordered_set<std::string> second_tags,
-    std::unordered_set<std::string> related_tags) 
+    std::unordered_set<std::string> related_tags)
 {
     prefab = nullptr;
     this->name         = name;
@@ -128,7 +128,7 @@ Animation::Animation() {
     // Animation properties:
     frame_width = 0;
     frame_height = 0;
-    frames_per_row = 0; 
+    frames_per_row = 0;
     frames_rows = 0;
     total_frames = 0;
     // Animation state:
@@ -150,7 +150,7 @@ Animation::Animation(const char* fileName, int frame_width, int frame_height, fl
     spritesheet = LoadTexture(fileName);
     this->frame_width = frame_width;
     this->frame_height = frame_height;
-    frames_per_row = spritesheet.width/frame_width; 
+    frames_per_row = spritesheet.width/frame_width;
     frames_rows = spritesheet.height/frame_height;
     total_frames = frames_rows * frames_per_row;
     // Animation state:
@@ -172,7 +172,7 @@ Animation::Animation(const char* fileName, int frame_width, int frame_height, Ve
     spritesheet = LoadTexture(fileName);
     this->frame_width = frame_width;
     this->frame_height = frame_height;
-    frames_per_row = spritesheet.width/frame_width; 
+    frames_per_row = spritesheet.width/frame_width;
     frames_rows = spritesheet.height/frame_height;
     total_frames = frames_rows * frames_per_row;
     // Animation state:
@@ -214,17 +214,17 @@ void Animation::Play(Vector2 position) {
                 current_frame++;
             }
         }
-        //if (!loop && current_frame+1 == frames_columns) 
+        //if (!loop && current_frame+1 == frames_columns)
         //if (!current_frame) {
         //    current_row = (current_row+1) % frames_rows;
         //}
         frame_src.x = (float) frame_width  * current_frame;
-        frame_src.y = (float) frame_height * current_row; 
+        frame_src.y = (float) frame_height * current_row;
     }
     frame_dst.x = position.x; frame_dst.y = position.y;
     DrawTexturePro(spritesheet, frame_src, frame_dst, Vector2{0,0}, 0, WHITE);
     current_frame_time += GetFrameTime();
-    current_time += GetFrameTime(); 
+    current_time += GetFrameTime();
 }
 void Animation::Stop() {
     current_frame = current_row = 0;
@@ -247,7 +247,7 @@ Animator::Animator(GameObject& gameObject, std::string entry_animation, std::uno
 }
 Animator::Animator(GameObject& gameObject, Animator& animator) : Component(gameObject) {
     entry_animation   = animator.entry_animation;
-    current_animation = animator.current_animation; 
+    current_animation = animator.current_animation;
     waiting_animation = animator.waiting_animation;
     Animations        = animator.Animations;
     gameObject.getComponent<Transform2D>().size = Animations[current_animation].GetViewDimensions();
@@ -342,13 +342,13 @@ Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color
 Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject) {
     color  = collider.color;
     pos    = &gameObject.getComponent<Transform2D>().position;
-    offset = collider.offset; 
-    size   = collider.size; 
+    offset = collider.offset;
+    size   = collider.size;
 }
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Vector2 offset, Color color) : Component(gameObject) {
     this->color  = color;
     this->pos    = &gameObject.getComponent<Transform2D>().position;
-    this->offset = offset; 
+    this->offset = offset;
     this->size   = size;
 }
 
@@ -360,13 +360,13 @@ void Collider2D::Draw() {
     DrawRectangleLinesEx({real_pos.x, real_pos.y, size.x, size.y}, 3.0f, color);
 }
 Vector2 Collider2D::Pos() const {
-    return (*pos) + offset; 
+    return (*pos) + offset;
 }
 
 //-----------------------------------------------------------------------------
 // Physics
 //-----------------------------------------------------------------------------
-RigidBody2D::RigidBody2D(GameObject& gameObject, float mass, float gravity, 
+RigidBody2D::RigidBody2D(GameObject& gameObject, float mass, float gravity,
     Vector2 max_velocity, Vector2 acceleration) : Component(gameObject)
 {
     this->mass    = mass;
@@ -386,7 +386,7 @@ Component* RigidBody2D::Clone(GameObject& gameObject) {
     return new RigidBody2D(gameObject, *this);
 }
 void RigidBody2D::Draw() {
-    auto center = gameObject.getComponent<Transform2D>().position + 
+    auto center = gameObject.getComponent<Transform2D>().position +
         (gameObject.getComponent<Collider2D>().size/2);
     DrawLineEx(center, center + velocity, 3.0f, BLUE);
     DrawLineEx(center, center + (Vector2){velocity.x, 0.0f}, 3.0f, RED);
@@ -423,7 +423,7 @@ Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 view_size) 
     src = {0, 0, (float)img.width, (float)img.height};
     dst = {0, 0, view_size.x, (view_size.y == -1) ? (float)img.height : view_size.y};
     gameObject.getComponent<Transform2D>().size = {dst.width, dst.height};
-} 
+}
 Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
     scale = sprite.scale;
     src   = sprite.src;
@@ -434,7 +434,7 @@ Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
 Component* Sprite::Clone(GameObject& gameObject) {
     return new Sprite(gameObject, *this);
 }
-Vector2 Sprite::GetScale() { 
+Vector2 Sprite::GetScale() {
     return scale;
 }
 Vector2 Sprite::GetDimensions() {
@@ -469,13 +469,13 @@ Component* Transform2D::Clone(GameObject& gameObject) {
 int GetAxis(std::string axis) {
     if (axis == "Horizontal") {
         bool left_key  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
-        bool right_key = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT); 
+        bool right_key = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT);
         if (left_key && right_key) return 0;
         else if (left_key) return -1;
         else if (right_key) return 1;
     } else if (axis == "Vertical") {
         bool down_key = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
-        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP); 
+        bool up_key   = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP);
         if (down_key && up_key) return 0;
         if (down_key) return -1;
         else if (up_key) return 1;
@@ -542,10 +542,10 @@ bool GameSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
     return true;
 }
 
-// Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el 
-// la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
+// Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el
+// la anchura y se extiende w/2 del collider A y la altura h/2 del collider A,
 // se extiende por ambos lados:
-bool GameSystem::Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point, 
+bool GameSystem::Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
     Vector2& contact_normal, float& contact_time)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
@@ -658,7 +658,7 @@ void GameSystem::Printout() {
     for (auto& [tag, tag_instances] : GameObjects) {
         std::cout << ">>>> Tag: " << tag << "\n";
         for (auto& [name, instance] : tag_instances) {
-            std::cout << ">>>>> Name: " << name << "\n";  
+            std::cout << ">>>>> Name: " << name << "\n";
         }
     }
 }

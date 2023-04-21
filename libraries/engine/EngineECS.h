@@ -18,7 +18,7 @@ struct GameObjectOptions {
     std::string name      = "";
     // Tag que queremos que reciba la nueva instancia.
     std::string tag       = "";
-    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // Tags secundarios, el gameObject puede tener un tag principal y luego
     // tags secundarios para colisiones, etc.
     std::unordered_set<std::string> second_tags;
     // Tags que queremos que se comprueben en las colisiones.
@@ -61,10 +61,10 @@ public:
     std::string name;
     // Tag de GameObject (puede englobar varios GameObject).
     std::string tag;
-    // Tags secundarios, el gameObject puede tener un tag principal y luego 
+    // Tags secundarios, el gameObject puede tener un tag principal y luego
     // tags secundarios para colisiones, etc.
     std::unordered_set<std::string> second_tags;
-    // Tags a los que esta relacionado el GameObject actual. 
+    // Tags a los que esta relacionado el GameObject actual.
     std::unordered_set<std::string> related_tags;
     // Para componentes que solo puede haber uno por GameObject.
     std::unordered_map<std::type_index, Component*> components;
@@ -217,7 +217,7 @@ private:
 public:
     // Construct a new Animator object
     Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations);
-    
+
     // Construct a new Animator object
     Animator(GameObject& gameObject, Animator& animator);
 
@@ -313,9 +313,9 @@ public:
     Color color;  // Color del collider.
     Vector2* pos; // Nuevo item. Coge el centro de nuestro objeto padre y se
                   // actualiza la posición actual.
-    Vector2 offset; 
+    Vector2 offset;
     Vector2 size; // Dimensiones del collider.
-    
+
     Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color = {129, 242, 53, 255});
     Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Vector2 offset, Color color = {129, 242, 53, 255});
@@ -411,9 +411,9 @@ int GetAxis(std::string axis);
 // ============================================================================
 // ----------------------------------------------------------------------------
 // Game System
-// /!\ Aunque no lo creais y no lo parezca, todo esto lo hago para encapsular 
+// /!\ Aunque no lo creais y no lo parezca, todo esto lo hago para encapsular
 // el tratamiento a pelo de los colliders y de los objetos en escena, de manera
-// que con llamar a un par de funciones lo haga solo sin que vosotros tengais 
+// que con llamar a un par de funciones lo haga solo sin que vosotros tengais
 // que controlarlo (+ reutilizacion de codigo + mantenimiento + generalizacion).
 // ----------------------------------------------------------------------------
 
@@ -443,16 +443,16 @@ private:
     static std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameObjects;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
-    // ahora no me apetece explicarla: 
+    // ahora no me apetece explicarla:
     // - https://www.youtube.com/watch?v=8JJ-4JgR7Dg
     // - https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_Rectangles.cpp
     static bool Collides(const Vector2 ray_o, const Vector2 ray_d, const Collider2D& target,
         Vector2& contact_point, Vector2& contact_normal, float& contact_time);
 
-    // Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el 
-    // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A, 
+    // Lo que hacemos aqui es extender el Collider a nuevas dimensiones, cogemos el
+    // la anchura y se extiende w/2 del collider A y la altura h/2 del collider A,
     // se extiende por ambos lados.
-    // De momento A es dinamico y B es estatico, 
+    // De momento A es dinamico y B es estatico,
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
 public:
