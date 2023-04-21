@@ -235,12 +235,16 @@ void Animation::operator[](int current_frame) {
 }
 
 Animator::Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
-    : Component(gameObject), current_animation(entry_animation), Animations(Animations) {}
+    : Component(gameObject), current_animation(entry_animation), Animations(Animations)
+{
+    gameObject.getComponent<Transform2D>().size = Animations[current_animation].GetViewDimensions();
+}
 Animator::Animator(GameObject& gameObject, Animator& animator) : Component(gameObject) {
     entry_animation   = animator.entry_animation;
     current_animation = animator.current_animation; 
     waiting_animation = animator.waiting_animation;
     Animations        = animator.Animations;
+    gameObject.getComponent<Transform2D>().size = Animations[current_animation].GetViewDimensions();
 }
 Component* Animator::Clone(GameObject& gameObject) {
     return new Animator(gameObject, *this);
@@ -284,6 +288,7 @@ void Animator::Unload() {
 Animation& Animator::operator[](std::string animation) {
     if (animation != current_animation) Animations[animation].Stop();
     current_animation = animation;
+    gameObject.getComponent<Transform2D>().size = Animations[current_animation].GetViewDimensions();
     return Animations[animation];
 }
 
@@ -395,24 +400,28 @@ Sprite::Sprite(GameObject& gameObject, const char* fileName, float scale) : Comp
     this->scale = {scale, scale};
     src = {0, 0, (float)img.width, (float)img.height};
     dst = {0, 0, img.width * scale, img.height * scale};
+    gameObject.getComponent<Transform2D>().size = {dst.width, dst.height};
 }
 Sprite::Sprite(GameObject& gameObject, const char* fileName, float scale_x, float scale_y) : Component(gameObject) {
     img = LoadTexture(fileName);
     this->scale = {scale_x, scale_y};
     src = {0, 0, (float)img.width, (float)img.height};
     dst = {0, 0, img.width * scale_x, img.height * scale_y};
+    gameObject.getComponent<Transform2D>().size = {dst.width, dst.height};
 }
 Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 view_size) : Component(gameObject) {
     img = LoadTexture(fileName);
     this->scale = {view_size.x/img.width, view_size.y/img.height};
     src = {0, 0, (float)img.width, (float)img.height};
     dst = {0, 0, view_size.x, (view_size.y == -1) ? (float)img.height : view_size.y};
+    gameObject.getComponent<Transform2D>().size = {dst.width, dst.height};
 } 
 Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
     scale = sprite.scale;
     src   = sprite.src;
     dst   = sprite.dst;
     img   = sprite.img;
+    gameObject.getComponent<Transform2D>().size = {dst.width, dst.height};
 }
 Component* Sprite::Clone(GameObject& gameObject) {
     return new Sprite(gameObject, *this);
@@ -438,12 +447,13 @@ void Sprite::Unload() {
 //-----------------------------------------------------------------------------
 // Transform2D
 //-----------------------------------------------------------------------------
-Transform2D::Transform2D(GameObject& gameObject, Vector2 position, float rotation, Vector2 scale)
-        : Component(gameObject), position(position), rotation(rotation), scale(scale) {}
+Transform2D::Transform2D(GameObject& gameObject, Vector2 position, float rotation, Vector2 scale, Vector2 size)
+        : Component(gameObject), position(position), rotation(rotation), scale(scale), size(size) {}
 Transform2D::Transform2D(GameObject& gameObject, Transform2D& transform) : Component(gameObject) {
     position = transform.position;
     rotation = transform.rotation;
     scale    = transform.scale;
+    size     = transform.size;
 }
 Component* Transform2D::Clone(GameObject& gameObject) {
     return new Transform2D(gameObject, *this);

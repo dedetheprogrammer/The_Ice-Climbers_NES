@@ -392,8 +392,9 @@ public:
     Vector2 position;
     float rotation;
     Vector2 scale;
+    Vector2 size;
 
-    Transform2D(GameObject& gameObject, Vector2 position = {0,0}, float rotation = 0.0f, Vector2 scale = {1.0f, 1.0f});
+    Transform2D(GameObject& gameObject, Vector2 position = {0,0}, float rotation = 0.0f, Vector2 scale = {1.0f, 1.0f}, Vector2 size = {1.0f, 1.0f});
     Transform2D(GameObject& gameObject, Transform2D& transform);
     Component* Clone(GameObject& gameObject) override;
 };

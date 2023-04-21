@@ -28,8 +28,6 @@ public:
             if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
                 contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
                 contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
-
-                std::cout << "Popo me ha violado violentamente\n";
                 GameSystem::Instantiate(hole, GameObjectOptions{.position = transform.position});
                 gameObject.Destroy();
             }

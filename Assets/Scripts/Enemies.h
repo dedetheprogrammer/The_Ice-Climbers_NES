@@ -124,18 +124,22 @@ public:
             isGrounded = true;
         }
         if (contact.gameObject.tag == "Hole") {
-            rigidbody.velocity.x *= -2;
-            if (rigidbody.velocity.x > 0 && !isRight) {
-                isRight = !isRight;
-                animator.Flip();
-            }
-            if (rigidbody.velocity.x < 0 && isRight) {
-                isRight = !isRight;
-                animator.Flip();
-            }
-            if (isGrounded && animator.GetViewDimensions().x > contact.gameObject.getComponent<Transform2D>().position.x) {
-                animator["Fall"];
-                rigidbody.velocity.x = 0;
+            int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
+                pos_p2 = transform.position.x + collider.size.x;
+            if (pos_p2 <= pos_x1 || transform.position.x >= pos_x2) {
+                rigidbody.velocity.x *= -2;
+                if (rigidbody.velocity.x > 0 && !isRight) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
+                if (rigidbody.velocity.x < 0 && isRight) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
+                if (isGrounded && animator.GetViewDimensions().x > contact.gameObject.getComponent<Transform2D>().position.x) {
+                    animator["Fall"];
+                    rigidbody.velocity.x = 0;
+                }
             }
         }
         if (contact.gameObject.tag == "Player") {

@@ -12,6 +12,8 @@ private:
     bool onCloud;
     Vector2 last_save_position;
     float momentum;
+    std::string last_tag;
+    bool hasCollisioned;
 public:
     bool isBraking;
     int lifes;
@@ -50,6 +52,8 @@ public:
         collider_size = collider.size;
         collider_offset = collider.offset;
         isBraking = false;
+        last_tag = "";
+        hasCollisioned = false;
     }
     
     PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
@@ -71,6 +75,8 @@ public:
         collider_size = behavior.collider_size;
         collider_offset = behavior.collider_offset;
         isBraking = behavior.isBraking;
+        last_tag = behavior.last_tag;
+        hasCollisioned = behavior.hasCollisioned;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -81,20 +87,30 @@ public:
         float deltaTime = GetFrameTime();
         int move = GetAxis("Horizontal");
         if (contact.gameObject.tag == "Floor") {
-            if (contact.contact_normal.y != 0) {
+            int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
+                pos_p2 = transform.position.x + collider.size.x;
+            if (contact.contact_normal.y != 0 && ((transform.position.x > pos_x1 && transform.position.x < pos_x2) || (pos_p2 > pos_x1 && pos_p2 < pos_x2))) {
                 if (contact.contact_normal.y < 0) {
                     if (isJumping || isBraking) {
                         isBraking = true;
                         if (rigidbody.velocity.x > 0) {
                             rigidbody.velocity.x -= rigidbody.acceleration.x * deltaTime;
+                            momentum -= rigidbody.acceleration.x * deltaTime;
                             if (rigidbody.velocity.x < 0) {
                                 rigidbody.velocity.x = 0;
+                            }
+                            if (momentum < 0) {
+                                momentum = 0;
                             }
                             animator["Brake"];
                         } else if (rigidbody.velocity.x < 0) {
                             rigidbody.velocity.x += rigidbody.acceleration.x * deltaTime;
+                            momentum += rigidbody.acceleration.x * deltaTime;
                             if (rigidbody.velocity.x > 0) {
                                 rigidbody.velocity.x = 0;
+                            }
+                            if (momentum > 0) {
+                                momentum = 0;
                             }
                             animator["Brake"];
                         } else {
@@ -115,11 +131,11 @@ public:
                     animator["Fall"];
                 }
                 rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-            }
-            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) //&&
-                //(transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y))) {
-            ){
-                rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.05;
+            } 
+            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
+                (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y)))
+            {
+                rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.02;
                 if (!isGrounded) {
                     hasBounced = true;
                     rigidbody.velocity.x *= -1;
@@ -127,12 +143,7 @@ public:
                         isRight = !isRight;
                         animator.Flip();
                     }
-                }
-            }
-        } else {
-            if (isGrounded) {
-                isGrounded = false;
-                animator["Fall"];
+                } 
             }
         }
 
@@ -167,10 +178,10 @@ public:
         } else {
             onCloud = false;
         }
+
         if (contact.gameObject.tag == "Enemy") {
             if (!isStunned) {
                 if (!isAttacking) {
-                    std::cout << "Hola\n";
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
@@ -197,6 +208,9 @@ public:
                 exit(0);
             }
         }
+
+        last_tag = contact.gameObject.tag;
+        hasCollisioned = true;
     }
 
     void Update() override {
@@ -214,7 +228,7 @@ public:
                         isBraking = false;
                         isStunned = false;
                         rigidbody.velocity.x = move * rigidbody.acceleration.x;
-                        momentum += move * rigidbody.acceleration.x * deltaTime;
+                        momentum += move * rigidbody.acceleration.x/1.5 * deltaTime;
                         if (momentum < -rigidbody.max_velocity.x) {
                             momentum = -rigidbody.max_velocity.x;
                         } else if (momentum > rigidbody.max_velocity.x) {
@@ -223,7 +237,6 @@ public:
                         if (isGrounded) {
                             isJumping = false;
                             animator["Walk"];
-                            //collider.size = animator.GetViewDimensions();
                         }
                     } else {
                         rigidbody.velocity.x += move * rigidbody.acceleration.x/16 * deltaTime;
@@ -255,7 +268,7 @@ public:
                 if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
                     isJumping  = true;
-                    rigidbody.velocity.x += momentum;
+                    rigidbody.velocity.x = momentum;
                     if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
                         rigidbody.velocity.x = rigidbody.max_velocity.x;
                     } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
@@ -265,13 +278,10 @@ public:
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
                     audioplayer["Jump"];
-                    //collider.size = animator.GetViewDimensions();
                 } else if (IsKeyDown(KEY_E)) {
                     isAttacking = true;
-                    //transform.position.y -= 3;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
-                    //collider.size.x = animator.GetViewDimensions().x;
                     collider.size.x = animator.GetViewDimensions().x;
                     collider.offset = {0,0};
                 }
@@ -294,6 +304,24 @@ public:
             transform.position = last_save_position;
             transform.position.y -= 150;
             animator["Fall"];
+        }
+
+        if (hasCollisioned) {
+            hasCollisioned = false; 
+        } else {
+            if (last_tag == "Floor") {
+                if (isGrounded) {
+                    isGrounded = false;
+                    animator["Fall"];
+                    rigidbody.velocity.x = momentum;
+                    if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = rigidbody.max_velocity.x;
+                    } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                    }
+                    isJumping = true;
+                }
+            }
         }
     }
 
