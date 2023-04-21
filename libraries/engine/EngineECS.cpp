@@ -389,8 +389,8 @@ void RigidBody2D::Draw() {
     auto center = gameObject.getComponent<Transform2D>().position +
         (gameObject.getComponent<Collider2D>().size/2);
     DrawLineEx(center, center + velocity, 3.0f, BLUE);
-    DrawLineEx(center, center + (Vector2){velocity.x, 0.0f}, 3.0f, RED);
-    DrawLineEx(center, center + (Vector2){0.0f, velocity.y}, 3.0f, GREEN);
+    DrawLineEx(center, center + Vector2{velocity.x, 0.0f}, 3.0f, RED);
+    DrawLineEx(center, center + Vector2{0.0f, velocity.y}, 3.0f, GREEN);
 }
 
 //-----------------------------------------------------------------------------
@@ -699,12 +699,20 @@ void GameSystem::Update() {
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }
-            if (gameObject->hasComponent<Collider2D>()) {
+            /*if (gameObject->hasComponent<Collider2D>()) {
                 gameObject->getComponent<Collider2D>().Draw();
             }
             if (gameObject->hasComponent<RigidBody2D>()) {
                 gameObject->getComponent<RigidBody2D>().Draw();
-            }
+            }*/
+        }
+    }
+}
+
+void GameSystem::DestroyAll() {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->Destroy();
         }
     }
 }

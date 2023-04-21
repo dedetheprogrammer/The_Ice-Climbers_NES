@@ -464,6 +464,7 @@ public:
     static void Render();
     static void Start();
     static void Update();
+    static void DestroyAll();
 };
 
 #endif

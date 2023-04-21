@@ -113,6 +113,7 @@ private:
     bool ignoreFloor;
     int last_sense;
     bool hasFallen;
+    bool needIcicle;
 
     GameObject& Icicle;
 
@@ -150,6 +151,7 @@ public:
         ignoreFloor = false;
         last_sense  = 0;
         hasFallen = false;
+        needIcicle = false;
 
     }
 
@@ -171,6 +173,7 @@ public:
         isStunned   = behavior.isStunned;
         last_sense  = behavior.last_sense;
         hasFallen   = behavior.hasFallen;
+        needIcicle  = behavior.needIcicle;
 
     }
 
@@ -219,6 +222,7 @@ public:
                     }
                     isRunning = true;
                     last_sense = sgn(rigidbody.velocity.x);
+                    needIcicle = true;
                 } else {
                     animator["Stunned"];
                     last_sense = sgn(rigidbody.velocity.x);
@@ -263,7 +267,8 @@ public:
     void Update() override {
         float deltaTime = GetFrameTime();
         if (!started) {
-            if (current_cooldown >= cooldown) {
+            if ((current_cooldown >= cooldown) || needIcicle) {
+                needIcicle = false;
                 current_cooldown = 0.0f;
                 started = true;
                 isStunned = false;

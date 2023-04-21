@@ -29,7 +29,7 @@ public:
 
 Font NES;
 
-void Game() {
+void Game(int numPlayers) {
 
     int level_phase = 0;
     bool acabar = false;
@@ -38,6 +38,12 @@ void Game() {
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
     Canvas Mountain("Assets/Sprites/00_Mountain.png", {0,-1560}, {(float)WINDOW_WIDTH, WINDOW_HEIGHT*3.65f});
+    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {20,20});
+    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {20,20});
+    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {20,20});
+    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {30,70}, {20,20});
+    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {60,70}, {20,20});
+    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {90,70}, {20,20});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -245,9 +251,11 @@ void Game() {
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
     //    a meter otro, perderá el primero.
     GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit"});
+    GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
+    Nana.addComponent<Transform2D>();
     // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
     // GameObject Popo(Vector2{600,500});
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
@@ -262,21 +270,44 @@ void Game() {
         {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 2.5, 0.3, false)},
         //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
+    Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
+        {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, 2.5, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Nana/02_Walk.png", 16, 24, 2.5, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Nana/03_Brake.png", 16, 24, 2.5, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Nana/04_Jump.png", 20, 25, 2.5, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, 2.5, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 21, 2.5, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, 2.5, 0.3, false)},
+        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
+    });
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
+    Nana.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+    });
     // 4. Añadimos el Rigidbody:
     Popo.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
+    Nana.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
 
     Vector2 popo_size = Popo.getComponent<Animator>().GetViewDimensions();
+    Vector2 nana_size = Nana.getComponent<Animator>().GetViewDimensions();
     Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Vector2{collider_width, popo_size.y}, Vector2{popo_size.x/2 - collider_offset, 0});
+    Nana.addComponent<Collider2D>(&Nana.getComponent<Transform2D>().position, Vector2{collider_width, nana_size.y}, Vector2{nana_size.x/2 - collider_offset, 0});
     Popo.addComponent<Script, PopoBehavior>(Controller_0);
+    Nana.addComponent<Script, PopoBehavior>(Controller_1);
     GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
+    //GameObject& Player2;
+    GameObject* Player_2 = nullptr;
+    if (numPlayers == 2) {
+        Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {450,450}});
+    }
+
 
     //GameSystem::Printout();
     float timeToShowScores = 0.0f;
@@ -307,7 +338,26 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-
+            if(Player.getComponent<Script, PopoBehavior>().lifes > 0) {
+                LifePopo1.Draw();
+            }
+            if(Player.getComponent<Script, PopoBehavior>().lifes > 1) {
+                LifePopo2.Draw();
+            }
+            if(Player.getComponent<Script, PopoBehavior>().lifes > 2) {
+                LifePopo3.Draw();
+            }
+            if(numPlayers == 2){
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 0) {
+                    LifeNana1.Draw();
+                }
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 1) {
+                    LifeNana2.Draw();
+                }
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 2) {
+                    LifeNana3.Draw();
+                }
+            }
             if (!moving_camera && Player.getComponent<Script, PopoBehavior>().isGrounded && Player.getComponent<Transform2D>().position.y < 150) {
                 moving_camera = true;
                 switch (level_phase) {
@@ -340,11 +390,11 @@ void Game() {
                 GameSystem::Update();
                 if (Player.getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
                     std::cout << "GAME OVER!\n";
-                    return;
+                    finished = true;
                 }
                 if(Player.getComponent<Script, PopoBehavior>().victory){
 
-                    std::cout << "muevo camara puntuacions" << std::endl;
+                    //std::cout << "muevo camara puntuacions" << std::endl;
                     Player.getComponent<Script, PopoBehavior>().victory;
                     float shift = 300 * GetFrameTime();
                     current_objects_offset  += shift;
@@ -355,11 +405,9 @@ void Game() {
                         acabar = true;
                         current_objects_offset = 0;
                     }
-
-
-                    }
+                }
             } else {
-                std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
+                //std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
                 float shift = 100 * GetFrameTime();
                 current_objects_offset  += shift;
                 if (current_objects_offset <= objects_offset) {
@@ -399,10 +447,12 @@ void Game() {
     }
     UnloadTexture(Pause_frame);
     Popo.Destroy();
+    Nana.Destroy();
     LevelFloor_0.Destroy();
     LevelFloor_1.Destroy();
     LevelFloor_2.Destroy();
     GrassBlock.Destroy();
+    GameSystem::DestroyAll();
     BGM.Unload();
 }
 
@@ -412,7 +462,6 @@ void Game() {
 enum MENU_ENUM { MAIN_MENU, NEW_GAME, NORMAL_GAME, SETTINGS, VIDEO_SETTINGS, AUDIO_SETTINGS, CONTROL_SETTINGS };
 
 int main() {
-
     init_config();
     std::random_device rd;
     std::mt19937 e2(rd());
@@ -758,10 +807,12 @@ int main() {
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
                     case 0:
-                        if (fst_player) {
+                        if (fst_player && !snd_player) {
                             //StopMusicStream(ts_music);
-                            Game();
+                            Game(1);
                             //PlayMusicStream(ts_music);
+                        } else if(snd_player) {
+                            Game(2);
                         }
                         break;
                     case 1:
