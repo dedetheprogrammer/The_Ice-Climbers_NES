@@ -7,20 +7,46 @@
 // Entidades
 // ============================================================================
 // ============================================================================
-GameObject::GameObject(std::string name, std::string tag,
-    std::unordered_set<std::string> second_tags,
-    std::unordered_set<std::string> related_tags
-) : name(name), tag(tag), second_tags(second_tags), related_tags(related_tags) {}
+Canvas::Canvas(const char* fileName, Vector2 position, Vector2 size) {
+    sprite = LoadTexture(fileName);
+    src    = {0, 0, (float)sprite.width, (float)sprite.height};
+    dst    = {position.x, position.y, size.x, size.y};
+}
+
+void Canvas::Draw() {
+    DrawTexturePro(sprite, src, dst, {0,0}, 0, WHITE);
+}
+
+void Canvas::Move(Vector2 translation) {
+    dst.x += translation.x;
+    dst.y += translation.y;
+}
+
+GameObject::GameObject(std::string name, std::string tag, std::unordered_set<std::string> second_tags,
+    std::unordered_set<std::string> related_tags) 
+{
+    prefab = nullptr;
+    this->name         = name;
+    this->tag          = tag;
+    this->second_tags  = second_tags;
+    this->related_tags = related_tags;
+    this->addComponent<Transform2D>();
+}
+
 GameObject::GameObject(GameObject& gameObject) {
     name = gameObject.name;
     tag  = gameObject.tag;
     related_tags = gameObject.related_tags;
+    prefab = nullptr;
     Clone(gameObject);
 }
+
 GameObject::GameObject(GameObject& gameObject, const GameObjectOptions& options) {
     this->name         = options.name;
     this->tag          = options.tag;
+    this->second_tags  = options.second_tags;
     this->related_tags = options.related_tags;
+    this->prefab       = &gameObject;
     Clone(gameObject);
     //this->getComponent<Collider2D>().color = options.collider_color;
     this->getComponent<Transform2D>().position = options.position;
@@ -39,16 +65,37 @@ void GameObject::Clone(GameObject& gameObject) {
 }
 
 void GameObject::Destroy() {
-    for (auto& component : components) {
-        component.second->Unload();
-        delete component.second;
+    for (auto& [type, component] : components) {
+        //component->Unload();
+        delete component;
+        components.erase(type);
     }
+    for (auto& [type, script] : scripts) {
+        delete script;
+        scripts.erase(type);
+    }
+    GameSystem::Destroy(*this);
+    delete this;
+}
+
+bool GameObject::hasSecondTag(std::string tag) {
+    return second_tags.find(tag) != second_tags.end();
 }
 
 void GameObject::OnCollision(Collision contact) {
     for (auto & [_, Script] : scripts) {
         Script->OnCollision(contact);
     }
+}
+
+void GameObject::Printout() {
+    std::cout << ">>>>> GameObject '" << name << "' info:\n";
+    if (prefab == nullptr) {
+        std::cout << "  Is a prefab object\n";
+    } else {
+        std::cout << "  Based on " << prefab->name << "\n";
+    }
+    std::cout << "  Tag: " << tag << "\n";
 }
 
 void GameObject::Update() {
@@ -93,7 +140,6 @@ Animation::Animation() {
     loop = false;
 }
 Animation::Animation(const char* fileName, int frame_width, int frame_height, float scale, float duration, bool loop) {
-    std::cout << "Hola: " << scale << "\n";
     // Animation properties:
     spritesheet = LoadTexture(fileName);
     this->frame_width = frame_width;
@@ -184,6 +230,10 @@ void Animation::Unload() {
     UnloadTexture(spritesheet);
 }
 
+void Animation::operator[](int current_frame) {
+    current_frame = current_frame % total_frames;
+}
+
 Animator::Animator(GameObject& gameObject, std::string entry_animation, std::unordered_map<std::string, Animation> Animations)
     : Component(gameObject), current_animation(entry_animation), Animations(Animations) {}
 Animator::Animator(GameObject& gameObject, Animator& animator) : Component(gameObject) {
@@ -231,9 +281,10 @@ void Animator::Unload() {
         animation.second.Unload();
     }
 }
-void Animator::operator[](std::string animation) {
+Animation& Animator::operator[](std::string animation) {
     if (animation != current_animation) Animations[animation].Stop();
     current_animation = animation;
+    return Animations[animation];
 }
 
 // ----------------------------------------------------------------------------
@@ -333,12 +384,18 @@ Sprite::Sprite(GameObject& gameObject, const char* fileName, float scale) : Comp
     src = {0, 0, (float)img.width, (float)img.height};
     dst = {0, 0, img.width * scale, img.height * scale};
 }
-Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 scale) : Component(gameObject) {
+Sprite::Sprite(GameObject& gameObject, const char* fileName, float scale_x, float scale_y) : Component(gameObject) {
     img = LoadTexture(fileName);
-    this->scale = scale;
+    this->scale = {scale_x, scale_y};
     src = {0, 0, (float)img.width, (float)img.height};
-    dst = {0, 0, img.width * scale.x, img.height * scale.y};
+    dst = {0, 0, img.width * scale_x, img.height * scale_y};
 }
+Sprite::Sprite(GameObject& gameObject, const char* fileName, Vector2 view_size) : Component(gameObject) {
+    img = LoadTexture(fileName);
+    this->scale = {view_size.x/img.width, view_size.y/img.height};
+    src = {0, 0, (float)img.width, (float)img.height};
+    dst = {0, 0, view_size.x, (view_size.y == -1) ? (float)img.height : view_size.y};
+} 
 Sprite::Sprite(GameObject& gameObject, Sprite& sprite) : Component(gameObject) {
     scale = sprite.scale;
     src   = sprite.src;
@@ -411,7 +468,7 @@ int GetAxis(std::string axis) {
  *  - Si defines los tags, a la hora de comprobar las colisiones, comprobará solo las tags que se le han indicado en la configuración.
  */
 std::unordered_map<std::string, int> GameSystem::nGameObjects;
-std::unordered_map<std::string, std::unordered_map<std::string, GameSystem::GameObjectRef>> GameSystem::GameObjects;
+std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameSystem::GameObjects;
 
 Collision::Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal)
     : gameObject(gameObject), contact_time(contact_time), contact_point(contact_point), contact_normal(contact_normal) {}
@@ -484,15 +541,15 @@ void GameSystem::Collisions(GameObject& gameObject) {
     if (!gameObject.tag.empty() && gameObject.hasComponent<Collider2D>() && gameObject.hasComponent<RigidBody2D>()) {
         for (auto& rel_tag : gameObject.related_tags) {
             for (auto& [check_name, check_ref] : GameObjects[rel_tag]) {
-                if (gameObject.name != check_name && check_ref.gameObject->hasComponent<Collider2D>()) {
+                if (gameObject.name != check_name && check_ref->hasComponent<Collider2D>()) {
                     float ct = 0; Vector2 cp{0,0}, cn{0,0};
                     auto Collider_A = gameObject.getComponent<Collider2D>();
-                    auto Collider_B = check_ref.gameObject->getComponent<Collider2D>();
+                    auto Collider_B = check_ref->getComponent<Collider2D>();
                     if (Collides(Collider_A, Collider_B, cp, cn, ct)) {
-                        gameObject.OnCollision(Collision(*check_ref.gameObject, ct, cp, cn));
-                        if (!check_ref.gameObject->hasComponent<RigidBody2D>()) {
-                            check_ref.gameObject->OnCollision(Collision(gameObject, ct, cp, -cn));
-                        }
+                        gameObject.OnCollision(Collision(*check_ref, ct, cp, cn));
+                        //if (!check_ref->hasComponent<RigidBody2D>()) {
+                            check_ref->OnCollision(Collision(gameObject, ct, cp, -cn));
+                        //}
                     }
                 }
             }
@@ -500,7 +557,15 @@ void GameSystem::Collisions(GameObject& gameObject) {
     }
 }
 
-void GameSystem::Instantiate(GameObject& gameObject, GameObjectOptions options) {
+void GameSystem::Destroy(GameObject& gameObject) {
+    nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
+    GameObjects[gameObject.tag].erase(gameObject.name);
+    if (GameObjects[gameObject.tag].empty()) {
+        GameObjects.erase(gameObject.tag);
+    }
+}
+
+GameObject& GameSystem::Instantiate(GameObject& gameObject, GameObjectOptions options) {
     // Configuring the name:
     if (options.name.empty()) {
         options.name = gameObject.name;
@@ -537,10 +602,17 @@ void GameSystem::Instantiate(GameObject& gameObject, GameObjectOptions options) 
     //    options.collider_color = gameObject.getComponent<Collider2D>().color;
     //}
     // Inserting the new instance:
-    GameObjects[options.tag][options.name] = {
-        &gameObject,
-        new GameObject(gameObject, options)
-    };
+    auto instance = new GameObject(gameObject, options);
+    GameObjects[options.tag][options.name] = instance;
+    return *instance;
+}
+
+void GameSystem::Move(Vector2 translation) {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->getComponent<Transform2D>().position += translation;
+        }
+    }
 }
 
 void GameSystem::Printout() {
@@ -553,21 +625,39 @@ void GameSystem::Printout() {
     }
 }
 
+void GameSystem::Render() {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            if (gameObject->hasComponent<Animator>()) {
+                gameObject->getComponent<Animator>().Play();
+            } else if (gameObject->hasComponent<Sprite>()) {
+                gameObject->getComponent<Sprite>().Draw();
+            }
+            if (gameObject->hasComponent<Collider2D>()) {
+                gameObject->getComponent<Collider2D>().Draw();
+            }
+            if (gameObject->hasComponent<RigidBody2D>()) {
+                gameObject->getComponent<RigidBody2D>().Draw();
+            }
+        }
+    }
+}
+
 void GameSystem::Update() {
-    for (auto& [_, gameObjectRefs] : GameObjects) {
-        for (auto& [_, ref] : gameObjectRefs) {
-            ref.gameObject->Update();
-            Collisions(*ref.gameObject);
-            if (ref.gameObject->hasComponent<Animator>()) {
-                ref.gameObject->getComponent<Animator>().Play();
-            } else if (ref.gameObject->hasComponent<Sprite>()) {
-                ref.gameObject->getComponent<Sprite>().Draw();
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->Update();
+            Collisions(*gameObject);
+            if (gameObject->hasComponent<Animator>()) {
+                gameObject->getComponent<Animator>().Play();
+            } else if (gameObject->hasComponent<Sprite>()) {
+                gameObject->getComponent<Sprite>().Draw();
             }
-            if (ref.gameObject->hasComponent<Collider2D>()) {
-                ref.gameObject->getComponent<Collider2D>().Draw();
+            if (gameObject->hasComponent<Collider2D>()) {
+                gameObject->getComponent<Collider2D>().Draw();
             }
-            if (ref.gameObject->hasComponent<RigidBody2D>()) {
-                ref.gameObject->getComponent<RigidBody2D>().Draw();
+            if (gameObject->hasComponent<RigidBody2D>()) {
+                gameObject->getComponent<RigidBody2D>().Draw();
             }
         }
     }

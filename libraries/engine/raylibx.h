@@ -22,7 +22,7 @@ Vector2 operator-(Vector2 a);
 Vector2 operator-(Vector2 a, Vector2 b);
 Vector2 operator*(Vector2 a, Vector2 b);
 Vector2 operator/(Vector2 a, Vector2 b);
-template <typename T> Vector2 operator*(Vector2 a, T b) { return {a.x * b, a.y * b}; }
+template <typename T> Vector2 operator*(Vector2 a, T b) { return {(float)(a.x * b), (float)(a.y * b)}; }
 template <typename T> Vector2 operator*(T a, Vector2 b) { return b*a; }
 template <typename T> Vector2 operator/(Vector2 a, T b) { return {a.x/b, a.y/b}; }
 template <typename T> Vector2 operator/(T a, Vector2 b) { return {a/b.x, a/b.y}; }

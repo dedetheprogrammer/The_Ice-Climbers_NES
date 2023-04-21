@@ -33,12 +33,30 @@ class Component;
 class Script;
 class Collision;
 
-// Un objeto del juego.
+//-----------------------------------------------------------------------------
+// Canvas
+//-----------------------------------------------------------------------------
+class Canvas {
+private:
+    Rectangle src; // What pixels of the sprite do I want to draw?
+    Rectangle dst; // Where and how do I draw these pixels?
+    Texture2D sprite;
+public:
+    Canvas(const char* fileName, Vector2 position, Vector2 size);
+    void Draw();
+    void Move(Vector2 translation);
+};
+
+//-----------------------------------------------------------------------------
+// Un objeto del motor.
+//-----------------------------------------------------------------------------
 class GameObject {
 private:
     // Clonar GameObject.
     void Clone(GameObject& gameObject);
 public:
+    // Object that is clone of.
+    GameObject* prefab;
     // Nombre del GameObject (unico por GameObject).
     std::string name;
     // Tag de GameObject (puede englobar varios GameObject).
@@ -67,6 +85,8 @@ public:
         scripts[typeid(T)] = new T(*this, std::forward<Args>(args)...);
     }
 
+    void Destroy();
+
     template <typename T> bool hasComponent() {
         auto it = components.find(typeid(T));
         if (it != components.end()) {
@@ -74,6 +94,8 @@ public:
         }
         return false;
     }
+
+    bool hasSecondTag(std::string tag);
 
     template <typename T> T& getComponent() {
         auto it = components.find(typeid(T));
@@ -91,6 +113,9 @@ public:
         throw std::runtime_error(name + ": Script '" + std::string(typeid(T).name()) + "' no encontrado.");
     }
 
+    void OnCollision(Collision contact);
+    void Printout();
+
     template <typename T> void removeComponent() {
         auto it = components.find(typeid(T));
         if (it != components.end()) {
@@ -107,8 +132,6 @@ public:
         }
     }
 
-    void Destroy();
-    void OnCollision(Collision contact);
     void Update();
 };
 
@@ -178,6 +201,7 @@ public:
     void Play(Vector2 position);
     void Stop();
     void Unload();
+    void operator[](int current_frame);
 
 };
 
@@ -226,7 +250,7 @@ public:
     void Unload() override;
 
     // Stops the current animation and changes to the given one.
-    void operator[](std::string animation);
+    Animation& operator[](std::string animation);
 };
 
 //-----------------------------------------------------------------------------
@@ -341,7 +365,8 @@ private:
     Texture2D img; // Sprite image.
 public:
     Sprite(GameObject& gameObject, const char* fileName, float scale);
-    Sprite(GameObject& gameObject, const char* fileName, Vector2 scale);
+    Sprite(GameObject& gameObject, const char* fileName, float scale_x, float scale_y);
+    Sprite(GameObject& gameObject, const char* fileName, Vector2 view_size);
     Sprite(GameObject& gameObject, Sprite& sprite);
 
     Vector2 GetScale();
@@ -402,11 +427,6 @@ struct Collision {
 
 class GameSystem {
 private:
-    // Instancia de la escena en el Game engine
-    struct GameObjectRef {
-        GameObject* original;   // Original GameObject.
-        GameObject* gameObject; // Instatiated GameObject.
-    };
     // Spoiler, but not for now:
     // - La idea es dividir el juego en escenas, por lo que cada escena tendrá
     //   sus objetos, y ya, opcional, puede plantearse pero se deja en el aire.
@@ -414,7 +434,7 @@ private:
     // std::string current scene;
     // Instances
     static std::unordered_map<std::string, int> nGameObjects;
-    static std::unordered_map<std::string, std::unordered_map<std::string, GameObjectRef>> GameObjects;
+    static std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameObjects;
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla: 
@@ -431,8 +451,11 @@ private:
         Vector2& contact_normal, float& contact_time);
 public:
     static void Collisions(GameObject& gameObject);
-    static void Instantiate(GameObject& gameObject, GameObjectOptions options);
+    static void Destroy(GameObject& gameObject);
+    static GameObject& Instantiate(GameObject& gameObject, GameObjectOptions options);
+    static void Move(Vector2 translation);
     static void Printout();
+    static void Render();
     static void Update();
 };
 

@@ -1,7 +1,10 @@
 #include "EngineECS.h"
 #include "settings.h"
+
+#include "Block.h"
+#include "Cloud.h"
+#include "Enemies.h"
 #include "Popo.h"
-#include "Grass_block.h"
 
 class Flicker {
 private:
@@ -27,15 +30,18 @@ Font NES;
 
 void Game() {
 
+    int level_phase = 0;
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
+
+    Canvas Mountain("Assets/Sprites/00_Mountain.png", {0,-1560}, {(float)WINDOW_WIDTH, WINDOW_HEIGHT*3.65f});
 
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -44,11 +50,13 @@ void Game() {
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
     Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 3, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 3, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 3, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 3, 0.9, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 3, 0.3, false)},
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 2.7, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 2.7, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 2.7, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 2.7, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 2.7, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 3, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 3, 0.3, false)},
         //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
     // 3. Añadimos el componente de Audio:
@@ -56,50 +64,181 @@ void Game() {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 98, Vector2{100,0}, Vector2{100,190});
+    Popo.addComponent<RigidBody2D>(1, 98, Vector2{200,0}, Vector2{150,190});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
     //    caso, es la animación inicial.
     Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Popo.addComponent<Script, Movement>();
-    GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
+    Popo.addComponent<Script, PopoBehavior>();
+    GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     // Rectangles = Sprites component?
     // Mountain background:
-    Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
-    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 40;
-    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
-    Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    
+    //Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
+    //Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     // PAUSE frame:
     Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
-    
-    GameObject Floor("Base Floor", "Floor");
-    Floor.addComponent<Transform2D>();
-    Floor.addComponent<Collider2D>(&Floor.getComponent<Transform2D>().position, Vector2{1224, 30}, PINK);
-    GameSystem::Instantiate(Floor, GameObjectOptions{.position{-100,560}});
 
-    GameObject Block("Grass Block", "Floor");
-    Block.addComponent<Transform2D>();
-    Block.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", Vector2{3.62f, 3.0f});
-    int block_width = Block.getComponent<Sprite>().GetViewDimensions().x;
-    Block.addComponent<Collider2D>(&Block.getComponent<Transform2D>().position, Block.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    Block.addComponent<Script, GrassBlockBehavior>();
-    for (int i = 0; i < 24; i++) {
-        GameSystem::Instantiate(Block, GameObjectOptions{.position{113.0f + block_width * i, 423}});
-    }
+
+    GameObject BaseFloor("Base Floor", "Floor");
+    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224,30}, PINK);
+    GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,560}});
+
+    GameObject LevelFloor_0("Level Floor 0", "Floor");
+    GameObject LevelFloor_1("Level Floor 1", "Floor");
+    GameObject LevelFloor_2("Level Floor 2", "Floor");
+    GameObject LevelFloor_3("Level Floor 3", "Floor");
+    GameObject LevelFloor_4("Level Floor 4", "Floor");
+    GameObject LevelWall_0("Level Wall 0", "Wall");
+    GameObject LevelWall_1("Level Wall 1", "Wall");
+    GameObject LevelWall_2("Level Wall 2", "Wall");
+    GameObject Death("Death", "Death");
+
+    // Scene:
+    GameObject GrassBlock("Grass Block", "Floor");
+    GrassBlock.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", 3.62f, 3.0f);
+    int block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x, block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
     
-    GameSystem::Printout();
+    float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
+        LevelFloor_4_width = block_width * 7.0f;
+    LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width,25}, PINK);
+    LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width,25}, PINK);
+    LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width,25}, PINK);
+    LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width,25}, PINK);
+    LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width,25}, PINK);
+    LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{25, block_height * 6.0f}, YELLOW);
+    LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{25, block_height * 7.0f}, YELLOW);
+    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
+    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
+    Death.addComponent<Collider2D>(&Death.getComponent<Transform2D>().position, Vector2{block_height * 10.0f, 25}, RED);
+
+    GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    GrassBlock.addComponent<Script, BlockBehavior>();
+    for (int i = 0; i < 24; i++) {
+        GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{113.0f + block_width * i, 423}});
+    }
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width, 423}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*24, 423}});
+
+    GameObject DirtBlock("Dirt Block", "Floor");
+    DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
+    DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    DirtBlock.addComponent<Script, BlockBehavior>();
+    for (int i = 0; i < 22; i++) {
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 287}});
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 150}});
+        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i,  14}});
+    }
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 287}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 287}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 150}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 150}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 14}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 14}});
+
+    GameObject IceBlock("Ice Block", "Floor", {"Ice"});
+    IceBlock.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", 3.62f, 3.0f);
+    IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    IceBlock.addComponent<Script, BlockBehavior>();
+    for (int i = 0; i < 20; i++) {
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -123}});
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -260}});
+        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -397}});
+    }
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -123}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -123}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -260}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -260}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -397}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -397}});
+
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f + block_width*21, -533}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - LevelFloor_0_width + 3*block_width, -533}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*5, -533}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*13, -533}});
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{115.0f - 2*block_width, -624.0f - 2*block_height}});
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{114.0f + block_width*25, -624.0f - 2*block_height}});
+
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*2, -626}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + block_width*9, -626}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*18, -626}});
+
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f - block_width, -620.0f - 9*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*24, -620.0f - 9*block_height}});
+    GameObject Cloud("Cloud", "Cloud");
+    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", 3.62f, 3.0f);
+    Cloud.addComponent<Collider2D>(&Cloud.getComponent<Transform2D>().position, Cloud.getComponent<Sprite>().GetViewDimensions());
+    Cloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Cloud.addComponent<Script, CloudBehavior>();
+    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*5}});
+
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f, -615.0f - 16*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*23, -615.0f - 16*block_height}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - block_width, -612.0f - 12*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 14*block_width, -612.0f - 11*block_height}});
+
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width, -629.0f - 22*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*22, -629.0f - 22*block_height}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + 8*block_width, -606.0f - 17*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{115.0f + 17*block_width, -607.0f - 16*block_height}});
+
+    GameObject SmallCloud("Small Cloud", "Cloud");
+    SmallCloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Short.png", 3.62f, 3.0f);
+    SmallCloud.addComponent<Collider2D>(&SmallCloud.getComponent<Transform2D>().position, SmallCloud.getComponent<Sprite>().GetViewDimensions());
+    SmallCloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    SmallCloud.addComponent<Script, CloudBehavior>();
+    GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*18}});
+
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*2, -620.0f - 29*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*21, -620.0f - 29*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{113.0f + 4*block_width, -614.0f - 27*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 12*block_width, -617.0f - 26*block_height}});
+    
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*3, -634.0f - 35*block_height}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*20, -634.0f - 35*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 8*block_width, -610.0f - 32*block_height}});
+    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 15*block_width, -612.0f - 30*block_height}});
+    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 10*block_width, -608.0f - 35*block_height}});
+
+    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{116.0f + block_width*4, -629.0f - 38*block_height}});
+    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{115.0f + block_width*19, -629.0f - 38*block_height}});
+    GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{114.0f + 2*block_width, -624.0f - 39*block_height}});
+    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + 16*block_width, -624.0f - 39*block_height}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f - 6*block_width, -624.0f - 38*block_height}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f + 22*block_width, -624.0f - 38*block_height}});
+
+    GameObject Condor("Red Condor", "Goal");
+    Condor.addComponent<Animator>("Fly", std::unordered_map<std::string, Animation> {
+        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, 2.7, 0.75, true)}
+    });
+    Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
+    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Condor.addComponent<Script, RedCondorBehavior>();
+    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, -624.0f - 49*block_height}});
+
+    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
+    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
+        }
+    );
+    Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
+    Topi.addComponent<Script, TopiBehavior>();
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
+    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,210}});
+
+    //GameSystem::Printout();
     bool play_music = false;
     bool paused = false;
+    bool moving_camera = false;
+    float objects_offset = 80, current_objects_offset = 0;
     BGM.Init();
-
-    // GameSystem::Printout();
 
     while(!WindowShouldClose()) {
         BeginDrawing();
@@ -111,7 +250,7 @@ void Game() {
             BGM.Play();
         }
     
-        DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, Vector2{0,0}, 0, WHITE);
+        Mountain.Draw();
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;
@@ -120,7 +259,38 @@ void Game() {
             paused = !paused;
         }
         if (!paused) {
-            GameSystem::Update();
+
+            if (!moving_camera && Player.getComponent<Script, PopoBehavior>().isGrounded && Player.getComponent<Transform2D>().position.y < 150) {
+                moving_camera = true;
+                switch (level_phase) {
+                case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                    level_phase++;
+                    break;
+                }
+                //if (level_phase++ == 8) {
+                //    objects_offset = 150;
+                //} else {
+                //    objects_offset = 80;
+                //}
+            }
+            if (!moving_camera) {
+                GameSystem::Update();
+                if (Player.getComponent<Script, PopoBehavior>().lifes <= 0) {
+                    std::cout << "GAME OVER!\n";
+                    return;
+                }
+            } else {
+                float shift = 100 * GetFrameTime();
+                current_objects_offset  += shift;
+                if (current_objects_offset <= objects_offset) {
+                    GameSystem::Move({0,shift});
+                    Mountain.Move({0,shift});
+                } else {
+                    current_objects_offset = 0;
+                    moving_camera = false;
+                }
+                GameSystem::Render();
+            }
         } else {
             DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
             if (show) {
@@ -142,14 +312,17 @@ void Game() {
             break;
         }
         if (IsKeyPressed(KEY_R)) {
-            Popo.getComponent<Transform2D>().position = Vector2{600,400};
+            Player.getComponent<Transform2D>().position = Vector2{600,70};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         EndDrawing();
     }
-    UnloadTexture(Mountain_sprite);
     UnloadTexture(Pause_frame);
     Popo.Destroy();
+    LevelFloor_0.Destroy();
+    LevelFloor_1.Destroy();
+    LevelFloor_2.Destroy();
+    GrassBlock.Destroy();
     BGM.Unload();
 }
 
@@ -164,11 +337,11 @@ int main() {
     std::random_device rd;
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> D(0, (float)WINDOW_WIDTH);
-    NES = LoadFont("Assets/NES - Ice Climber - Fonts/Pixel_NES.otf");
+    NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     // ---- Music
-    Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
-    ts_music.looping = true;
+    // Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    //ts_music.looping = true;
     // bool play_music = false;
 
     // Initial trailer --------------------------------------------------------
@@ -742,7 +915,7 @@ int main() {
     UnloadTexture(Enterkey);
     */
     UnloadFont(NES);
-    UnloadMusicStream(ts_music);
+    //UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
 }

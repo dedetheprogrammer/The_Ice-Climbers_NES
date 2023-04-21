@@ -5,7 +5,7 @@
 #include "EngineECS.h"
 #include "raylib.h"
 #include "raylibx.h"
-#include "Grass_block.h"
+#include "Block.h"
 #include "test.h"
 
 /**
@@ -239,7 +239,9 @@ int sense() {
 
 int main() {
 
-    InitWindow(800, 800, "COÑO");
+    int WINDOW_WIDTH = 1024;
+    int WINDOW_HEIGHT = 768;
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "COÑO");
 
     GameObject A("A"), B("B");
     A.addComponent<Transform2D>(Vector2{365,200});
@@ -273,18 +275,38 @@ int main() {
 //
 
     //Texture2D a = LoadTexture("Assets/Sprites/Grass_block_large.png");
-    GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Hola"  });
+    GameObject& Abracadabra = GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Hola"  });
     GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Adios" });
     GameSystem::Instantiate(A, {.name = "Pito de burro", .tag = "Hola"  });
     GameSystem::Instantiate(A, {.name = "Pito de burro", .tag = "Adios" });
-    GameSystem::Printout();
-    //while (!WindowShouldClose()) {
-    //    BeginDrawing();
-    //    ClearBackground(BLACK);
+    GameSystem::Printout(); std::cout << "\n\n";
+    
+    Abracadabra.Printout();
+    Abracadabra.Destroy();
+
+    std::cout << "\n\n"; GameSystem::Printout();
+
+
+    Texture2D Mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
+    float Mountain_view_height = (Mountain_sprite.width * WINDOW_HEIGHT)/(float)WINDOW_WIDTH + 40;
+    int Mountain_offset = 60;
+    std::cout << Mountain_sprite.height << "," << Mountain_offset << "\n";
+    Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
+    Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
+
+    float offset = 0; 
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
+        DrawTexturePro(Mountain_sprite, Mountain_src, Mountain_dst, {0,0}, 0, WHITE);
+        if (offset <= Mountain_offset) {
+            offset += 10*GetFrameTime();
+            Mountain_src.y -= 10 * GetFrameTime();
+        }
     //    DrawRectangle(0,0,40,40,RED);
     //    GameSystem::Update();
-    //    EndDrawing();
-    //}
+        EndDrawing();
+    }
 
     /*
     InitWindow(800, 800, "COÑO");
