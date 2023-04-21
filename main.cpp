@@ -227,8 +227,6 @@ void Game() {
     GameSystem::Instantiate(Fruit, GameObjectOptions{.position={550, -1380}});
     GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1430}});
 
-
-    GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
             {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
@@ -422,13 +420,13 @@ int main() {
     NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     // ---- Music
-    // Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
-    //ts_music.looping = true;
-    // bool play_music = false;
+    /*Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    ts_music.looping = true;
+    bool play_music = false;*/
 
     // Initial trailer --------------------------------------------------------
-    // int state = 0, shown = 0;
-    /*
+     int state = 0, shown = 0;
+    
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -527,9 +525,9 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-    */
-    Game();
-    /*
+    
+    //Game();
+    
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -556,9 +554,9 @@ int main() {
             }
         }
 
-        if (play_music) {
+        /*if (play_music) {
             UpdateMusicStream(ts_music);
-        }
+        }*/
 
         // Begin drawing:
         BeginDrawing();
@@ -608,7 +606,7 @@ int main() {
                             SignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            PlayMusicStream(ts_music);
+                            //PlayMusicStream(ts_music);
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             SignDst.y = height_dst;
@@ -616,8 +614,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            PlayMusicStream(ts_music);
-                            play_music = true;
+                            //PlayMusicStream(ts_music);
+                            //play_music = true;
                         }
                     }
                 } else {
@@ -627,8 +625,8 @@ int main() {
                             OldSignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            PlayMusicStream(ts_music);
-                            play_music = true;
+                            //PlayMusicStream(ts_music);
+                            //play_music = true;
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             OldSignDst.y = height_dst;
@@ -636,8 +634,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            PlayMusicStream(ts_music);
-                            play_music = true;
+                            //PlayMusicStream(ts_music);
+                            //play_music = true;
                         }
                     }
                 }
@@ -761,9 +759,9 @@ int main() {
                     switch (current_option) {
                     case 0:
                         if (fst_player) {
-                            StopMusicStream(ts_music);
+                            //StopMusicStream(ts_music);
                             Game();
-                            PlayMusicStream(ts_music);
+                            //PlayMusicStream(ts_music);
                         }
                         break;
                     case 1:
@@ -995,7 +993,7 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
-    */
+    
     UnloadFont(NES);
     //UnloadMusicStream(ts_music);
     CloseAudioDevice();

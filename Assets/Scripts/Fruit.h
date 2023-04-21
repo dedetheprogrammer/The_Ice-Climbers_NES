@@ -15,18 +15,18 @@ private:
 public:
     FruitBehavior(GameObject& gameObject) : Script(gameObject),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        collider(gameObject.getComponent<Collider2D>()),
         sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        collider(gameObject.getComponent<Collider2D>())
     {
         
     }
 
     FruitBehavior(GameObject& gameObject, FruitBehavior behavior) : Script(gameObject),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        collider(gameObject.getComponent<Collider2D>()),
         sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        collider(gameObject.getComponent<Collider2D>())
     {
  
     }

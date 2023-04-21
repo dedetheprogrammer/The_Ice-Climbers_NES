@@ -1,5 +1,6 @@
 #pragma once
 #include "EngineECS.h"
+#include "controllers.h"
 #include "raylib.h"
 #include "raylibx.h"
 
@@ -21,6 +22,10 @@ public:
     bool isAttacking; // Telling us if the object is attacking.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isStunned;
+    int frutasRecogidas;
+    int bloquesDestruidos;
+    bool victory;
+    bool puntuacion;
     Vector2 collider_size;
     Vector2 collider_offset;
     // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
@@ -32,13 +37,15 @@ public:
     RigidBody2D& rigidbody;
     bool isGrounded;  // Telling us if the object is on the ground.
     Transform2D& transform;
+    Controller& controller; // Pointer to the controller instance.
 
-    PopoBehavior(GameObject& gameObject) : Script(gameObject), 
+    PopoBehavior(GameObject& gameObject, Controller& c) : Script(gameObject), 
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        controller(c)
     {
         lifes = 3;
         isGrounded  = false;
@@ -54,6 +61,10 @@ public:
         isBraking = false;
         last_tag = "";
         hasCollisioned = false;
+        victory = false;
+        puntuacion = false;
+        bloquesDestruidos = 0;
+        frutasRecogidas = 0;
     }
     
     PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
@@ -61,7 +72,8 @@ public:
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
+        transform(gameObject.getComponent<Transform2D>()),
+        controller(behavior.controller)
     {
         lifes       = behavior.lifes;
         isJumping   = behavior.isJumping;
@@ -77,6 +89,10 @@ public:
         isBraking = behavior.isBraking;
         last_tag = behavior.last_tag;
         hasCollisioned = behavior.hasCollisioned;
+        victory     = behavior.victory;
+        puntuacion = false;
+        bloquesDestruidos = 0;
+        frutasRecogidas = 0;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -85,7 +101,11 @@ public:
 
     void OnCollision(Collision contact) {
         float deltaTime = GetFrameTime();
-        int move = GetAxis("Horizontal");
+        //int move = GetAxis("Horizontal");
+        int move = 0;
+        if (controller.isDown(Controller::LEFT)) move -= 1;
+        if (controller.isDown(Controller::RIGHT)) move += 1;
+
         if (contact.gameObject.tag == "Floor") {
             int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
                 pos_p2 = transform.position.x + collider.size.x;
@@ -127,7 +147,9 @@ public:
                     isGrounded = true;
                     brokeBlock = false;
                     last_save_position = transform.position;
-                } else {
+                }else{
+                    if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
+                    std::cout << contact.gameObject.name << std::endl;
                     animator["Fall"];
                 }
                 rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
@@ -155,7 +177,7 @@ public:
             if (contact.contact_normal.y < 0) {
                 isGrounded = true;
                 isJumping  = false;
-                onCloud = true;
+                onCloud = false;//true;
                 if (!move) {
                     animator["Idle"];
                 } else {
@@ -204,11 +226,15 @@ public:
 
         if (contact.gameObject.tag == "Goal") {
             if (contact.contact_normal.y > 0) {
+                victory = true;
                 std::cout << "VICTORY!";
-                exit(0);
+                //exit(0);
             }
         }
 
+        if (contact.gameObject.tag == "Fruit") {
+            frutasRecogidas += 1;
+        }
         last_tag = contact.gameObject.tag;
         hasCollisioned = true;
     }
@@ -220,7 +246,10 @@ public:
 
         if (!isAttacking) {
             // Horizontal movement:
-            move = GetAxis("Horizontal");
+            //move = GetAxis("Horizontal");
+            if (controller.isDown(Controller::LEFT)) move -= 1;
+            if (controller.isDown(Controller::RIGHT)) move += 1;
+            
             transform.position.x += rigidbody.velocity.x * deltaTime;
             if (!hasBounced && !onCloud) {
                 if (move) {
@@ -239,7 +268,7 @@ public:
                             animator["Walk"];
                         }
                     } else {
-                        rigidbody.velocity.x += move * rigidbody.acceleration.x/10 * deltaTime;
+                        rigidbody.velocity.x += move * rigidbody.acceleration.x/4 * deltaTime;
                         if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
                             rigidbody.velocity.x = -rigidbody.max_velocity.x;
                         } else if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
@@ -265,7 +294,8 @@ public:
 
             // Vertical movement:
             if (!isJumping && isGrounded) {
-                if (IsKeyDown(KEY_SPACE)) {
+                if (controller.isDown(Controller::JUMP)) {
+                //if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
                     isJumping  = true;
                     rigidbody.velocity.x = momentum;
@@ -278,7 +308,8 @@ public:
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
                     audioplayer["Jump"];
-                } else if (IsKeyDown(KEY_E)) {
+                } else if (controller.isDown(Controller::ATTACK)) {
+                //} else if (IsKeyDown(KEY_E)) {
                     isAttacking = true;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
@@ -296,7 +327,7 @@ public:
         // Colissions:
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-        if (transform.position.y > GetScreenHeight()) {
+        if (transform.position.y > GetScreenHeight() && !victory) {
             lifes--;
             isJumping = false;
             isGrounded = true;
