@@ -121,6 +121,7 @@ public:
 
         if (contact.gameObject.tag == "Floor") {
             rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+            isGrounded = true;
         }
         if (contact.gameObject.tag == "Hole") {
             rigidbody.velocity.x *= -2;
@@ -131,6 +132,10 @@ public:
             if (rigidbody.velocity.x < 0 && isRight) {
                 isRight = !isRight;
                 animator.Flip();
+            }
+            if (isGrounded && animator.GetViewDimensions().x > contact.gameObject.getComponent<Transform2D>().position.x) {
+                animator["Fall"];
+                rigidbody.velocity.x = 0;
             }
         }
         if (contact.gameObject.tag == "Player") {

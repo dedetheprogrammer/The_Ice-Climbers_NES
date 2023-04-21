@@ -7,15 +7,20 @@ class PopoBehavior : public Script {
 private:
 
     // Variables para Popo:
-    bool isJumping;
     bool hasBounced;
+    bool isJumping;
     bool onCloud;
     Vector2 last_save_position;
+    float momentum;
 public:
+    bool isBraking;
     int lifes;
+    bool brokeBlock;
     bool isAttacking; // Telling us if the object is attacking.
     bool isRight;     // Telling us if the object is facing to the right.
     bool isStunned;
+    Vector2 collider_size;
+    Vector2 collider_offset;
     // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
     // eficiente que acceder una y otra vez a los componentes cada vez que 
     // necesitamos hacer algo con uno de ellos.
@@ -41,6 +46,10 @@ public:
         hasBounced  = false;
         onCloud = false;
         isStunned = false;
+        brokeBlock = false;
+        collider_size = collider.size;
+        collider_offset = collider.offset;
+        isBraking = false;
     }
     
     PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
@@ -58,6 +67,10 @@ public:
         isAttacking = behavior.isAttacking;
         onCloud     = behavior.onCloud;
         isStunned   = behavior.isStunned;
+        brokeBlock  = behavior.brokeBlock;
+        collider_size = behavior.collider_size;
+        collider_offset = behavior.collider_offset;
+        isBraking = behavior.isBraking;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -65,44 +78,47 @@ public:
     }
 
     void OnCollision(Collision contact) {
-        //float deltaTime = GetFrameTime();
+        float deltaTime = GetFrameTime();
         int move = GetAxis("Horizontal");
         if (contact.gameObject.tag == "Floor") {
             if (contact.contact_normal.y != 0) {
                 if (contact.contact_normal.y < 0) {
-                    //if (/*(contact.gameObject.hasSecondTag("Ice") && !move) ||*/ isJumping) {
-                    //    if (rigidbody.velocity.x > 0) {
-                    //        rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
-                    //        if (rigidbody.velocity.x < 0) {
-                    //            rigidbody.velocity.x = 0;
-                    //        }
-                    //        animator["Brake"];
-                    //        collider.size = animator.GetViewDimensions();
-                    //    } else if (rigidbody.velocity.x < 0) {
-                    //        rigidbody.velocity.x -= sgn(rigidbody.velocity.x) * rigidbody.acceleration.x * deltaTime;
-                    //        if (rigidbody.velocity.x > 0) {
-                    //            rigidbody.velocity.x = 0;
-                    //        }
-                    //        animator["Brake"];
-                    //        collider.size = animator.GetViewDimensions();
-                    //    } else {
-                    //        isJumping = false;
-                    //    }
-                    //} else {
+                    if (isJumping || isBraking) {
+                        isBraking = true;
+                        if (rigidbody.velocity.x > 0) {
+                            rigidbody.velocity.x -= rigidbody.acceleration.x * deltaTime;
+                            if (rigidbody.velocity.x < 0) {
+                                rigidbody.velocity.x = 0;
+                            }
+                            animator["Brake"];
+                        } else if (rigidbody.velocity.x < 0) {
+                            rigidbody.velocity.x += rigidbody.acceleration.x * deltaTime;
+                            if (rigidbody.velocity.x > 0) {
+                                rigidbody.velocity.x = 0;
+                            }
+                            animator["Brake"];
+                        } else {
+                            isBraking = false;
+                        }
+                    } else {
                         if (!isStunned && !isAttacking && !move) {
                             rigidbody.velocity.x = 0;
                             animator["Idle"];
-                            //collider.size = animator.GetViewDimensions();
                         }
-                    //}
+                    }
                     isJumping  = false;
                     hasBounced = false;
                     isGrounded = true;
+                    brokeBlock = false;
                     last_save_position = transform.position;
+                } else {
+                    animator["Fall"];
                 }
                 rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             }
-            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) ) {
+            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) //&&
+                //(transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y))) {
+            ){
                 rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.05;
                 if (!isGrounded) {
                     hasBounced = true;
@@ -113,10 +129,17 @@ public:
                     }
                 }
             }
+        } else {
+            if (isGrounded) {
+                isGrounded = false;
+                animator["Fall"];
+            }
         }
+
         if (contact.gameObject.tag == "Wall") {
             rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
         }
+
         if (contact.gameObject.tag == "Cloud") {
             if (contact.contact_normal.y < 0) {
                 isGrounded = true;
@@ -187,12 +210,32 @@ public:
             transform.position.x += rigidbody.velocity.x * deltaTime;
             if (!hasBounced && !onCloud) {
                 if (move) {
-                    isStunned = false;
-                    rigidbody.velocity.x = move * rigidbody.acceleration.x;
-                    if (isGrounded) {
-                        isJumping = false;
-                        animator["Walk"];
-                        collider.size = animator.GetViewDimensions();
+                    if (!isJumping) {
+                        isBraking = false;
+                        isStunned = false;
+                        rigidbody.velocity.x = move * rigidbody.acceleration.x;
+                        momentum += move * rigidbody.acceleration.x * deltaTime;
+                        if (momentum < -rigidbody.max_velocity.x) {
+                            momentum = -rigidbody.max_velocity.x;
+                        } else if (momentum > rigidbody.max_velocity.x) {
+                            momentum = rigidbody.max_velocity.x;
+                        }
+                        if (isGrounded) {
+                            isJumping = false;
+                            animator["Walk"];
+                            //collider.size = animator.GetViewDimensions();
+                        }
+                    } else {
+                        rigidbody.velocity.x += move * rigidbody.acceleration.x/16 * deltaTime;
+                        if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                            rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                        } else if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                            rigidbody.velocity.x = rigidbody.max_velocity.x;
+                        }
+                    }
+                } else {
+                    if (!isJumping) {
+                        momentum = 0;
                     }
                 }
                 if ((move > 0 && !isRight) || (move < 0 && isRight)) {
@@ -208,10 +251,17 @@ public:
 
 
             // Vertical movement:
-            if (!isJumping) {
+            if (!isJumping && isGrounded) {
                 if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
                     isJumping  = true;
+                    rigidbody.velocity.x += momentum;
+                    if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = rigidbody.max_velocity.x;
+                    } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = -rigidbody.max_velocity.x;
+                    }
+
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
                     audioplayer["Jump"];
@@ -221,14 +271,16 @@ public:
                     //transform.position.y -= 3;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
+                    //collider.size.x = animator.GetViewDimensions().x;
                     collider.size.x = animator.GetViewDimensions().x;
+                    collider.offset = {0,0};
                 }
             }
         } else if (animator.HasFinished("Attack")) {
             isAttacking = false;
             animator["Idle"];
-            collider.size.x = animator.GetViewDimensions().x;
-            //transform.position.y += 3;
+            collider.size = collider_size;
+            collider.offset = collider_offset;
         }
 
         // Colissions:

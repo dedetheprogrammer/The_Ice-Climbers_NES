@@ -36,43 +36,6 @@ void Game() {
 
     Canvas Mountain("Assets/Sprites/00_Mountain.png", {0,-1560}, {(float)WINDOW_WIDTH, WINDOW_HEIGHT*3.65f});
 
-    // ¿Como construyo un GameObject para Popo?
-    // 1. Creamos el GameObject. Recuerda:
-    //  - El GameObject no tiene ningún componente nada más crearlo.
-    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
-    //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal"});
-    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
-    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
-    Popo.addComponent<Transform2D>();
-    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
-    // GameObject Popo(Vector2{600,500});
-    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
-    // si no, dará error.
-    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 2.7, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 2.7, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 2.7, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 2.7, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 2.7, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 3, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 3, 0.3, false)},
-        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
-    });
-    // 3. Añadimos el componente de Audio:
-    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
-        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
-    });
-    // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 98, Vector2{200,0}, Vector2{150,190});
-    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
-    //  - El Transform2D que tiene la posición del objeto.
-    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
-    //    caso, es la animación inicial.
-    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Popo.getComponent<Animator>().GetViewDimensions());
-    Popo.addComponent<Script, PopoBehavior>();
-    GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
-
     // Rectangles = Sprites component?
     // Mountain background:
     //Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
@@ -83,7 +46,6 @@ void Game() {
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
-
 
     GameObject BaseFloor("Base Floor", "Floor");
     BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224,30}, PINK);
@@ -100,9 +62,11 @@ void Game() {
     GameObject Death("Death", "Death");
 
     // Scene:
-    GameObject GrassBlock("Grass Block", "Floor");
+    GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", 3.62f, 3.0f);
     int block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x, block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
+    float collider_width  = block_width-4.0f;
+    float collider_offset = (collider_width)/2;
     
     float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
         LevelFloor_4_width = block_width * 7.0f;
@@ -125,7 +89,7 @@ void Game() {
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width, 423}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*24, 423}});
 
-    GameObject DirtBlock("Dirt Block", "Floor");
+    GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
     DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
     DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlock.addComponent<Script, BlockBehavior>();
@@ -141,7 +105,7 @@ void Game() {
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 14}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 14}});
 
-    GameObject IceBlock("Ice Block", "Floor", {"Ice"});
+    GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
     IceBlock.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", 3.62f, 3.0f);
     IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlock.addComponent<Script, BlockBehavior>();
@@ -221,6 +185,7 @@ void Game() {
     Condor.addComponent<Script, RedCondorBehavior>();
     GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, -624.0f - 49*block_height}});
 
+
     GameObject Topi("Topi", "Enemy", {}, {"Floor", "Hole", "Player"});
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
@@ -228,10 +193,51 @@ void Game() {
         }
     );
     Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Topi.getComponent<Animator>().GetViewDimensions());
+    Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>();
     GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
     GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,210}});
+
+        // ¿Como construyo un GameObject para Popo?
+    // 1. Creamos el GameObject. Recuerda:
+    //  - El GameObject no tiene ningún componente nada más crearlo.
+    //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves 
+    //    a meter otro, perderá el primero.
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal"});
+    // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
+    //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
+    Popo.addComponent<Transform2D>();
+    // 2.b. Se podría haber ahorrado el addComponent<Transform2D> y crearlo en el GameObject directamente:
+    // GameObject Popo(Vector2{600,500});
+    // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
+    // si no, dará error.
+    Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 3, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 3, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 3, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 3, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 3, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 3, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 3, 0.3, false)},
+        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
+    });
+    // 3. Añadimos el componente de Audio:
+    Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+    });
+    // 4. Añadimos el Rigidbody:
+    Popo.addComponent<RigidBody2D>(1, 500, Vector2{50,0}, Vector2{200,410});
+    // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
+    //  - El Transform2D que tiene la posición del objeto.
+    //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
+    //    caso, es la animación inicial.
+
+
+    Vector2 popo_size = Popo.getComponent<Animator>().GetViewDimensions();
+    Popo.addComponent<Collider2D>(&Popo.getComponent<Transform2D>().position, Vector2{collider_width, popo_size.y}, Vector2{popo_size.x/2 - collider_offset, 0});
+    Popo.addComponent<Script, PopoBehavior>();
+    GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
 
     //GameSystem::Printout();
     bool play_music = false;

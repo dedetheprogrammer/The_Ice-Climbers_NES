@@ -325,19 +325,31 @@ void AudioPlayer::operator[ ](std::string audiosource) {
 // Collider
 // ----------------------------------------------------------------------------
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, int width, int height, Color color)
-    : Component(gameObject), color(color), pos(pos), size({(float)width, (float)height}) {}
+    : Component(gameObject), color(color), pos(pos), offset({0,0}), size({(float)width, (float)height}) {}
 Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Color color)
-    : Component(gameObject), color(color), pos(pos), size(size) {}
+    : Component(gameObject), color(color), pos(pos), offset({0,0}), size(size) {}
 Collider2D::Collider2D(GameObject& gameObject, Collider2D& collider) : Component(gameObject) {
-    color = collider.color;
-    pos   = &gameObject.getComponent<Transform2D>().position;
-    size  = collider.size; 
+    color  = collider.color;
+    pos    = &gameObject.getComponent<Transform2D>().position;
+    offset = collider.offset; 
+    size   = collider.size; 
 }
+Collider2D::Collider2D(GameObject& gameObject, Vector2* pos, Vector2 size, Vector2 offset, Color color) : Component(gameObject) {
+    this->color  = color;
+    this->pos    = &gameObject.getComponent<Transform2D>().position;
+    this->offset = offset; 
+    this->size   = size;
+}
+
 Component* Collider2D::Clone(GameObject& gameObject) {
     return new Collider2D(gameObject, *this);
 }
 void Collider2D::Draw() {
-    DrawRectangleLinesEx({pos->x, pos->y, size.x, size.y}, 3.0f, color);
+    auto real_pos = Pos();
+    DrawRectangleLinesEx({real_pos.x, real_pos.y, size.x, size.y}, 3.0f, color);
+}
+Vector2 Collider2D::Pos() const {
+    return (*pos) + offset; 
 }
 
 //-----------------------------------------------------------------------------
@@ -479,8 +491,8 @@ bool GameSystem::Collides(const Vector2 ray_o, const Vector2 ray_d,
 {
     DrawLineEx(ray_o, ray_o + (10000 * ray_d), 2.0f, PINK);
     Vector2 ray_i = 1.0f/ray_d;
-    Vector2 t_near = (*target.pos - ray_o) * ray_i;
-    Vector2 t_far  = (*target.pos + target.size - ray_o) * ray_i;
+    Vector2 t_near = (target.Pos() - ray_o) * ray_i;
+    Vector2 t_far  = (target.Pos() + target.size - ray_o) * ray_i;
 
     if (std::isnan(t_near.x) || std::isnan(t_near.y)) return false;
     if (std::isnan(t_far.x)  || std::isnan(t_far.y) ) return false;
@@ -519,10 +531,10 @@ bool GameSystem::Collides(const Collider2D& A, const Collider2D& B, Vector2& con
     Vector2& contact_normal, float& contact_time)
 {
     // Expandir el rectangulo destino con las dimensiones del rectangulo origen.
-    Vector2 exp_B_pos = *B.pos - (A.size/2);
+    Vector2 exp_B_pos = B.Pos() - (A.size/2);
     if (Collides(
         // El rayo se lanza desde el centro del collider:
-        *A.pos + A.size/2,
+        A.Pos() + A.size/2,
         // La dirección del rayo se obtiene mediante la velocidad del objeto:
         A.gameObject.getComponent<RigidBody2D>().velocity * GetFrameTime(),
         // Se crea un nuevo collider ampliado a la mitad del objeto dinámico:
