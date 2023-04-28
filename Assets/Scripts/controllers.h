@@ -216,11 +216,14 @@ public:
         } else return false;
     }
 
+    std::string getActionBind(Control c) { return (type == Type::KEYBOARD) ? code2key[controls[c]] : code2joy[controls[c]]; }
+
     void printAll() {
         for (auto kv : controls) {
             printKey(kv.first);
         }
     }
+
     void printKey(Control c) {
         std::string keybind = "NONE";
         std::string controllerName = "Controller_" + std::to_string(type);

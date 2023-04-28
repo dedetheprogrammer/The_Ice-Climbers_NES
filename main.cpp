@@ -841,7 +841,7 @@ int main() {
                 DrawTextEx(NES, "SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
                 DrawTextEx(NES, "VIDEO",    {500, menu_start + (float)option_offset}, 35, 2, WHITE);
                 DrawTextEx(NES, "AUDIO",    {500, menu_start + (option_offset * 2.0f)}, 35, 2, GRAY);
-                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, GRAY);
+                DrawTextEx(NES, "CONTROLS", {500, menu_start + (option_offset * 3.0f)}, 35, 2, WHITE);
                 DrawTextEx(NES, "RETURN",   {500, menu_start + (option_offset * 4.0f)}, 35, 2, WHITE);
                 if (IsKeyPressed(KEY_ENTER)) {
                     switch (current_option) {
@@ -852,8 +852,15 @@ int main() {
                         option_offset  = menu_height/(OPTIONS+1);
                         option_drift   = 3;
                         break;
-                    case 1: case 2:
+                    case 1:
                         std::cout << "Hola\n";
+                        break;
+                    case 2:
+                        CURRENT_MENU   = CONTROL_SETTINGS;
+                        OPTIONS = 4;
+                        current_option = 0;
+                        option_offset  = menu_height/(OPTIONS+1);
+                        option_drift   = 3;
                         break;
                     case 3:
                         CURRENT_MENU   = MAIN_MENU;
@@ -1006,15 +1013,127 @@ int main() {
                     option_drift   = 0;
                 }
                 break;
-            case AUDIO_SETTINGS: case CONTROL_SETTINGS:
+            case AUDIO_SETTINGS:
                 break;
+            case CONTROL_SETTINGS:
+                // MENU TITLE:
+                DrawTextEx(NES, "CONTROL SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
+                
+                // CURRENT PLAYER: 0, 1, 2, 3
+                static int currPlyr = 0;
+                DrawTextEx(NES, "PLAYER:", {500, menu_start + (option_offset * 1.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 1.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, std::to_string(currPlyr).c_str(), {770, menu_start + (option_offset * 1.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT CONTROLLER: 0, 1, 2, 3
+                static int currCont = Controller::KEYBOARD;
+                std::string currContStr;
+                switch (currCont) {
+                    case Controller::CONTROLLER_0: currContStr = "JOY 0"; break;
+                    case Controller::CONTROLLER_1: currContStr = "JOY 1"; break;
+                    case Controller::CONTROLLER_2: currContStr = "JOY 2"; break;
+                    case Controller::CONTROLLER_3: currContStr = "JOY 3"; break;
+                    case Controller::KEYBOARD: currContStr = "KEYBOARD"; break;
+                    default: currContStr = "NO JOY"; break;
+                }
+                DrawTextEx(NES, "CONTROLLER:", {500, menu_start + (option_offset * 2.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 2.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currContStr.c_str(), {770, menu_start + (option_offset * 2.0f) + 5}, 17, 1, WHITE);
+
+                // CURRENT ACTION
+                static int currAction = Controller::LEFT;
+                std::string currActionStr;
+                switch (currAction) {
+                    case Controller::LEFT: currActionStr = "GO LEFT"; break;
+                    case Controller::RIGHT: currActionStr = "GO RIGHT"; break;
+                    case Controller::DOWN: currActionStr = "GO DOWN"; break;
+                    case Controller::UP: currActionStr = "GO UP"; break;
+                    case Controller::JUMP: currActionStr = "JUMP"; break;
+                    case Controller::ATTACK: currActionStr = "ATTACK"; break;
+                    default: currActionStr = "No Action"; break;
+                }
+                DrawTextEx(NES, "ACTION:", {500, menu_start + (option_offset * 3.0f)}, 30, 1, WHITE);
+                DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                DrawTextEx(NES, currActionStr.c_str(), {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
+                
+                // CURRENT ACTION BINDING
+                static bool selected = false;
+                DrawTextEx(NES, "KEYBINDING:", {500, menu_start + (option_offset * 4.0f)}, 30, 1, WHITE);
+                if (selected) {
+                    DrawTexturePro(Arrow, ArrowSrcInv, {750, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                    DrawTexturePro(Arrow, ArrowSrc, {870, menu_start + (option_offset * 4.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
+                }
+                std::string actionBinding = controllers[currPlyr]->getActionBind((Controller::Control)currAction);
+                DrawTextEx(NES, actionBinding.c_str(), {770, menu_start + (option_offset * 4.0f) + 5}, 17, 1, WHITE);
+                switch (current_option) {
+                    case 0:
+                        if (IsKeyPressed(KEY_LEFT)) currPlyr = mod(currPlyr-1, 4);
+                        else if (IsKeyPressed(KEY_RIGHT)) currPlyr = mod(currPlyr+1, 4);
+                        break;
+                    case 1:
+                        if (IsKeyPressed(KEY_LEFT)) { currCont = mod(currCont-1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        else if (IsKeyPressed(KEY_RIGHT)) { currCont = mod(currCont+1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+                        break;
+                    case 2:
+                        if (IsKeyPressed(KEY_LEFT)) currAction = mod(currAction-1, 6);
+                        else if (IsKeyPressed(KEY_RIGHT)) currAction = mod(currAction+1, 6);
+                        break;
+                    case 3:
+                        if (!selected && IsKeyPressed(KEY_ENTER)) {
+                            selected = true;
+                        } else if (selected) {
+                            bool keyboard = (controllers[currPlyr]->type == Controller::Type::KEYBOARD);
+                            int binding = 0;
+                            int axisOffset = 0;
+                            //Keyboard
+                            if (keyboard) binding = GetKeyPressed();
+                            //Gamepad Trigger
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Axis
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_LEFT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) < -0.5)
+                            { binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+                            //Gamepad Button
+                            else binding = GetGamepadButtonPressed();
+
+                            if (binding != 0) {
+                                controllers[currPlyr]->controls[(Controller::Control)currAction] = binding;
+                                if (axisOffset != 0) controllers[currPlyr]->controls[(Controller::Control)(currAction + axisOffset)] = binding;
+                                save_controls(currPlyr);
+                                selected = false;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    CURRENT_MENU   = SETTINGS;
+                    OPTIONS        = 4;
+                    current_option = 0;
+                    option_offset  = menu_height/(OPTIONS+1);
+                    option_drift   = 0;
+                }
+                break;
+
             }
 
             if (IsKeyPressed(KEY_DOWN)) {
-                current_option = ((current_option+1)%OPTIONS);
+                current_option = mod(current_option+1, OPTIONS);
             }
             if (IsKeyPressed(KEY_UP)) {
-                current_option = ((current_option-1)%OPTIONS + OPTIONS) % OPTIONS;
+                current_option = mod(current_option-1, OPTIONS);
             }
 
             if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {

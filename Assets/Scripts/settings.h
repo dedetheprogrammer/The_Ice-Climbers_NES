@@ -137,6 +137,27 @@ void default_config() {
     controller_default_config(3);
 }
 
+void save_controls(int controller) {
+    std::string controllerSection = "Controller_" + std::to_string(controller);
+    ini[controllerSection]["ControllerType"]  = controllers[controller]->type;
+
+    if (controllers[controller]->type == Controller::Type::KEYBOARD) {
+        ini[controllerSection]["KB_Left"]  = controllers[controller]->controls[Controller::Control::LEFT];
+        ini[controllerSection]["KB_Right"] = controllers[controller]->controls[Controller::Control::RIGHT];
+        ini[controllerSection]["KB_Down"]  = controllers[controller]->controls[Controller::Control::DOWN];
+        ini[controllerSection]["KB_Up"]    = controllers[controller]->controls[Controller::Control::UP];
+        ini[controllerSection]["KB_Jump"]  = controllers[controller]->controls[Controller::Control::JUMP];
+        ini[controllerSection]["KB_Attack"]= controllers[controller]->controls[Controller::Control::ATTACK];
+    } else {
+        ini[controllerSection]["GP_Left"]  = controllers[controller]->controls[Controller::Control::LEFT];
+        ini[controllerSection]["GP_Right"] = controllers[controller]->controls[Controller::Control::RIGHT];
+        ini[controllerSection]["GP_Down"]  = controllers[controller]->controls[Controller::Control::DOWN];
+        ini[controllerSection]["GP_Up"]    = controllers[controller]->controls[Controller::Control::UP];
+        ini[controllerSection]["GP_Jump"]  = controllers[controller]->controls[Controller::Control::JUMP];
+        ini[controllerSection]["GP_Attack"]= controllers[controller]->controls[Controller::Control::ATTACK];
+    }
+}
+
 void controller_save_config(int controller, std::ofstream& os) {
     std::string controllerSection = "Controller_" + std::to_string(controller);
     os  << "[" << controllerSection << "]"
