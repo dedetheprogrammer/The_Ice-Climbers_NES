@@ -2,6 +2,7 @@
 #include "EngineECS.h"
 #include "controllers.h"
 #include "raylib.h"
+//#include "Enemies.h"
 #include "raylibx.h"
 
 class PopoBehavior : public Script {
@@ -202,13 +203,16 @@ public:
         }
 
         if (contact.gameObject.tag == "Enemy") {
-            if (!isStunned) {
-                if (!isAttacking) {
+            if (!isStunned ){
+                if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
+                    std::cout << "if 1" << std::endl;
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
-                } else {
+                }else if(contact.contact_normal.x){
+
+                            std::cout << "else 4" << std::endl;
                     if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                         lifes--;
                         animator["Stunned"];

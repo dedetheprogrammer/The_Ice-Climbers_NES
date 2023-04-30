@@ -229,9 +229,10 @@ void Game(int numPlayers) {
     Fruit.addComponent<Collider2D>(&Fruit.getComponent<Transform2D>().position, Fruit.getComponent<Sprite>().GetViewDimensions(), ORANGE);
     Fruit.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
     Fruit.addComponent<Script, FruitBehavior>();
-    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={400, -1055}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={400, -1060}});
     GameSystem::Instantiate(Fruit, GameObjectOptions{.position={550, -1380}});
-    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1430}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1425}});
+    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={3500, 1000}});
 
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
@@ -242,8 +243,19 @@ void Game(int numPlayers) {
     Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>(Icicle);
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,220}});
+    //GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
+    //GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,220}});
+
+    GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
+    Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Nutpicker - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)},
+        }
+    );
+    Nutpicker.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Nutpicker.addComponent<Collider2D>(&Nutpicker.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
+    Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
+    GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
 
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
@@ -379,7 +391,7 @@ void Game(int numPlayers) {
                     DrawText(("Frutas x " +  std::to_string(Player.getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
                     DrawText(("Bloques rotos x " + std::to_string(Player.getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
                     DrawText(("Puntuación: " + std::to_string(3000 + Player.getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
-                        Player.getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+                    Player.getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
 
                     if(IsKeyPressed(KEY_ENTER)){
                         finished = true;

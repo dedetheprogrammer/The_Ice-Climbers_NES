@@ -1,5 +1,11 @@
+#pragma once
 #include "EngineECS.h"
 #include "Popo.h"
+#include "settings.h"
+
+#include <iostream>
+#include <ctime>
+
 
 class RedCondorBehavior : public Script {
 private:
@@ -335,6 +341,166 @@ public:
         rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
         if (ignoreFloor) {
             ignoreFloor = !ignoreFloor;
+        }
+    }
+};
+
+class NutpickerBehavior : public Script {
+private:
+    // Variables para Nutpicker:
+    bool isStunned;
+    float time;
+    float timeStunned;
+    float t;
+    float tStunned;
+    float isRight;
+    int cont;
+    unsigned t0, t1;
+
+public:
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
+    // eficiente que acceder una y otra vez a los componentes cada vez que
+    // necesitamos hacer algo con uno de ellos.
+    Animator& animator;
+    Collider2D& collider;
+    RigidBody2D& rigidbody;
+    Transform2D& transform;
+
+    NutpickerBehavior(GameObject& gameObject, GameObject& Icicle) : Script(gameObject),
+        animator(gameObject.getComponent<Animator>()),
+        collider(gameObject.getComponent<Collider2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        isStunned = true;
+        time = rand() % 10 + 15;
+        timeStunned = rand() % 25 + 20;
+        t = 0;
+        tStunned = 0;
+        isRight = 1;
+        cont = 0;
+    }
+
+    NutpickerBehavior(GameObject& gameObject, NutpickerBehavior& behavior) : Script(gameObject),
+        animator(gameObject.getComponent<Animator>()),
+        collider(gameObject.getComponent<Collider2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        transform(gameObject.getComponent<Transform2D>())
+    {
+        isStunned = true;
+        time = behavior.time;
+        timeStunned = behavior.timeStunned;
+        t = behavior.t;
+        tStunned = behavior.tStunned;
+        t0 = behavior.t0;
+        t1 = behavior.t1;
+        rigidbody.velocity.x = 80;
+        isRight = behavior.isRight;
+        cont = behavior.cont;
+    }
+
+    Component* Clone(GameObject& gameObject) override {
+        return new NutpickerBehavior(gameObject, *this);
+    }
+
+
+    void OnCollision(Collision contact) override {
+
+        if (contact.gameObject.tag == "Player") {
+            if (!isStunned && contact.gameObject.getComponent<Script, PopoBehavior>().isAttacking) {
+                if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
+                    animator["Stunned"];
+                    isStunned = true;
+                    rigidbody.velocity.x = 0;
+                    t0 = clock();
+                    std::cout << "stun 1" << std::endl;
+                }
+                if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
+                    animator["Stunned"];
+                    isStunned = true;
+                    rigidbody.velocity.x = 0;
+                    t0 = clock();
+                    std::cout << "stun 2" << std::endl;
+                }
+            }
+            if(!isStunned && (!contact.gameObject.getComponent<Script, PopoBehavior>().isGrounded) && (contact.contact_normal.y < 0)){
+                animator["Stunned"];
+                isStunned = true;
+                rigidbody.velocity.x = 0;
+                t0 = clock();
+                std::cout << "stun 3" << std::endl;
+            }
+        }
+    }
+
+    void Update() override {
+        float deltaTime = GetFrameTime();
+        if(t0 == 0) t0 = clock();
+        bool primer = true;
+
+        for (auto& [check_name, check_ref] : GameSystem::GameObjects["Player"]) {
+            if(primer){
+                primer = false;
+                if(!isStunned){
+                    t1 = clock();
+                    auto elapsed_time = (double(t1-t0)/CLOCKS_PER_SEC);
+
+                    if(elapsed_time < time) {
+                        if(transform.position.y > check_ref->getComponent<Transform2D>().position.y + check_ref->getComponent<Animator>().GetViewDimensions().y + 50){
+                            rigidbody.velocity.y = -20;
+                        }else if(transform.position.y + animator.GetViewDimensions().y + 50 < check_ref->getComponent<Transform2D>().position.y){
+                            rigidbody.velocity.y = 20;
+                        }
+                        if(abs(transform.position.x - check_ref->getComponent<Transform2D>().position.x) > 2*WINDOW_WIDTH/5){
+                            if((check_ref->getComponent<Transform2D>().position.x > transform.position.x && rigidbody.velocity.x < 0) || (check_ref->getComponent<Transform2D>().position.x < transform.position.x && rigidbody.velocity.x > 0)){
+                                animator.Flip();
+                                isRight *= -1;
+                                rigidbody.velocity.x *= -1;
+                            }
+                        }
+                    }else if(transform.position.x + animator.GetViewDimensions().x < 0 || transform.position.x > WINDOW_WIDTH ||
+                                 transform.position.y + animator.GetViewDimensions().y < 0 || transform.position.y > WINDOW_HEIGHT) {
+                        isStunned = true;
+                        t0 = clock();
+                    }
+                }else{
+                    t1 = clock();
+                    auto elapsed_time = (double(t1-t0)/CLOCKS_PER_SEC);
+                    rigidbody.velocity.y = 80;
+                    cont += 1;
+
+                    if(cont % 7 == 0){
+                        animator.Flip();
+                        isRight *= -1;
+                    }
+                    
+                    if(elapsed_time >= timeStunned){
+                        t0 = clock();
+                        isStunned = false;
+                        animator["Walk"];
+
+                        if(check_ref->getComponent<Transform2D>().position.x <= WINDOW_WIDTH/2){
+                            transform.position.x = -50;
+                            rigidbody.velocity.x = 100;
+                            if(isRight == -1){
+                                animator.Flip();
+                                isRight *= -1;
+                            } 
+                        }else{
+                            transform.position.x = WINDOW_WIDTH + 50;
+                            rigidbody.velocity.x = -100;
+                            if(isRight == 1){
+                                animator.Flip();
+                                isRight *= -1;
+                            }
+                        }
+                        transform.position.y = 150;
+                    }
+                }
+
+                transform.position.x += rigidbody.velocity.x * deltaTime;
+                transform.position.y += rigidbody.velocity.y * deltaTime;
+            }
         }
     }
 };

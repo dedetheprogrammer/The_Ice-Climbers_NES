@@ -599,7 +599,7 @@ void GameSystem::Destroy(GameObject& gameObject) {
     GameObjects[gameObject.tag].erase(gameObject.name);
     if (GameObjects[gameObject.tag].empty()) {
         GameObjects.erase(gameObject.tag);
-        nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
+        //nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
     }
 }
 
