@@ -134,19 +134,19 @@ void save_controls(int controller) {
     ini[controllerSection]["ControllerType"]  = controllers[controller]->type;
 
     if (controllers[controller]->type == Controller::Type::KEYBOARD) {
-        ini[controllerSection]["KB_Left"]  = controllers[controller]->controls[Controller::Control::LEFT];
-        ini[controllerSection]["KB_Right"] = controllers[controller]->controls[Controller::Control::RIGHT];
-        ini[controllerSection]["KB_Down"]  = controllers[controller]->controls[Controller::Control::DOWN];
-        ini[controllerSection]["KB_Up"]    = controllers[controller]->controls[Controller::Control::UP];
-        ini[controllerSection]["KB_Jump"]  = controllers[controller]->controls[Controller::Control::JUMP];
-        ini[controllerSection]["KB_Attack"]= controllers[controller]->controls[Controller::Control::ATTACK];
+        ini[controllerSection]["KB_Left"]  = controllers[controller]->kb_controls[Controller::Control::LEFT];
+        ini[controllerSection]["KB_Right"] = controllers[controller]->kb_controls[Controller::Control::RIGHT];
+        ini[controllerSection]["KB_Down"]  = controllers[controller]->kb_controls[Controller::Control::DOWN];
+        ini[controllerSection]["KB_Up"]    = controllers[controller]->kb_controls[Controller::Control::UP];
+        ini[controllerSection]["KB_Jump"]  = controllers[controller]->kb_controls[Controller::Control::JUMP];
+        ini[controllerSection]["KB_Attack"]= controllers[controller]->kb_controls[Controller::Control::ATTACK];
     } else {
-        ini[controllerSection]["GP_Left"]  = controllers[controller]->controls[Controller::Control::LEFT];
-        ini[controllerSection]["GP_Right"] = controllers[controller]->controls[Controller::Control::RIGHT];
-        ini[controllerSection]["GP_Down"]  = controllers[controller]->controls[Controller::Control::DOWN];
-        ini[controllerSection]["GP_Up"]    = controllers[controller]->controls[Controller::Control::UP];
-        ini[controllerSection]["GP_Jump"]  = controllers[controller]->controls[Controller::Control::JUMP];
-        ini[controllerSection]["GP_Attack"]= controllers[controller]->controls[Controller::Control::ATTACK];
+        ini[controllerSection]["GP_Left"]  = controllers[controller]->gp_controls[Controller::Control::LEFT];
+        ini[controllerSection]["GP_Right"] = controllers[controller]->gp_controls[Controller::Control::RIGHT];
+        ini[controllerSection]["GP_Down"]  = controllers[controller]->gp_controls[Controller::Control::DOWN];
+        ini[controllerSection]["GP_Up"]    = controllers[controller]->gp_controls[Controller::Control::UP];
+        ini[controllerSection]["GP_Jump"]  = controllers[controller]->gp_controls[Controller::Control::JUMP];
+        ini[controllerSection]["GP_Attack"]= controllers[controller]->gp_controls[Controller::Control::ATTACK];
     }
 }
 
@@ -194,21 +194,21 @@ void controller_init_config(Controller& controller, int controllerNumber, std::i
 
     if (type == Controller::KEYBOARD) {
 
-        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["KB_Left"]);
-        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["KB_Right"]);
-        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["KB_Down"]);
-        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["KB_Up"]);
-        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["KB_Jump"]);
-        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["KB_Attack"]);
+        controller.kb_controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["KB_Left"]);
+        controller.kb_controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["KB_Right"]);
+        controller.kb_controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["KB_Down"]);
+        controller.kb_controls[Controller::UP] = std::get<int>(ini[controllerSection]["KB_Up"]);
+        controller.kb_controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["KB_Jump"]);
+        controller.kb_controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["KB_Attack"]);
 
     } else if (type >= Controller::CONTROLLER_0 && type <= Controller::CONTROLLER_3) {
 
-        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["GP_Left"]);
-        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["GP_Right"]);
-        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["GP_Down"]);
-        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["GP_Up"]);
-        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["GP_Jump"]);
-        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["GP_Attack"]);
+        controller.gp_controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["GP_Left"]);
+        controller.gp_controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["GP_Right"]);
+        controller.gp_controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["GP_Down"]);
+        controller.gp_controls[Controller::UP] = std::get<int>(ini[controllerSection]["GP_Up"]);
+        controller.gp_controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["GP_Jump"]);
+        controller.gp_controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["GP_Attack"]);
     }
 }
 

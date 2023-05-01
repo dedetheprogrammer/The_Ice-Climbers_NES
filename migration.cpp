@@ -161,12 +161,44 @@ int main() {
 
     // KEY BINDING SETTNGS:
     UIText PlayerText(NES, "PLAYER", 33, 1, {200, GetScreenHeight()/2.0f - 185}, UIObject::CENTER_LEFT);
-    UISprite PlayerLArrow(LArrow, {GetScreenWidth()/2.0f + 60, PlayerText.pos.y}, 1.0f, 1.0f);
-    UISprite PlayerRArrow(RArrow, {GetScreenWidth()/2.0f + 260, PlayerText.pos.y}, 1.0f, 1.0f);
+    UISprite PlayerLArrow(LArrow, {GetScreenWidth()/2.0f + 80, PlayerText.pos.y}, 1.0f, 1.0f);
+    UIText SelectedPlayer(NES, "PLAYER_0", 25, 1, {GetScreenWidth()/2.0f + 250, PlayerText.pos.y}, UIObject::UP_CENTER);
+    UISprite PlayerRArrow(RArrow, {GetScreenWidth()/2.0f + 400, PlayerText.pos.y}, 1.0f, 1.0f);
 
     UIText ControllerText(NES, "CONTROLLER", 33, 1, {200, GetScreenHeight()/2.0f - 125}, UIObject::CENTER_LEFT);
-    UISprite ControllerLArrow(LArrow, {GetScreenWidth()/2.0f + 60, ControllerText.pos.y}, 1.0f, 1.0f);
-    UISprite ControllerRArrow(RArrow, {GetScreenWidth()/2.0f + 260, ControllerText.pos.y}, 1.0f, 1.0f);
+    UISprite ControllerLArrow(LArrow, {GetScreenWidth()/2.0f + 80, ControllerText.pos.y}, 1.0f, 1.0f);
+    UIText SelectedController(NES, "KEYBOARD", 25, 1, {GetScreenWidth()/2.0f + 250, ControllerText.pos.y}, UIObject::UP_CENTER);
+    UISprite ControllerRArrow(RArrow, {GetScreenWidth()/2.0f + 400, ControllerText.pos.y}, 1.0f, 1.0f);
+    
+    UIText LeftActionText(NES, "LEFT ACTION", 33, 1, {200, GetScreenHeight()/2.0f - 65}, UIObject::CENTER_LEFT);
+    UISprite LeftActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, LeftActionText.pos.y}, 1.0f, 1.0f);
+    UIText LeftActionKeybind(NES, "LEFT ARROW", 25, 1, {GetScreenWidth()/2.0f + 250, LeftActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite LeftActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, LeftActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText RightActionText(NES, "RIGHT ACTION", 33, 1, {200, GetScreenHeight()/2.0f - 5}, UIObject::CENTER_LEFT);
+    UISprite RightActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, RightActionText.pos.y}, 1.0f, 1.0f);
+    UIText RightActionKeybind(NES, "RIGHT ARROW", 25, 1, {GetScreenWidth()/2.0f + 250, RightActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite RightActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, RightActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText DownActionText(NES, "DOWN ACTION", 33, 1, {200, GetScreenHeight()/2.0f + 55}, UIObject::CENTER_LEFT);
+    UISprite DownActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, DownActionText.pos.y}, 1.0f, 1.0f);
+    UIText DownActionKeybind(NES, "DOWN ARROW", 25, 1, {GetScreenWidth()/2.0f + 250, DownActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite DownActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, DownActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText UpActionText(NES, "UP ACTION", 33, 1, {200, GetScreenHeight()/2.0f + 115}, UIObject::CENTER_LEFT);
+    UISprite UpActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, UpActionText.pos.y}, 1.0f, 1.0f);
+    UIText UpActionKeybind(NES, "UP ARROW", 25, 1, {GetScreenWidth()/2.0f + 250, UpActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite UpActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, UpActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText AttackActionText(NES, "ATTACK ACTION", 33, 1, {200, GetScreenHeight()/2.0f + 175}, UIObject::CENTER_LEFT);
+    UISprite AttackActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, AttackActionText.pos.y}, 1.0f, 1.0f);
+    UIText AttackActionKeybind(NES, "E", 25, 1, {GetScreenWidth()/2.0f + 250, AttackActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite AttackActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, AttackActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText JumpActionText(NES, "JUMP ACTION", 33, 1, {200, GetScreenHeight()/2.0f + 235}, UIObject::CENTER_LEFT);
+    UISprite JumpActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, JumpActionText.pos.y}, 1.0f, 1.0f);
+    UIText JumpActionKeybind(NES, "SPACEBAR", 25, 1, {GetScreenWidth()/2.0f + 250, JumpActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite JumpActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, JumpActionText.pos.y}, 1.0f, 1.0f);
 
     // GENERAL UI:
     UISprite Hammer("Assets/Sprites/UI_Old_Hammer.png", {NewGameText.pos.x - 70, NewGameText.pos.y + NewGameText.size.y/2.0f}, 4.0f, 4.0f, UIObject::CENTER_RIGHT);
@@ -573,7 +605,7 @@ int main() {
                             if (IsKeyPressed(KEY_ENTER)) {
                                 CURRENT_MENU = CONTROL_SETTINGS;
                                 OPTION = 0;
-                                // OPTIONS = ?;
+                                OPTIONS = 8;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                             }
                         } else if (OPTION == 6) {
@@ -587,14 +619,104 @@ int main() {
                         }
                     }
                 } else if (CURRENT_MENU == CONTROL_SETTINGS) {
-                    // Para Gabriel:
-                    PlayerText.Draw();
-                    PlayerLArrow.Draw();
-                    PlayerRArrow.Draw();
+					// CURRENT PLAYER: 0, 1, 2, 3
+					static int currPlyr = 0;
+					SelectedPlayer.text = "PLAYER " + std::to_string(currPlyr);
+					// CURRENT CONTROLLER: KEYBOARD, CONTROLLER_0, CONTROLLER_1, CONTROLLER_2, CONTROLLER_3
+					static int currCont = Controller::KEYBOARD;
+					switch (currCont) {
+						case Controller::CONTROLLER_0: SelectedController.text = "CONTROLLER 0"; break;
+						case Controller::CONTROLLER_1: SelectedController.text = "CONTROLLER 1"; break;
+						case Controller::CONTROLLER_2: SelectedController.text = "CONTROLLER 2"; break;
+						case Controller::CONTROLLER_3: SelectedController.text = "CONTROLLER 3"; break;
+						case Controller::KEYBOARD: SelectedController.text = "KEYBOARD"; break;
+						default: SelectedController.text = "NO CONTROLLER"; break;
+					}
+					// CURRENT ACTION
+					int currAction = (OPTION < 2)? Controller::NO_CONTROL : OPTION - 2;
+					// CURRENT ACTION BINDING
+					static bool selected = false;
 
-                    ControllerText.Draw();
-                    ControllerLArrow.Draw();
-                    ControllerRArrow.Draw();
+					LeftActionKeybind.text =	controllers[currPlyr]->getActionBind(Controller::LEFT);
+					RightActionKeybind.text =	controllers[currPlyr]->getActionBind(Controller::RIGHT);
+					DownActionKeybind.text =	controllers[currPlyr]->getActionBind(Controller::DOWN);
+					UpActionKeybind.text =		controllers[currPlyr]->getActionBind(Controller::UP);
+					JumpActionKeybind.text =	controllers[currPlyr]->getActionBind(Controller::JUMP);
+					AttackActionKeybind.text =	controllers[currPlyr]->getActionBind(Controller::ATTACK);
+
+					switch (OPTION) {
+						case 0:
+							if (IsKeyPressed(KEY_LEFT)) currPlyr = mod(currPlyr-1, 4);
+							else if (IsKeyPressed(KEY_RIGHT)) currPlyr = mod(currPlyr+1, 4);
+							break;
+						case 1:
+							if (IsKeyPressed(KEY_LEFT)) { currCont = mod(currCont-1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+							else if (IsKeyPressed(KEY_RIGHT)) { currCont = mod(currCont+1, 5); controllers[currPlyr]->type = (Controller::Type)currCont; }
+							break;
+						case 2: case 3: case 4: case 5: case 6: case 7:
+							if (!selected && IsKeyPressed(KEY_ENTER)) {
+								selected = true;
+							} else if (selected) {
+								bool keyboard = (controllers[currPlyr]->type == Controller::Type::KEYBOARD);
+								int binding = 0;
+								int axisOffset = 0;
+								//Keyboard
+								if (keyboard) binding = GetKeyPressed();
+								//Gamepad Trigger
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5)
+								{ binding = GAMEPAD_AXIS_LEFT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5)
+								{ binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								//Gamepad Axis
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_X) < -0.5)
+								{ binding = GAMEPAD_AXIS_LEFT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_LEFT_Y) < -0.5)
+								{ binding = GAMEPAD_AXIS_LEFT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_X) < -0.5)
+								{ binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								else if (GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(currCont, GAMEPAD_AXIS_RIGHT_Y) < -0.5)
+								{ binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4)? ((currAction%2 == 0)? 1 : -1) : 0; }
+								//Gamepad Button
+								else binding = GetGamepadButtonPressed();
+
+								if (binding != 0) {
+									if (currCont == Controller::KEYBOARD) controllers[currPlyr]->kb_controls[(Controller::Control)currAction] = binding;
+									else controllers[currPlyr]->gp_controls[(Controller::Control)currAction] = binding;
+									if (axisOffset != 0) controllers[currPlyr]->gp_controls[(Controller::Control)(currAction + axisOffset)] = binding;
+									save_controls(currPlyr);
+									selected = false;
+								}
+							}
+							break;
+						default:
+							break;
+					}
+					
+					if (IsKeyPressed(KEY_Q)) {
+						std::cout	<< "Current player: " << currPlyr << ", Current controller: " << currCont << " Current action: "
+									<< currAction << ", isSelected: " << selected << std::endl;
+						controllers[currPlyr]->printAll();
+					}
+
+                    // Para Gabriel:
+                    PlayerText.Draw();						PlayerLArrow.Draw();			SelectedPlayer.Draw();			PlayerRArrow.Draw();
+                    ControllerText.Draw();					ControllerLArrow.Draw();    	SelectedController.Draw();		ControllerRArrow.Draw();
+
+                    LeftActionText.Draw();					LeftActionLArrow.Draw();										LeftActionRArrow.Draw();
+                    RightActionText.Draw();					RightActionLArrow.Draw();										RightActionRArrow.Draw();
+                    DownActionText.Draw();					DownActionLArrow.Draw();										DownActionRArrow.Draw();
+                    UpActionText.Draw();					UpActionLArrow.Draw();											UpActionRArrow.Draw();
+                    JumpActionText.Draw();					JumpActionLArrow.Draw();										JumpActionRArrow.Draw();
+                    AttackActionText.Draw();				AttackActionLArrow.Draw();										AttackActionRArrow.Draw();
+
+					
+					if (selected && currAction == 0) LeftActionKeybind.Draw(RED); else LeftActionKeybind.Draw(JELLYFISH);
+					if (selected && currAction == 1) RightActionKeybind.Draw(RED); else RightActionKeybind.Draw(JELLYFISH);
+					if (selected && currAction == 2) DownActionKeybind.Draw(RED); else DownActionKeybind.Draw(JELLYFISH);
+					if (selected && currAction == 3) UpActionKeybind.Draw(RED); else UpActionKeybind.Draw(JELLYFISH);
+					if (selected && currAction == 4) JumpActionKeybind.Draw(RED); else JumpActionKeybind.Draw(JELLYFISH);
+					if (selected && currAction == 5) AttackActionKeybind.Draw(RED); else AttackActionKeybind.Draw(JELLYFISH);
+                    
                     if (IsKeyPressed(KEY_ESCAPE)) {
                         CURRENT_MENU = SETTINGS;
                         OPTION = 5;
@@ -677,6 +799,7 @@ int main() {
         EndDrawing();
 
     }
+	save_config();
     UnloadMusicStream(MainTitleOST);
     UnloadFont(NES);
     UISystem::RemoveAll();
