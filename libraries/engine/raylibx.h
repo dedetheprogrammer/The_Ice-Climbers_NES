@@ -41,4 +41,10 @@ Vector2 reflect(Vector2 wi, Vector2 n);
 
 std::ostream& operator<<(std::ostream& os, Vector2 v);
 
+// ----------------------------------------------------------------------------
+// Time extension
+// ----------------------------------------------------------------------------
+std::string millis_to_time(int millis);
+std::string seconds_to_time(int seconds);
+
 #endif

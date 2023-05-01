@@ -328,6 +328,8 @@ void Game(int numPlayers) {
     bool paused = false;
     bool moving_camera = false;
     float objects_offset = 80, current_objects_offset = 0;
+    float speedrun_time = 0.0f;
+    float time_limit = 120.0f;
     BGM.Init();
 
     GameSystem::Start();
@@ -383,7 +385,7 @@ void Game(int numPlayers) {
                 //    objects_offset = 80;
                 //}
             }
-            if(acabar){
+            if(acabar) {
                 if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
                 else {
                     DrawText("WIN", 400, 100, 100, GREEN);
@@ -397,7 +399,12 @@ void Game(int numPlayers) {
                         finished = true;
                     }
                 }
+            } else {
+                float delta_time = GetFrameTime();
+                speedrun_time += delta_time;
+                time_limit = (time_limit - delta_time < 0)? 0 : time_limit - delta_time;
             }
+
             if (!moving_camera) {
                 GameSystem::Update();
                 if (Player.getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
@@ -455,6 +462,16 @@ void Game(int numPlayers) {
             Player.getComponent<Transform2D>().position = Vector2{600,70};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
+
+        std::string speedrun_string = seconds_to_time(speedrun_time);
+        std::string time_limit_string = seconds_to_time(time_limit);
+
+        auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
+        DrawTextPro(NES, speedrun_string.c_str(), {WINDOW_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+        
+        dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
+        DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+        
         EndDrawing();
     }
     UnloadTexture(Pause_frame);
@@ -481,9 +498,9 @@ int main() {
     NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     // ---- Music
-    /*Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    Music ts_music = LoadMusicStream("Assets/Sounds/01-Main-Title.mp3");
     ts_music.looping = true;
-    bool play_music = false;*/
+    bool play_music = false;
 
     // Initial trailer --------------------------------------------------------
      int state = 0, shown = 0;
@@ -507,53 +524,53 @@ int main() {
 
     // Titlescreen ------------------------------------------------------------
     // - Fore pines
-    Texture2D ForePines = LoadTexture("Assets/SPRITES/Titlescreen_01_Fore_Pines.png");
+    Texture2D ForePines = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_01_Fore_Pines.png");
     float ForePinesSpeed = 0.6;
     float ForePinesHeight = (WINDOW_WIDTH * ForePines.height)/(float)(ForePines.width);
     Rectangle ForePinesSrc{0, 0, (float)ForePines.width, (float)ForePines.height};
     Rectangle ForePinesDst{0, WINDOW_HEIGHT - ForePinesHeight, (float)WINDOW_WIDTH, ForePinesHeight};
     // - Mid pines
-    Texture2D MidPines = LoadTexture("Assets/SPRITES/Titlescreen_02_Mid_Pines.png");
+    Texture2D MidPines = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_02_Mid_Pines.png");
     float MidPinesSpeed = 0.3;
     float MidPinesHeight = (WINDOW_WIDTH * MidPines.height)/(float)(MidPines.width);
     Rectangle MidPinesSrc{0, 0, (float)MidPines.width, (float)MidPines.height};
     Rectangle MidPinesDst{0, WINDOW_HEIGHT - MidPinesHeight + 5, (float)WINDOW_WIDTH, MidPinesHeight};
     // - Mountain
-    Texture2D Mountain = LoadTexture("Assets/SPRITES/Titlescreen_03_Mountain.png");
+    Texture2D Mountain = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_03_Mountain.png");
     float MountainSpeed = 0.1;
     float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
     Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
     Rectangle MountainDst{D(e2), WINDOW_HEIGHT - (MountainHeight * 0.75f), WINDOW_WIDTH * 0.75f, MountainHeight * 0.75f};
     // - Background fields
-    Texture2D Fields = LoadTexture("Assets/SPRITES/Titlescreen_04_Fields.png");
+    Texture2D Fields = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_04_Fields.png");
     float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
     Rectangle FieldsSrc{0, 0, (float)Fields.width, (float)Fields.height};
     Rectangle FieldsDst{0, WINDOW_HEIGHT - FieldsHeight, (float)WINDOW_WIDTH, FieldsHeight};
     // - Falling snow
     float SnowSpeed = 0.1;
-    Texture2D Snow = LoadTexture("Assets/SPRITES/Titlescreen_05_Snow.png");
+    Texture2D Snow = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_05_Snow.png");
     Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
     Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     // - Sign
     float SignSpeed = 105, height_dst = 30;
-    Texture2D Sign = LoadTexture("Assets/SPRITES/Titlescreen_06_Sign.png");
+    Texture2D Sign = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_06_Sign.png");
     Rectangle SignSrc{0, 0, (float)Sign.width,  (float)Sign.height};
     Rectangle SignDst{(WINDOW_WIDTH - Sign.width*2.5f)/2.0f, -Sign.height * 2.5f, Sign.width * 2.5f, Sign.height * 2.5f};
 
-    Texture2D OldBackground = LoadTexture("Assets/SPRITES/Titlescreen_Old_01_Background.png");
+    Texture2D OldBackground = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_01_Background.png");
     Rectangle OldBackgroundSrc{0, 0, (float)OldBackground.width,  (float)OldBackground.height};
     Rectangle OldBackgroundDst{0, 0, (float)WINDOW_WIDTH, WINDOW_HEIGHT - 90.0f};
     float water_speed = 5;
-    Texture2D OldWater = LoadTexture("Assets/SPRITES/Titlescreen_Old_02_Water.png");
+    Texture2D OldWater = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_02_Water.png");
     Rectangle OldWaterSrc{0, 0, (float)OldWater.width,  (float)OldWater.height};
     Rectangle OldWaterDst{0,  WINDOW_HEIGHT - 90.0f, (float)WINDOW_WIDTH, 90.0f};
-    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen_Old_03_Sign.png");
+    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_03_Sign.png");
     Rectangle OldSignSrc{0, 0, (float)OldSign.width,  (float)OldSign.height};
     Rectangle OldSignDst{(WINDOW_WIDTH - OldSign.width*2.5f)/2.0f, -OldSign.height * 2.5f, OldSign.width * 2.5f, OldSign.height * 2.5f};
     bool show_background = false;
     // - Copyright
     float CopySpeed = 30, copy_height_dst = WINDOW_HEIGHT - 50;
-    Texture2D Copy = LoadTexture("Assets/SPRITES/Titlescreen_07_Copyright.png");
+    Texture2D Copy = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_07_Copyright.png");
     Rectangle CopySrc{0, 0, (float)Copy.width, (float)Copy.height};
     Rectangle CopyDst{(WINDOW_WIDTH - Copy.width*3.0f)/2.0f, WINDOW_HEIGHT + (float)Copy.height*3.0f, Copy.width * 3.0f, Copy.height * 3.0f};
 
@@ -615,9 +632,9 @@ int main() {
             }
         }
 
-        /*if (play_music) {
+        if (play_music) {
             UpdateMusicStream(ts_music);
-        }*/
+        }
 
         // Begin drawing:
         BeginDrawing();
@@ -667,7 +684,7 @@ int main() {
                             SignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            //PlayMusicStream(ts_music);
+                            PlayMusicStream(ts_music);
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             SignDst.y = height_dst;
@@ -675,8 +692,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                     }
                 } else {
@@ -686,8 +703,8 @@ int main() {
                             OldSignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             OldSignDst.y = height_dst;
@@ -695,8 +712,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                     }
                 }
@@ -820,9 +837,9 @@ int main() {
                     switch (current_option) {
                     case 0:
                         if (fst_player && !snd_player) {
-                            //StopMusicStream(ts_music);
+                            StopMusicStream(ts_music);
                             Game(1);
-                            //PlayMusicStream(ts_music);
+                            PlayMusicStream(ts_music);
                         } else if(snd_player) {
                             Game(2);
                         }
@@ -1177,7 +1194,7 @@ int main() {
     UnloadTexture(Enterkey);
     
     UnloadFont(NES);
-    //UnloadMusicStream(ts_music);
+    UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
 }
