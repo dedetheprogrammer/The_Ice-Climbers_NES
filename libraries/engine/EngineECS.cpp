@@ -8,6 +8,21 @@
 // Entidades
 // ============================================================================
 // ============================================================================
+Canvas::Canvas(const char* fileName, Vector2 position, Vector2 size) {
+    sprite = LoadTexture(fileName);
+    src    = {0, 0, (float)sprite.width, (float)sprite.height};
+    dst    = {position.x, position.y, size.x, size.y};
+}
+
+void Canvas::Draw() {
+    DrawTexturePro(sprite, src, dst, {0,0}, 0, WHITE);
+}
+
+void Canvas::Move(Vector2 translation) {
+    dst.x += translation.x;
+    dst.y += translation.y;
+}
+
 GameObject::GameObject(std::string name, std::string tag, std::unordered_set<std::string> second_tags,
     std::unordered_set<std::string> related_tags)
 {
@@ -587,14 +602,6 @@ void GameSystem::Destroy(GameObject& gameObject) {
     if (GameObjects[gameObject.tag].empty()) {
         GameObjects.erase(gameObject.tag);
         //nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
-    }
-}
-
-void GameSystem::DestroyAll() {
-    for (auto& [_, instances] : GameObjects) {
-        for (auto& [_, gameObject] : instances) {
-            gameObject->Destroy();
-        }
     }
 }
 

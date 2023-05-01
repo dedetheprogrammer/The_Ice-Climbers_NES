@@ -114,42 +114,6 @@ void controller_default_config(int controller) {
     }
 }
 
-void controller_default_config(int controller) {
-    if(controller == 0 || controller == 2 || controller == 3){
-        std::string controllerSection = "Controller_" + std::to_string(controller);
-        ini[controllerSection]["ControllerType"]  = Controller::KEYBOARD;
-        ini[controllerSection]["GP_Left"]  = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
-        ini[controllerSection]["GP_Right"] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
-        ini[controllerSection]["GP_Down"]  = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
-        ini[controllerSection]["GP_Up"]    = GAMEPAD_BUTTON_LEFT_FACE_UP;
-        ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
-        ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
-
-        ini[controllerSection]["KB_Left"]  = KEY_A;
-        ini[controllerSection]["KB_Right"] = KEY_D;
-        ini[controllerSection]["KB_Down"]  = KEY_S;
-        ini[controllerSection]["KB_Up"]    = KEY_W;
-        ini[controllerSection]["KB_Jump"]  = KEY_SPACE;
-        ini[controllerSection]["KB_Attack"]= KEY_E;
-    } else if (controller == 1) {
-        std::string controllerSection = "Controller_" + std::to_string(controller);
-        ini[controllerSection]["ControllerType"]  = Controller::KEYBOARD;
-        ini[controllerSection]["GP_Left"]  = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
-        ini[controllerSection]["GP_Right"] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
-        ini[controllerSection]["GP_Down"]  = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
-        ini[controllerSection]["GP_Up"]    = GAMEPAD_BUTTON_LEFT_FACE_UP;
-        ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
-        ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
-
-        ini[controllerSection]["KB_Left"]  = KEY_LEFT;
-        ini[controllerSection]["KB_Right"] = KEY_RIGHT;
-        ini[controllerSection]["KB_Down"]  = KEY_DOWN;
-        ini[controllerSection]["KB_Up"]    = KEY_UP;
-        ini[controllerSection]["KB_Jump"]  = KEY_RIGHT_ALT;
-        ini[controllerSection]["KB_Attack"]= KEY_RIGHT_CONTROL;
-    }
-}
-
 void default_config() {
     // Graphics settings:
     ini["Graphics"]["OldFashioned"] = DEFAULT_OLD_STYLE;
