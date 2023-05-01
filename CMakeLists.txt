@@ -19,7 +19,7 @@ option(BUILD_ENGINE "Build engine" ON)
 option(BUILD_GAME "Build game" ON)
 
 if(BUILD_ENGINE)
-    add_library(engine STATIC Libraries/engine/EngineECS.cpp Libraries/engine/raylibx.cpp)
+    add_library(engine STATIC Libraries/engine/EngineECS.cpp Libraries/engine/EngineUI.cpp Libraries/engine/raylibx.cpp)
     target_compile_options(engine PRIVATE -Wall -Wno-missing-braces)
     target_include_directories(engine PRIVATE Libraries/raylib)
     target_link_libraries(engine PRIVATE ${CMAKE_SOURCE_DIR}/Libraries/raylib/libraylib.a opengl32 gdi32 winmm)
@@ -40,7 +40,7 @@ if(BUILD_GAME)
         Libraries/raylib
     )
 
-    add_executable(main main.cpp)
+    add_executable(main migration.cpp)
 
     target_link_libraries(
         main

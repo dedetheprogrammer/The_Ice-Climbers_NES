@@ -1,27 +1,13 @@
 #include "EngineECS.h"
-#include "raylibx.h"
 #include "raylib.h"
+#include "raylibx.h"
+
 
 // ============================================================================
 // ============================================================================
 // Entidades
 // ============================================================================
 // ============================================================================
-Canvas::Canvas(const char* fileName, Vector2 position, Vector2 size) {
-    sprite = LoadTexture(fileName);
-    src    = {0, 0, (float)sprite.width, (float)sprite.height};
-    dst    = {position.x, position.y, size.x, size.y};
-}
-
-void Canvas::Draw() {
-    DrawTexturePro(sprite, src, dst, {0,0}, 0, WHITE);
-}
-
-void Canvas::Move(Vector2 translation) {
-    dst.x += translation.x;
-    dst.y += translation.y;
-}
-
 GameObject::GameObject(std::string name, std::string tag, std::unordered_set<std::string> second_tags,
     std::unordered_set<std::string> related_tags) 
 {
@@ -499,6 +485,7 @@ int GetAxis(std::string axis) {
  */
 std::unordered_map<std::string, int> GameSystem::nGameObjects;
 std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameSystem::GameObjects;
+const bool DEBUG = false;
 
 Collision::Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal)
     : gameObject(gameObject), contact_time(contact_time), contact_point(contact_point), contact_normal(contact_normal) {}
@@ -671,12 +658,15 @@ void GameSystem::Render() {
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }
-            if (gameObject->hasComponent<Collider2D>()) {
-                gameObject->getComponent<Collider2D>().Draw();
+            if (DEBUG) {
+                if (gameObject->hasComponent<Collider2D>()) {
+                    gameObject->getComponent<Collider2D>().Draw();
+                }
+                if (gameObject->hasComponent<RigidBody2D>()) {
+                    gameObject->getComponent<RigidBody2D>().Draw();
+                }
             }
-            if (gameObject->hasComponent<RigidBody2D>()) {
-                gameObject->getComponent<RigidBody2D>().Draw();
-            }
+
         }
     }
 }
@@ -699,12 +689,22 @@ void GameSystem::Update() {
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }
-            if (gameObject->hasComponent<Collider2D>()) {
-                gameObject->getComponent<Collider2D>().Draw();
+            if (DEBUG) {
+                if (gameObject->hasComponent<Collider2D>()) {
+                    gameObject->getComponent<Collider2D>().Draw();
+                }
+                if (gameObject->hasComponent<RigidBody2D>()) {
+                    gameObject->getComponent<RigidBody2D>().Draw();
+                }
             }
-            if (gameObject->hasComponent<RigidBody2D>()) {
-                gameObject->getComponent<RigidBody2D>().Draw();
-            }
+        }
+    }
+}
+
+void GameSystem::DestroyAll() {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->Destroy();
         }
     }
 }

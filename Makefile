@@ -165,6 +165,30 @@ Libraries/engine/EngineECS.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineECS.cpp.s
 .PHONY : Libraries/engine/EngineECS.cpp.s
 
+Libraries/engine/EngineUI.obj: Libraries/engine/EngineUI.cpp.obj
+.PHONY : Libraries/engine/EngineUI.obj
+
+# target to build an object file
+Libraries/engine/EngineUI.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.obj
+.PHONY : Libraries/engine/EngineUI.cpp.obj
+
+Libraries/engine/EngineUI.i: Libraries/engine/EngineUI.cpp.i
+.PHONY : Libraries/engine/EngineUI.i
+
+# target to preprocess a source file
+Libraries/engine/EngineUI.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.i
+.PHONY : Libraries/engine/EngineUI.cpp.i
+
+Libraries/engine/EngineUI.s: Libraries/engine/EngineUI.cpp.s
+.PHONY : Libraries/engine/EngineUI.s
+
+# target to generate assembly for a file
+Libraries/engine/EngineUI.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.s
+.PHONY : Libraries/engine/EngineUI.cpp.s
+
 Libraries/engine/raylibx.obj: Libraries/engine/raylibx.cpp.obj
 .PHONY : Libraries/engine/raylibx.obj
 
@@ -189,29 +213,29 @@ Libraries/engine/raylibx.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.s
 .PHONY : Libraries/engine/raylibx.cpp.s
 
-main.obj: main.cpp.obj
-.PHONY : main.obj
+migration.obj: migration.cpp.obj
+.PHONY : migration.obj
 
 # target to build an object file
-main.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.obj
-.PHONY : main.cpp.obj
+migration.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.obj
+.PHONY : migration.cpp.obj
 
-main.i: main.cpp.i
-.PHONY : main.i
+migration.i: migration.cpp.i
+.PHONY : migration.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
+migration.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.i
+.PHONY : migration.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+migration.s: migration.cpp.s
+.PHONY : migration.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
+migration.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.s
+.PHONY : migration.cpp.s
 
 # Help Target
 help:
@@ -226,12 +250,15 @@ help:
 	@echo ... Libraries/engine/EngineECS.obj
 	@echo ... Libraries/engine/EngineECS.i
 	@echo ... Libraries/engine/EngineECS.s
+	@echo ... Libraries/engine/EngineUI.obj
+	@echo ... Libraries/engine/EngineUI.i
+	@echo ... Libraries/engine/EngineUI.s
 	@echo ... Libraries/engine/raylibx.obj
 	@echo ... Libraries/engine/raylibx.i
 	@echo ... Libraries/engine/raylibx.s
-	@echo ... main.obj
-	@echo ... main.i
-	@echo ... main.s
+	@echo ... migration.obj
+	@echo ... migration.i
+	@echo ... migration.s
 .PHONY : help
 
 

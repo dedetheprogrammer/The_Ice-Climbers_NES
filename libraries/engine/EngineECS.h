@@ -34,20 +34,6 @@ class Script;
 class Collision;
 
 //-----------------------------------------------------------------------------
-// Canvas
-//-----------------------------------------------------------------------------
-class Canvas {
-private:
-    Rectangle src; // What pixels of the sprite do I want to draw?
-    Rectangle dst; // Where and how do I draw these pixels?
-    Texture2D sprite;
-public:
-    Canvas(const char* fileName, Vector2 position, Vector2 size);
-    void Draw();
-    void Move(Vector2 translation);
-};
-
-//-----------------------------------------------------------------------------
 // Un objeto del motor.
 //-----------------------------------------------------------------------------
 class GameObject {
