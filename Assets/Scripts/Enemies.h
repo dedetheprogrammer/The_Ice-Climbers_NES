@@ -363,6 +363,7 @@ public:
 
     void Move(Vector2 traslation) {
         original_level += traslation.y;
+    }
 };
 
 class NutpickerBehavior : public Script {
