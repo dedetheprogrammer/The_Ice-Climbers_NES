@@ -50,6 +50,10 @@ float mod(Vector2 v) {
     return std::sqrt(v.x*v.x + v.y*v.y);
 }
 
+int mod(int a, int b) {
+    return (a%b + b)%b;
+}
+
 Vector2 abs(Vector2 v) {
     return {std::abs(v.x), std::abs(v.y)};
 }
