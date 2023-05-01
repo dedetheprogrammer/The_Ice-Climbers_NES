@@ -5,8 +5,8 @@
 //-----------------------------------------------------------------------------
 // Elemento de UI
 //-----------------------------------------------------------------------------
-UIObject::UIObject(std::string name, PIVOT pivot, bool hidden, float scale_factor)
-    : /*effect(nullptr),*/ name(name), pivot(pivot), hidden(hidden), scale_factor(scale_factor) {}
+UIObject::UIObject(PIVOT pivot, bool hidden, float scale_factor)
+    : /*effect(nullptr),*/ pivot(pivot), hidden(hidden), scale_factor(scale_factor) {}
 
 bool UIObject::IsRendered() {
     //if (effect == nullptr) {
@@ -36,8 +36,8 @@ UIAnimation::UIAnimation(Animation animation, std::string name, Vector2 pos, flo
 }*/
 
 //--------------------
-UISprite::UISprite(const char* fileName, std::string name, Vector2 pos, float scale_x, float scale_y, PIVOT pivot, bool hidden, float scale_factor)
-    : UIObject(name, pivot, hidden, scale_factor)
+UISprite::UISprite(const char* fileName, Vector2 pos, float scale_x, float scale_y, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor)
 {
     fullscreen   = false;
     sprite       = LoadTexture(fileName);
@@ -66,8 +66,8 @@ UISprite::UISprite(const char* fileName, std::string name, Vector2 pos, float sc
     UISystem::Add(*this);
 }
 
-UISprite::UISprite(const char* fileName, std::string name, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
-    : UIObject(name, pivot, hidden, scale_factor)
+UISprite::UISprite(const char* fileName, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor)
 {
     if (size.x == GetScreenWidth() || size.y == GetScreenHeight()) {
         fullscreen = true;
@@ -100,8 +100,8 @@ UISprite::UISprite(const char* fileName, std::string name, Vector2 pos, Vector2 
 }
 
 
-UISprite::UISprite(Texture2D sprite, std::string name, Vector2 pos, float scale_x, float scale_y, PIVOT pivot, bool hidden, float scale_factor)
-    : UIObject(name, pivot, hidden, scale_factor) 
+UISprite::UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor) 
 {
     this->sprite = sprite;
     src = {0, 0, (float)sprite.width, (float)sprite.height};
@@ -110,8 +110,8 @@ UISprite::UISprite(Texture2D sprite, std::string name, Vector2 pos, float scale_
     UISystem::Add(*this);
 }
 
-UISprite::UISprite(Texture2D sprite, std::string name, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
-    : UIObject(name, pivot, hidden, scale_factor) 
+UISprite::UISprite(Texture2D sprite, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor) 
 {
     if (size.x == GetScreenWidth() || size.y == GetScreenHeight()) {
         fullscreen = true;
@@ -125,8 +125,8 @@ UISprite::UISprite(Texture2D sprite, std::string name, Vector2 pos, Vector2 size
     UISystem::Add(*this);
 }
 
-UISprite::UISprite(Texture2D sprite, std::string name, Rectangle src, Rectangle dst, PIVOT pivot, bool hidden, float scale_factor)
-    : UIObject(name, pivot, hidden, scale_factor)
+UISprite::UISprite(Texture2D sprite, Rectangle src, Rectangle dst, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor)
 {
     if (dst.width == GetScreenWidth() || dst.height == GetScreenHeight()) {
         fullscreen = true;
@@ -220,30 +220,14 @@ void UISprite::Unload() {
 }
 
 //----------------------
-UIText::UIText(
-    Font font,
-    std::string text,
-    int font_size,
-    int spacing,
-    std::string name,
-    Vector2 pos,
-    Color color,
-    PIVOT pivot,
-    bool hidden,
-    float scale_factor,
-    int outline,
-    Color outline_color
-)
-    : UIObject(name, pivot, hidden, scale_factor)
+UIText::UIText(Font font, std::string text, int font_size, int spacing, Vector2 pos, PIVOT pivot, bool hidden, float scale_factor)
+    : UIObject(pivot, hidden, scale_factor)
 {
     this->font = font;
     this->text = text;
     this->font_size = ref_font_size = font_size;
-    this->outline   = outline;
-    outlinefont_size = font_size + outline;
     this->spacing   = ref_spacing   = spacing;
     size = MeasureTextEx(font, text.c_str(), font_size, spacing);
-    outline_size = MeasureTextEx(font, text.c_str(), outlinefont_size, spacing-1);
     if (pivot == UP_LEFT) {
         this->pos = pos;
     } else if (pivot == UP_CENTER) {
@@ -255,7 +239,7 @@ UIText::UIText(
     } else if (pivot == CENTER) {
         this->pos = {pos.x - size.x/2, pos.y - size.y/2};
     } else if (pivot == CENTER_RIGHT) {
-        this->pos = {pos.x - size.x, pos.y - size.y/2,};
+        this->pos = {pos.x - size.x, pos.y - size.y/2};
     } else if (pivot == DOWN_LEFT) {
         this->pos = {pos.x, pos.y - size.y};
     } else if (pivot == DOWN_CENTER) {
@@ -263,19 +247,12 @@ UIText::UIText(
     } else if (pivot == DOWN_RIGHT) {
         this->pos = {pos.x - size.x, pos.y - size.y};
     }
-    auto diff   = outline_size - size;
-    outline_pos = {this->pos.x - diff.x/2, this->pos.y - diff.y/2};
     ref_pos     = pos;
-    this->color = color;
-    this->outline_color = outline_color;
     UISystem::Add(*this);
 }
 
 void UIText::Draw(Color color) {
-    if (outlinefont_size != font_size) {
-        DrawTextEx(font, text.c_str(), outline_pos, outlinefont_size, 0, outline_color);
-    }
-    DrawTextEx(font, text.c_str(), pos, font_size, spacing, this->color);
+    DrawTextEx(font, text.c_str(), pos, font_size, spacing, color);
 }
 
 void UIText::Move(Vector2 translation) {
@@ -292,13 +269,11 @@ void UIText::Reescale() {
     float scale = fmaxf(GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 
         GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
     font_size = ref_font_size * scale * scale_factor;
-    outlinefont_size = font_size + outline;
-    spacing   = ref_spacing * scale * scale_factor;
+    //spacing   = ref_spacing * scale * scale_factor;
 
     pos.x = ref_pos.x * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF;
     pos.y = ref_pos.y *  GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
     size = MeasureTextEx(font, text.c_str(), font_size, spacing);
-    outline_size = MeasureTextEx(font, text.c_str(), outlinefont_size, spacing-1);
     if (pivot == UIObject::UP_CENTER) {
         pos.x -= size.x/2;
     } else if (pivot == UIObject::UP_RIGHT) {
@@ -320,8 +295,6 @@ void UIText::Reescale() {
         pos.x -= size.x;
         pos.y -= size.y;
     }
-    auto diff   = outline_size - size;
-    outline_pos = {pos.x - diff.x/2, pos.y - diff.y/2};
 }
 
 // ============================================================================
@@ -571,22 +544,18 @@ void Scroll::Stop() {
 // ----------------------------------------------------------------------------
 float UISystem::WINDOW_WIDTH_REF;
 float UISystem::WINDOW_HEIGHT_REF;
-std::unordered_map<std::string, UIObject*> UISystem::UIObjects;
+std::vector<UIObject*> UISystem::UIObjects;
 
 void UISystem::Add(UIObject& uiobject) {
-    UIObjects[uiobject.name] = &uiobject;
+    UIObjects.push_back(&uiobject);
 }
 
 void UISystem::Draw() {
-    for (auto& [_, uiobject] : UIObjects) {
+    for (auto& uiobject : UIObjects) {
         if (!uiobject->hidden) {
             uiobject->Draw();
         }
     }
-}
-
-bool UISystem::IsRendered(std::string name) {
-    return UIObjects[name]->IsRendered();
 }
 
 void UISystem::init_UI_system(float WINDOW_WIDTH, float WINDOW_HEIGHT) {
@@ -595,31 +564,21 @@ void UISystem::init_UI_system(float WINDOW_WIDTH, float WINDOW_HEIGHT) {
 }
 
 void UISystem::Move(Vector2 translation) {
-    for (auto& [_, uiobject] : UIObjects) {
+    for (auto& uiobject : UIObjects) {
         uiobject->Move(translation);
     }
 }
 
-void UISystem::Move(Vector2 translation, std::vector<std::string> names) {
-    for (auto& name : names) {
-        UIObjects[name]->Move(translation);
-    }
-}
 
 void UISystem::Reescale() {
-    for (auto& [_, uiobject] : UIObjects) {
+    for (auto& uiobject : UIObjects) {
         uiobject->Reescale();
     }
 }
 
-void UISystem::Remove(std::string name) {
-    UIObjects[name]->Unload();
-    UIObjects.erase(name);
-}
 
 void UISystem::RemoveAll() {
-    for (auto& [name, uiobject] : UIObjects) {
+    for (auto& uiobject : UIObjects) {
         uiobject->Unload();
-        UIObjects.erase(name);
     }
 }

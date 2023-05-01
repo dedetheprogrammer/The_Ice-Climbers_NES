@@ -382,7 +382,7 @@ int main() {
 
     // Initial trailer --------------------------------------------------------
     // int state = 0, shown = 0;
-    /*
+
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -481,9 +481,7 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-    */
-    Game();
-    /*
+
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -949,7 +947,6 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
-    */
     UnloadFont(NES);
     //UnloadMusicStream(ts_music);
     CloseAudioDevice();

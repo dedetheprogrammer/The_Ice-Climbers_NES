@@ -33,12 +33,11 @@ public:
         DOWN_RIGHT
     };
 
-    std::string name;
     PIVOT pivot;   // Pivot reference from where to do the transformations.
     bool hidden;
     float scale_factor;
 
-    UIObject(std::string name = "UIObject", PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UIObject(PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
 
     virtual void Draw(Color color = WHITE) = 0;
     bool IsRendered();
@@ -74,11 +73,11 @@ public:
     Rectangle dst; // Where and how do I draw these pixels?
 
     Texture2D sprite;
-    UISprite(const char* fileName, std::string name, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
-    UISprite(const char* fileName, std::string name, Vector2 pos, Vector2 size, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
-    UISprite(Texture2D sprite, std::string name, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
-    UISprite(Texture2D sprite, std::string name, Vector2 pos, Vector2 size, PIVOT pivot =  UP_LEFT, bool hidden = false, float scale_factor = 1);
-    UISprite(Texture2D sprite, std::string name, Rectangle src, Rectangle dst, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UISprite(const char* fileName, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UISprite(const char* fileName, Vector2 pos, Vector2 size, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UISprite(Texture2D sprite, Vector2 pos, Vector2 size, PIVOT pivot =  UP_LEFT, bool hidden = false, float scale_factor = 1);
+    UISprite(Texture2D sprite, Rectangle src, Rectangle dst, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
@@ -89,11 +88,6 @@ public:
 class UIText : public UIObject {
 private:
     //...
-    int outline;
-    int outlinefont_size;
-    Vector2 outline_pos;
-    Vector2 outline_size;
-    Color outline_color;
 public:
     Font font;
     std::string text;
@@ -104,21 +98,16 @@ public:
     Vector2 pos;
     Vector2 size;
     Vector2 ref_pos;
-    Color color;
 
     UIText(
         Font font,
         std::string text,
         int font_size,
         int spacing,
-        std::string name, 
         Vector2 pos, 
-        Color color,
         PIVOT pivot = UP_LEFT,
         bool hidden = false,
-        float scale_factor = 1,
-        int outline = 0,
-        Color outline_color = BLACK
+        float scale_factor = 1
     );
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
@@ -267,19 +256,16 @@ public:
 
 class UISystem {
 private:
-    static std::unordered_map<std::string, UIObject*> UIObjects;
+    static std::vector<UIObject*> UIObjects;
 public:
     static float WINDOW_WIDTH_REF;
     static float WINDOW_HEIGHT_REF;
 
     static void Add(UIObject& uiobject);
     static void Draw();
-    static bool IsRendered(std::string name);
     static void init_UI_system(float WINDOW_WIDTH_REF, float WINDOW_HEIGHT_REF);
     static void Move(Vector2 translation);
-    static void Move(Vector2 translation, std::vector<std::string> names);
     static void Reescale();
-    static void Remove(std::string name);
     static void RemoveAll();
 };
 
