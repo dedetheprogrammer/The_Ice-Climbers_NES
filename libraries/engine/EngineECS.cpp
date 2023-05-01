@@ -599,7 +599,7 @@ void GameSystem::Destroy(GameObject& gameObject) {
     GameObjects[gameObject.tag].erase(gameObject.name);
     if (GameObjects[gameObject.tag].empty()) {
         GameObjects.erase(gameObject.tag);
-        nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
+        //nGameObjects.erase(GameObjects[gameObject.tag][gameObject.name]->prefab->name);
     }
 }
 
@@ -699,10 +699,10 @@ void GameSystem::Update() {
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }
-            /*if (gameObject->hasComponent<Collider2D>()) {
+            if (gameObject->hasComponent<Collider2D>()) {
                 gameObject->getComponent<Collider2D>().Draw();
             }
-            if (gameObject->hasComponent<RigidBody2D>()) {
+            /*if (gameObject->hasComponent<RigidBody2D>()) {
                 gameObject->getComponent<RigidBody2D>().Draw();
             }*/
         }

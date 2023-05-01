@@ -1,3 +1,4 @@
+#pragma once
 #include "EngineECS.h"
 #include "Popo.h"
 #include <iostream>
@@ -59,4 +60,27 @@ public:
         }
     }
 
+};
+
+class SlidingBlockBehavior : public Script {
+private:
+    Sprite& sprite;
+    Transform2D& transform;
+    RigidBody2D& rigidbody;
+public:
+    GameObject* hole;
+    SlidingBlockBehavior(GameObject& gameObject) : Script(gameObject),
+        sprite(gameObject.getComponent<Sprite>()),
+        transform(gameObject.getComponent<Transform2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()) {}
+
+    SlidingBlockBehavior(GameObject& gameObject, SlidingBlockBehavior& behavior) : Script(gameObject),
+        sprite(gameObject.getComponent<Sprite>()),
+        transform(gameObject.getComponent<Transform2D>()),
+        rigidbody(gameObject.getComponent<RigidBody2D>()),
+        hole(behavior.hole) {}
+
+    Component* Clone(GameObject& gameObject) {
+        return new SlidingBlockBehavior(gameObject, *this);
+    }
 };

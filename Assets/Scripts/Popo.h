@@ -171,11 +171,22 @@ public:
 
         if (contact.gameObject.tag == "Wall") {
             rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
+            if (contact.contact_normal.y != 0) {
+                if(isGrounded) {
+                    hasBounced = true;
+                    rigidbody.velocity.x *= -1;
+                    if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                }
+            }
         }
 
         if (contact.gameObject.tag == "Cloud") {
             if (contact.contact_normal.y < 0) {
                 isGrounded = true;
+                brokeBlock = false;
                 isJumping  = false;
                 onCloud = false;//true;
                 if (!move) {
@@ -201,7 +212,7 @@ public:
             onCloud = false;
         }
 
-        if (contact.gameObject.tag == "Enemy") {
+        if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned")) || contact.gameObject.tag == "Icicle") {
             if (!isStunned) {
                 if (!isAttacking) {
                     lifes--;
@@ -214,7 +225,7 @@ public:
                         animator["Stunned"];
                         isStunned = true;
                         rigidbody.velocity.x = 0;
-                    } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
+                    } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
                         lifes--;
                         animator["Stunned"];
                         isStunned = true;
@@ -222,6 +233,33 @@ public:
                     }
                 } 
             }
+        }
+
+        if (contact.gameObject.tag == "SlidingFloor") {
+            if (contact.contact_normal.y < 0) {
+                isGrounded = true;
+                brokeBlock = false;
+                isJumping  = false;
+                onCloud = false;//true;
+                if (!move) {
+                    animator["Idle"];
+                } else {
+                    animator["Walk"];
+                    if ((move > 0 && !isRight) || (move < 0 && isRight)) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                }
+                rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().velocity.x);
+            }
+            if (contact.contact_normal.x != 0) {
+                rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().velocity.x);
+                if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
+            }
+            rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
         }
 
         if (contact.gameObject.tag == "Goal") {

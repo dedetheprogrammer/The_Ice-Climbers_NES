@@ -1,5 +1,8 @@
+#pragma once
 #include "EngineECS.h"
+#include "Block.h"
 #include "Popo.h"
+#include "random"
 
 class RedCondorBehavior : public Script {
 private:
@@ -78,21 +81,31 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        if (contact.gameObject.tag == "Floor") {
-            rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-        }
+        //if (contact.gameObject.tag == "Floor") {
+        //    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
+        //}
         if (contact.gameObject.tag == "Hole") {
             auto position = contact.gameObject.getComponent<Transform2D>().position;
             GameSystem::Instantiate(*contact.gameObject.getComponent<Script, HoleBehavior>().original_block, GameObjectOptions{.position=position});
             contact.gameObject.Destroy();
             gameObject.Destroy();
         }
+        if (contact.gameObject.tag == "Player") {
+            if (contact.gameObject.getComponent<Script, PopoBehavior>().isAttacking) {
+                if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
+                    gameObject.Destroy();
+                }
+                if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
+                    gameObject.Destroy();
+                }
+            }
+        }
     }
 
     void Update() override {
         float deltaTime = GetFrameTime();
         transform.position.x += rigidbody.velocity.x * deltaTime;
-        transform.position.y += rigidbody.velocity.y * deltaTime;
+        //transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
@@ -101,7 +114,7 @@ public:
 class TopiBehavior : public Script {
 private:
     // Variables para Popo:
-    int original_level;
+    float original_level;
     float current_cooldown;
     float cooldown;
     bool started;
@@ -197,7 +210,7 @@ public:
 
     void OnCollision(Collision contact) override {
 
-        if (contact.gameObject.tag == "Floor" && !ignoreFloor) {
+        if ((contact.gameObject.tag == "Floor" || contact.gameObject.tag == "Wall") && !ignoreFloor) {
             rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             isGrounded = true;
             if (hasFallen) {
@@ -229,6 +242,7 @@ public:
                     rigidbody.velocity.x = 0;
                     isGrounded = false;
                     hasFallen = true;
+                    std::cout << "Ignorando" << std::endl;
                     ignoreFloor = true;
                 }
             } else {
@@ -239,6 +253,7 @@ public:
                     last_sense = sgn(rigidbody.velocity.x);
                     rigidbody.velocity.x = 0;
                     isGrounded = false;
+                    std::cout << "Ignorando" << std::endl;
                     ignoreFloor = true;
                 } else {
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
@@ -277,16 +292,21 @@ public:
                 if (isRunning) {
                     isRunning = false;
                     rigidbody.velocity.x = -last_sense * rigidbody.acceleration.x;
+                    auto icicle_size = Icicle.getComponent<Sprite>().GetViewDimensions();
                     if (last_sense > 0) {
                         transform.position.x = GetScreenWidth() + 70;
-                        GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, transform.position.y + 15}});
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, original_level - (original_level - icicle_size.y)}});
+                        std::cout << "Topi x = " << transform.position.x << std::endl;
+                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (isRight) {
                             isRight = !isRight;
                             animator.Flip();
                         }
                     } else {
                         transform.position.x = -(animator.GetViewDimensions().x + 70);
-                        GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, transform.position.y + 15}});
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, original_level - (original_level - icicle_size.y)}});
+                        std::cout << "Topi x = " << transform.position.x << std::endl;
+                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (!isRight) {
                             isRight = !isRight;
                             animator.Flip();
@@ -336,5 +356,9 @@ public:
         if (ignoreFloor) {
             ignoreFloor = !ignoreFloor;
         }
+    }
+
+    void Move(Vector2 traslation) {
+        original_level += traslation.y;
     }
 };

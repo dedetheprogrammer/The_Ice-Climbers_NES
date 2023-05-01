@@ -29,7 +29,35 @@ public:
 
 Font NES;
 
-void Game(int numPlayers) {
+void Game(int numPlayers, int level) {
+
+    Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
+    float vertical_scale = (float)WINDOW_WIDTH * 2.3f / (float)mountain_sprite.height;
+    float horizontal_scale = (float)WINDOW_WIDTH / (float)mountain_sprite.width;
+    Vector2 scale = {horizontal_scale, vertical_scale};
+
+    std::vector<float> floor_levels = {
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*2.0f,  // 0
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*8.0f,  // 1
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*14.0f, // 2
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*20.0f, // 3
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*26.0f, // 4
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*32.0f, // 5
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*38.0f, // 6
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*44.0f, // 7
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*50.0f  // 8
+    };
+
+    std::vector<float> wall_levels = {
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*56.0f, // 0
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*63.0f, // 1
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*70.0f, // 2
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*77.0f, // 3
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*84.0f, // 4
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*91.0f, // 5
+        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*94.0f, // 6
+    };
+
 
     int level_phase = 0;
     bool acabar = false;
@@ -37,7 +65,12 @@ void Game(int numPlayers) {
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
-    Canvas Mountain("Assets/Sprites/00_Mountain.png", {0,-1560}, {(float)WINDOW_WIDTH, WINDOW_HEIGHT*3.65f});
+    std::string MountainPath;
+    if(level == 1)
+        MountainPath = "Assets/Sprites/00_Mountain.png";
+    else if(level == 2)
+        MountainPath = "Assets/Sprites/01_Mountain.png";
+    Canvas Mountain(MountainPath.c_str(), {0.0f, (float)WINDOW_HEIGHT - (float)WINDOW_WIDTH*2.3f}, {(float)WINDOW_WIDTH, (float)WINDOW_WIDTH*2.3f});
     Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {20,20});
     Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {20,20});
     Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {20,20});
@@ -56,10 +89,78 @@ void Game(int numPlayers) {
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
     Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
 
+    // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
-    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224,30}, PINK);
-    GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,560}});
+    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224, 8.0f*vertical_scale*2.0f}, PINK);
 
+    // Bloque de hierba
+    GameObject GrassBlock("Grass Block", "Floor", {"Block"});
+    GameObject GrassHole("Grass Hole", "Hole");
+
+    GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
+    GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    GrassBlock.addComponent<Script, BlockBehavior>();
+    GrassBlock.getComponent<Script, BlockBehavior>().hole = &GrassHole;
+    float block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x;
+    float block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
+    float collider_width  = block_width-5.0f;
+    float collider_offset = (collider_width)/2;
+
+    GrassHole.addComponent<Collider2D>(&GrassHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
+    GrassHole.addComponent<Script, HoleBehavior>();
+    GrassHole.getComponent<Script, HoleBehavior>().original_block = &GrassBlock;
+
+    // Bloque de tierra
+    GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
+    GameObject DirtHole("Dirt Hole", "Hole");
+
+    DirtBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_large.png", horizontal_scale, vertical_scale);
+    DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    DirtBlock.addComponent<Script, BlockBehavior>();
+    DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+
+    DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
+    DirtHole.addComponent<Script, HoleBehavior>();
+    DirtHole.getComponent<Script, HoleBehavior>().original_block = &DirtBlock;
+
+    // Bloque de hielo
+    GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
+    GameObject IceSlidingBlock("Ice Sliding Block", "SlidingFloor", {"Ice","Block"});
+    GameObject IceHole("Ice Hole", "Hole");
+    GameObject IceSlidingHole("Ice Sliding Hole", "Hole");
+
+    IceBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_block_large.png", horizontal_scale, vertical_scale);
+    IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    IceBlock.addComponent<Script, BlockBehavior>();
+    IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
+
+    IceSlidingBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_sliding_block.png", horizontal_scale, vertical_scale);
+    IceSlidingBlock.addComponent<Collider2D>(&IceSlidingBlock.getComponent<Transform2D>().position, IceSlidingBlock  .getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
+    IceSlidingBlock.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    IceSlidingBlock.addComponent<Script, SlidingBlockBehavior>();
+    IceSlidingBlock.getComponent<Script, SlidingBlockBehavior>().hole = &IceSlidingHole;
+    
+    IceHole.addComponent<Collider2D>(&IceHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
+    IceHole.addComponent<Script, HoleBehavior>();
+    IceHole.getComponent<Script, HoleBehavior>().original_block = &IceBlock;
+    
+    IceSlidingHole.addComponent<Collider2D>(&IceSlidingHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
+    IceSlidingHole.addComponent<Script, HoleBehavior>();
+    IceSlidingHole.getComponent<Script, HoleBehavior>().original_block = &IceSlidingHole;
+
+    // Muros fino
+    GameObject Wall("Wall", "Wall");
+    Wall.addComponent<Collider2D>(&Wall.getComponent<Transform2D>().position, Vector2{block_width, block_height * 6.0f}, YELLOW);
+
+    // Muros laterales
+    GameObject GrassWall("Wall", "Wall");
+    GrassWall.addComponent<Collider2D>(&GrassWall.getComponent<Transform2D>().position, Vector2{block_width * 4.0f, block_height * 5.0f}, YELLOW);
+    GameObject DirtWall("Wall", "Wall");
+    DirtWall.addComponent<Collider2D>(&DirtWall.getComponent<Transform2D>().position, Vector2{block_width * 5.0f, block_height * 5.0f}, YELLOW);
+    GameObject IceWall("Wall", "Wall");
+    IceWall.addComponent<Collider2D>(&IceWall.getComponent<Transform2D>().position, Vector2{block_width * 6.0f, block_height * 5.0f}, YELLOW);
+
+    // Suelos y muros de la zona bonus
     GameObject LevelFloor_0("Level Floor 0", "Floor");
     GameObject LevelFloor_1("Level Floor 1", "Floor");
     GameObject LevelFloor_2("Level Floor 2", "Floor");
@@ -68,189 +169,28 @@ void Game(int numPlayers) {
     GameObject LevelWall_0("Level Wall 0", "Wall");
     GameObject LevelWall_1("Level Wall 1", "Wall");
     GameObject LevelWall_2("Level Wall 2", "Wall");
-    GameObject Death("Death", "Death");
-
-    // Scene:
-    GameObject GrassBlock("Grass Block", "Floor", {"Block"});
-    GrassBlock.addComponent<Sprite>("Assets/Sprites/Grass_block_large.png", 3.62f, 3.0f);
-    int block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x, block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
-    float collider_width  = block_width-5.0f;
-    float collider_offset = (collider_width)/2;
-
-    GameObject GrassHole("Grass Hole", "Hole");
-    GrassHole.addComponent<Collider2D>(&GrassHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
-    GrassHole.addComponent<Script, HoleBehavior>();
 
     float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
         LevelFloor_4_width = block_width * 7.0f;
-    LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width,25}, PINK);
-    LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width,25}, PINK);
-    LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width,25}, PINK);
-    LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width,25}, PINK);
-    LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width,25}, PINK);
-    LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{25, block_height * 6.0f}, YELLOW);
-    LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{25, block_height * 7.0f}, YELLOW);
-    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
-    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{25, block_height * 3.0f}, YELLOW);
-    Death.addComponent<Collider2D>(&Death.getComponent<Transform2D>().position, Vector2{block_height * 10.0f, 25}, RED);
+    LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width, block_height}, PINK);
+    LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width, block_height}, PINK);
+    LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
+    LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width, block_height}, PINK);
+    LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width, block_height}, PINK);
+    LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 6.0f}, YELLOW);
+    LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 7.0f}, YELLOW);
+    LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 3.0f}, YELLOW);
 
-    GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    GrassBlock.addComponent<Script, BlockBehavior>();
-
-    GrassBlock.getComponent<Script, BlockBehavior>().hole = &GrassHole;
-    GrassHole.getComponent<Script, HoleBehavior>().original_block = &GrassBlock;
-    for (int i = 0; i < 24; i++) {
-        GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{113.0f + block_width * i, 423}});
-    }
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width, 423}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*24, 423}});
-
-    GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
-    GameObject DirtHole("Dirt Hole", "Hole");
-    DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
-    DirtHole.addComponent<Script, HoleBehavior>();
-
-    DirtBlock.addComponent<Sprite>("Assets/Sprites/Dirt_block_large.png", 3.62f, 3.0f);
-    DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    DirtBlock.addComponent<Script, BlockBehavior>();
-
-    DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
-    DirtHole.getComponent<Script, HoleBehavior>().original_block = &DirtBlock;
-
-
-    for (int i = 0; i < 22; i++) {
-        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 287}});
-        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i, 150}});
-        GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{(113.0f+block_width) + block_width*i,  14}});
-    }
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 287}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 287}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 150}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 150}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + block_width, 14}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*23, 14}});
-
-    GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
-    GameObject IceHole("Dirt Hole", "Hole");
-    IceHole.addComponent<Collider2D>(&IceHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
-    IceHole.addComponent<Script, HoleBehavior>();
-
-    IceBlock.addComponent<Sprite>("Assets/Sprites/Ice_block_large.png", 3.62f, 3.0f);
-    IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    IceBlock.addComponent<Script, BlockBehavior>();
-
-    IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
-    IceHole.getComponent<Script, HoleBehavior>().original_block = &IceBlock;
-    for (int i = 0; i < 20; i++) {
-        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -123}});
-        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -260}});
-        GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{(113.0f+(2*block_width)) + block_width*i, -397}});
-    }
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -123}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -123}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -260}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -260}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f - LevelFloor_0_width + 2*block_width, -397}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{113.0f + block_width*22, -397}});
-
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f + block_width*21, -533}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - LevelFloor_0_width + 3*block_width, -533}});
-    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*5, -533}});
-    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + block_width*13, -533}});
-    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{115.0f - 2*block_width, -624.0f - 2*block_height}});
-    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{114.0f + block_width*25, -624.0f - 2*block_height}});
-
-    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*2, -626}});
-    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + block_width*9, -626}});
-    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{113.0f + block_width*18, -626}});
-
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f - block_width, -620.0f - 9*block_height}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*24, -620.0f - 9*block_height}});
-    GameObject Cloud("Cloud", "Cloud");
-    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", 3.62f, 3.0f);
-    Cloud.addComponent<Collider2D>(&Cloud.getComponent<Transform2D>().position, Cloud.getComponent<Sprite>().GetViewDimensions());
-    Cloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
-    Cloud.addComponent<Script, CloudBehavior>();
-    GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*5}});
-
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f, -615.0f - 16*block_height}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*23, -615.0f - 16*block_height}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{114.0f - block_width, -612.0f - 12*block_height}});
-    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 14*block_width, -612.0f - 11*block_height}});
-
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width, -629.0f - 22*block_height}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*22, -629.0f - 22*block_height}});
-    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{113.0f + 8*block_width, -606.0f - 17*block_height}});
-    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{115.0f + 17*block_width, -607.0f - 16*block_height}});
-
-    GameObject SmallCloud("Small Cloud", "Cloud");
-    SmallCloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Short.png", 3.62f, 3.0f);
-    SmallCloud.addComponent<Collider2D>(&SmallCloud.getComponent<Transform2D>().position, SmallCloud.getComponent<Sprite>().GetViewDimensions());
-    SmallCloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
-    SmallCloud.addComponent<Script, CloudBehavior>();
-    GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, -626.0f - block_width*18}});
-
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*2, -620.0f - 29*block_height}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*21, -620.0f - 29*block_height}});
-    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{113.0f + 4*block_width, -614.0f - 27*block_height}});
-    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 12*block_width, -617.0f - 26*block_height}});
-
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{116.0f + block_width*3, -634.0f - 35*block_height}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{115.0f + block_width*20, -634.0f - 35*block_height}});
-    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 8*block_width, -610.0f - 32*block_height}});
-    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{114.0f + 15*block_width, -612.0f - 30*block_height}});
-    GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{114.0f + 10*block_width, -608.0f - 35*block_height}});
-
-    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{116.0f + block_width*4, -629.0f - 38*block_height}});
-    GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{115.0f + block_width*19, -629.0f - 38*block_height}});
-    GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{114.0f + 2*block_width, -624.0f - 39*block_height}});
-    GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{114.0f + 16*block_width, -624.0f - 39*block_height}});
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f - 6*block_width, -624.0f - 38*block_height}});
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{114.0f + 22*block_width, -624.0f - 38*block_height}});
-
-    GameObject Condor("Red Condor", "Goal");
-    Condor.addComponent<Animator>("Fly", std::unordered_map<std::string, Animation> {
-        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, 2.7, 0.75, true)}
-    });
-    Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
-    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
-    Condor.addComponent<Script, RedCondorBehavior>();
-    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, -624.0f - 49*block_height}});
-
-    GameObject Icicle("Icicle", "Icicle", {}, {"Hole", "Player", "Floor"});
-    Icicle.addComponent<Sprite>("Assets/Sprites/Icicle.png", 3, 3);
-    Icicle.addComponent<Collider2D>(&Icicle.getComponent<Transform2D>().position, Icicle.getComponent<Sprite>().GetViewDimensions());
-    Icicle.addComponent<RigidBody2D>(1, 98, Vector2{0,0}, Vector2{0,0});
-    Icicle.addComponent<Script, IcicleBehavior>();
-
-    GameObject Topi("Topi", "Enemy", {"Topi"}, {"Floor", "Hole", "Player", "Icicle"});
-    GameObject Fruit("Fruit", "Fruit");
-    Fruit.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", 3.62f, 3.0f);
-    Fruit.addComponent<Collider2D>(&Fruit.getComponent<Transform2D>().position, Fruit.getComponent<Sprite>().GetViewDimensions(), ORANGE);
-    Fruit.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
-    Fruit.addComponent<Script, FruitBehavior>();
-    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={400, -1055}});
-    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={550, -1380}});
-    GameSystem::Instantiate(Fruit, GameObjectOptions{.position={350, -1430}});
-
-    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
-            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, 3, 0.5, true)},
-        }
-    );
-    Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
-    Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
-    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
-    Topi.addComponent<Script, TopiBehavior>(Icicle);
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,510}});
-    GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,220}});
+    // Zona de muerte en la cima
+    GameObject Death("Death", "Death");
+    Death.addComponent<Collider2D>(&Death.getComponent<Transform2D>().position, Vector2{block_width * 6.0f, block_height}, RED);
 
     // ¿Como construyo un GameObject para Popo?
     // 1. Creamos el GameObject. Recuerda:
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
     GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
@@ -261,23 +201,23 @@ void Game(int numPlayers) {
     // 3. Añadimos el componente de Animaciones. Como veis, hay que indicarle de que tipo es la lista {...},
     // si no, dará error.
     Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, 2.5, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, 2.5, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, 2.5, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, 2.5, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, 2.5, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, 2.5, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, 2.5, 0.3, false)},
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, scale, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, scale, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, scale, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, scale, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, scale, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, scale, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, scale, 0.3, false)},
         //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
     Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, 2.5, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Nana/02_Walk.png", 16, 24, 2.5, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Nana/03_Brake.png", 16, 24, 2.5, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Nana/04_Jump.png", 20, 25, 2.5, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, 2.5, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 21, 2.5, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, 2.5, 0.3, false)},
+        {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, scale, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Nana/02_Walk.png", 16, 24, scale, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Nana/03_Brake.png", 16, 24, scale, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Nana/04_Jump.png", 20, 25, scale, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, scale, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 21, scale, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, scale, 0.3, false)},
         //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
     });
     // 3. Añadimos el componente de Audio:
@@ -301,13 +241,285 @@ void Game(int numPlayers) {
     Nana.addComponent<Collider2D>(&Nana.getComponent<Transform2D>().position, Vector2{collider_width, nana_size.y}, Vector2{nana_size.x/2 - collider_offset, 0});
     Popo.addComponent<Script, PopoBehavior>(Controller_0);
     Nana.addComponent<Script, PopoBehavior>(Controller_1);
-    GameObject& Player = GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400,450}});
-    //GameObject& Player2;
-    GameObject* Player_2 = nullptr;
-    if (numPlayers == 2) {
-        Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {450,450}});
-    }
 
+    GameObject* Player_1 = nullptr;
+    GameObject* Player_2 = nullptr;
+    //GameObject* Player_3 = nullptr;
+    //GameObject* Player_4 = nullptr;
+
+    // Nubes
+    GameObject Cloud("Cloud", "Cloud");
+    Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", horizontal_scale, vertical_scale);
+    Cloud.addComponent<Collider2D>(&Cloud.getComponent<Transform2D>().position, Cloud.getComponent<Sprite>().GetViewDimensions());
+    Cloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Cloud.addComponent<Script, CloudBehavior>();
+
+    GameObject SmallCloud("Small Cloud", "Cloud");
+    SmallCloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Short.png", horizontal_scale, vertical_scale);
+    SmallCloud.addComponent<Collider2D>(&SmallCloud.getComponent<Transform2D>().position, SmallCloud.getComponent<Sprite>().GetViewDimensions());
+    SmallCloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    SmallCloud.addComponent<Script, CloudBehavior>();
+
+    // Condor
+    GameObject Condor("Red Condor", "Goal");
+    Condor.addComponent<Animator>("Fly", std::unordered_map<std::string, Animation> {
+        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, scale, 0.75, true)}
+    });
+    Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
+    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Condor.addComponent<Script, RedCondorBehavior>();
+
+    // Icicle
+    GameObject Icicle("Icicle", "Icicle", {}, {"Hole", "Player", "Floor"});
+    Icicle.addComponent<Sprite>("Assets/Sprites/Icicle.png", horizontal_scale, vertical_scale);
+    Icicle.addComponent<Collider2D>(&Icicle.getComponent<Transform2D>().position, Icicle.getComponent<Sprite>().GetViewDimensions());
+    Icicle.addComponent<RigidBody2D>(1, 98, Vector2{0,0}, Vector2{0,0});
+    Icicle.addComponent<Script, IcicleBehavior>();
+
+    // Frutas
+    GameObject Eggplant("Fruit", "Fruit");
+    Eggplant.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", horizontal_scale, vertical_scale);
+    Eggplant.addComponent<Collider2D>(&Eggplant.getComponent<Transform2D>().position, Eggplant.getComponent<Sprite>().GetViewDimensions(), ORANGE);
+    Eggplant.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Eggplant.addComponent<Script, FruitBehavior>();
+    float eggplant_height = Eggplant.getComponent<Sprite>().GetViewDimensions().y;
+    
+    GameObject Lettuce("Fruit", "Fruit");
+    Lettuce.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", horizontal_scale, vertical_scale);
+    Lettuce.addComponent<Collider2D>(&Lettuce.getComponent<Transform2D>().position, Lettuce.getComponent<Sprite>().GetViewDimensions(), ORANGE);
+    Lettuce.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Lettuce.addComponent<Script, FruitBehavior>();
+    float lettuce_height = Lettuce.getComponent<Sprite>().GetViewDimensions().y;
+
+    // Enemies
+    GameObject Topi("Topi", "Enemy", {"Topi"}, {"Floor", "Hole", "Player", "Icicle", "Wall"});
+    Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, scale, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, scale, 0.5, true)},
+        }
+    );
+    Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
+    Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
+    Topi.addComponent<Script, TopiBehavior>(Icicle);
+
+    /***** Elementos comunes a todos los niveles *****/
+    // Suelo base
+    GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,floor_levels[0]}});
+
+    // Plataformas laterales
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*4.0f, floor_levels[1]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[2]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[3]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[4]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[5]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[6]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[7]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
+
+    // Muros de la fase bonus
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{0, wall_levels[0]}});
+    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{block_width * 29.0f, wall_levels[0]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width, wall_levels[1]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 28.0f, wall_levels[1]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 2.0f, wall_levels[2]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 27.0f, wall_levels[2]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 3.0f, wall_levels[3]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 26.0f, wall_levels[3]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 4.0f, wall_levels[4]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 25.0f, wall_levels[4]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 5.0f, wall_levels[5]}});
+    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
+
+    // Players
+    Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {400, floor_levels[0] - popo_size.y}});
+    if (numPlayers > 1) {
+        Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {450, floor_levels[0] - popo_size.y}});
+    }
+    /*if (numPlayers > 2) {
+        Player_3 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {450,450}});
+    }*/
+
+    // Zona de muerte y Condor en la cima de la montaña
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{0, (float)WINDOW_HEIGHT - block_height * 95.0f}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, (float)WINDOW_HEIGHT - block_height * 95.0f}});
+    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, (float)WINDOW_HEIGHT - block_height * 104.0f}});
+
+    std::vector<GameObject*> Enemies{};
+    if(level == 1) {
+        
+        std::vector<float> bonus_floor_levels = {
+            (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
+            (float)WINDOW_HEIGHT - block_height * 58.0f, // 1
+            (float)WINDOW_HEIGHT - block_height * 60.0f, // 2  Cloud
+            (float)WINDOW_HEIGHT - block_height * 65.0f, // 3
+            (float)WINDOW_HEIGHT - block_height * 66.0f, // 4
+            (float)WINDOW_HEIGHT - block_height * 70.0f, // 5
+            (float)WINDOW_HEIGHT - block_height * 71.0f, // 6
+            (float)WINDOW_HEIGHT - block_height * 76.0f, // 7  Cloud
+            (float)WINDOW_HEIGHT - block_height * 81.0f, // 8
+            (float)WINDOW_HEIGHT - block_height * 82.0f, // 9
+            (float)WINDOW_HEIGHT - block_height * 85.0f, // 10
+            (float)WINDOW_HEIGHT - block_height * 87.0f, // 11
+            (float)WINDOW_HEIGHT - block_height * 90.0f, // 12
+            (float)WINDOW_HEIGHT - block_height * 95.0f  // 13
+        };
+        
+        for (float i = 0.0f; i < 24; i++) {
+            GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+        }
+
+        for (int i = 0; i < 22; i++) {
+            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
+        }
+
+        for (int i = 0; i < 20; i++) {
+            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
+            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+        }
+
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[1]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[2]}});
+
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
+        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[4]}});
+
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[5]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[6]}});
+
+        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 16.0f, bonus_floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 8.0f, bonus_floor_levels[9]}});
+
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 19.0f, bonus_floor_levels[10]}});
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[11]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[12]}});
+
+        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
+        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[13]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[13]}});
+
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - eggplant_height}});
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - eggplant_height}});
+
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[4] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[6] - topi_size.y}}));
+    } else if(level == 2) {
+        
+        std::vector<float> bonus_floor_levels = {
+            (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
+            (float)WINDOW_HEIGHT - block_height * 60.0f, // 1 Cloud
+            (float)WINDOW_HEIGHT - block_height * 65.0f, // 2
+            (float)WINDOW_HEIGHT - block_height * 66.0f, // 3
+            (float)WINDOW_HEIGHT - block_height * 70.0f, // 4
+            (float)WINDOW_HEIGHT - block_height * 71.0f, // 5
+            (float)WINDOW_HEIGHT - block_height * 76.0f, // 6 Cloud
+            (float)WINDOW_HEIGHT - block_height * 79.0f, // 7 Cloud
+            (float)WINDOW_HEIGHT - block_height * 85.0f, // 8
+            (float)WINDOW_HEIGHT - block_height * 90.0f, // 9
+            (float)WINDOW_HEIGHT - block_height * 95.0f  // 10
+        };
+
+        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
+        
+        GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
+        GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
+        
+        for (int i = 0; i < 22; i++) {
+            if(i != 5 && i != 6 && i != 7 && i != 10 && i != 11 && i != 12) {
+                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+            } else if(i == 5 || i == 10) {
+                GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+            }
+        }
+        for (int i = 0; i < 22; i++) {
+            if(i != 6 && i != 11)
+                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+        }
+        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
+
+        GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
+        GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
+        
+        for (int i = 0; i < 20; i++) {
+            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+            if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17))
+                GameSystem::Instantiate(IceSlidingBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+            else
+                GameSystem::Instantiate(IceSlidingHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+        }
+        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[6]}});
+
+        GameSystem::Instantiate(IceWall, GameObjectOptions{.position{0, floor_levels[7] + block_height}});
+        GameSystem::Instantiate(IceWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 6.0f, floor_levels[7] + block_height}});
+
+        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[1]}});
+        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[3]}});
+        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 16.0f, floor_levels[3]}});
+
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+
+        // Fase bonus
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+
+        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[1]}});
+
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[2]}});
+        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[3]}});
+
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[4]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[5]}});
+
+        GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[6]}});
+        GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+
+        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 17.0f, bonus_floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[9]}});
+
+        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
+        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[10]}});
+        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[10]}});
+
+        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - lettuce_height}});
+        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - lettuce_height}});
+        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
+        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - lettuce_height}});
+
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[3] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[5] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[7] - topi_size.y}}));
+    }
 
     //GameSystem::Printout();
     float timeToShowScores = 0.0f;
@@ -315,7 +527,7 @@ void Game(int numPlayers) {
     bool play_music = false;
     bool paused = false;
     bool moving_camera = false;
-    float objects_offset = 80, current_objects_offset = 0;
+    float objects_offset = 100, current_objects_offset = 0;
     BGM.Init();
 
     GameSystem::Start();
@@ -338,13 +550,13 @@ void Game(int numPlayers) {
             paused = !paused;
         }
         if (!paused) {
-            if(Player.getComponent<Script, PopoBehavior>().lifes > 0) {
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0) {
                 LifePopo1.Draw();
             }
-            if(Player.getComponent<Script, PopoBehavior>().lifes > 1) {
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1) {
                 LifePopo2.Draw();
             }
-            if(Player.getComponent<Script, PopoBehavior>().lifes > 2) {
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 2) {
                 LifePopo3.Draw();
             }
             if(numPlayers == 2){
@@ -358,7 +570,7 @@ void Game(int numPlayers) {
                     LifeNana3.Draw();
                 }
             }
-            if (!moving_camera && Player.getComponent<Script, PopoBehavior>().isGrounded && Player.getComponent<Transform2D>().position.y < 150) {
+            if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < 150) {
                 moving_camera = true;
                 switch (level_phase) {
                 case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -376,10 +588,10 @@ void Game(int numPlayers) {
                 else {
                     DrawText("WIN", 400, 100, 100, GREEN);
                     DrawText("Victoria 3000", 250, 200, 60, WHITE);
-                    DrawText(("Frutas x " +  std::to_string(Player.getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
-                    DrawText(("Bloques rotos x " + std::to_string(Player.getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
-                    DrawText(("Puntuación: " + std::to_string(3000 + Player.getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
-                        Player.getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+                    DrawText(("Frutas x " +  std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
+                    DrawText(("Bloques rotos x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
+                    DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
+                        Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
 
                     if(IsKeyPressed(KEY_ENTER)){
                         finished = true;
@@ -388,19 +600,20 @@ void Game(int numPlayers) {
             }
             if (!moving_camera) {
                 GameSystem::Update();
-                if (Player.getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
+                if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
                     std::cout << "GAME OVER!\n";
                     finished = true;
                 }
-                if(Player.getComponent<Script, PopoBehavior>().victory){
+                if(Player_1->getComponent<Script, PopoBehavior>().victory){
 
                     //std::cout << "muevo camara puntuacions" << std::endl;
-                    Player.getComponent<Script, PopoBehavior>().victory;
+                    Player_1->getComponent<Script, PopoBehavior>().victory;
                     float shift = 300 * GetFrameTime();
                     current_objects_offset  += shift;
                     if (current_objects_offset <= objects_offset) {
                         GameSystem::Move({0,shift});
                         Mountain.Move({0,shift});
+
                     }else{
                         acabar = true;
                         current_objects_offset = 0;
@@ -413,6 +626,9 @@ void Game(int numPlayers) {
                 if (current_objects_offset <= objects_offset) {
                     GameSystem::Move({0,shift});
                     Mountain.Move({0,shift});
+                    for(auto enemy : Enemies) {
+                        enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
+                    }
                 } else {
                     current_objects_offset = 0;
                     moving_camera = false;
@@ -437,10 +653,11 @@ void Game(int numPlayers) {
             paused_showtime -= GetFrameTime();
         }
         if (IsKeyPressed(KEY_ESCAPE)) {
+            finished = true;
             break;
         }
         if (IsKeyPressed(KEY_R)) {
-            Player.getComponent<Transform2D>().position = Vector2{600,70};
+            Player_1->getComponent<Transform2D>().position = Vector2{600,70};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
         EndDrawing();
@@ -495,53 +712,53 @@ int main() {
 
     // Titlescreen ------------------------------------------------------------
     // - Fore pines
-    Texture2D ForePines = LoadTexture("Assets/SPRITES/Titlescreen_01_Fore_Pines.png");
+    Texture2D ForePines = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_01_Fore_Pines.png");
     float ForePinesSpeed = 0.6;
     float ForePinesHeight = (WINDOW_WIDTH * ForePines.height)/(float)(ForePines.width);
     Rectangle ForePinesSrc{0, 0, (float)ForePines.width, (float)ForePines.height};
     Rectangle ForePinesDst{0, WINDOW_HEIGHT - ForePinesHeight, (float)WINDOW_WIDTH, ForePinesHeight};
     // - Mid pines
-    Texture2D MidPines = LoadTexture("Assets/SPRITES/Titlescreen_02_Mid_Pines.png");
+    Texture2D MidPines = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_02_Mid_Pines.png");
     float MidPinesSpeed = 0.3;
     float MidPinesHeight = (WINDOW_WIDTH * MidPines.height)/(float)(MidPines.width);
     Rectangle MidPinesSrc{0, 0, (float)MidPines.width, (float)MidPines.height};
     Rectangle MidPinesDst{0, WINDOW_HEIGHT - MidPinesHeight + 5, (float)WINDOW_WIDTH, MidPinesHeight};
     // - Mountain
-    Texture2D Mountain = LoadTexture("Assets/SPRITES/Titlescreen_03_Mountain.png");
+    Texture2D Mountain = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_03_Mountain.png");
     float MountainSpeed = 0.1;
     float MountainHeight = (WINDOW_WIDTH * Mountain.height)/(float)(Mountain.width);
     Rectangle MountainSrc{0, 0, (float)Mountain.width, (float)Mountain.height};
     Rectangle MountainDst{D(e2), WINDOW_HEIGHT - (MountainHeight * 0.75f), WINDOW_WIDTH * 0.75f, MountainHeight * 0.75f};
     // - Background fields
-    Texture2D Fields = LoadTexture("Assets/SPRITES/Titlescreen_04_Fields.png");
+    Texture2D Fields = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_04_Fields.png");
     float FieldsHeight = (WINDOW_WIDTH * Fields.height)/(float)(Fields.width);
     Rectangle FieldsSrc{0, 0, (float)Fields.width, (float)Fields.height};
     Rectangle FieldsDst{0, WINDOW_HEIGHT - FieldsHeight, (float)WINDOW_WIDTH, FieldsHeight};
     // - Falling snow
     float SnowSpeed = 0.1;
-    Texture2D Snow = LoadTexture("Assets/SPRITES/Titlescreen_05_Snow.png");
+    Texture2D Snow = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_05_Snow.png");
     Rectangle SnowSrc{0, 0, (float)Snow.width,  (float)Snow.height};
     Rectangle SnowDst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     // - Sign
     float SignSpeed = 105, height_dst = 30;
-    Texture2D Sign = LoadTexture("Assets/SPRITES/Titlescreen_06_Sign.png");
+    Texture2D Sign = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_06_Sign.png");
     Rectangle SignSrc{0, 0, (float)Sign.width,  (float)Sign.height};
     Rectangle SignDst{(WINDOW_WIDTH - Sign.width*2.5f)/2.0f, -Sign.height * 2.5f, Sign.width * 2.5f, Sign.height * 2.5f};
 
-    Texture2D OldBackground = LoadTexture("Assets/SPRITES/Titlescreen_Old_01_Background.png");
+    Texture2D OldBackground = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_01_Background.png");
     Rectangle OldBackgroundSrc{0, 0, (float)OldBackground.width,  (float)OldBackground.height};
     Rectangle OldBackgroundDst{0, 0, (float)WINDOW_WIDTH, WINDOW_HEIGHT - 90.0f};
     float water_speed = 5;
-    Texture2D OldWater = LoadTexture("Assets/SPRITES/Titlescreen_Old_02_Water.png");
+    Texture2D OldWater = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_02_Water.png");
     Rectangle OldWaterSrc{0, 0, (float)OldWater.width,  (float)OldWater.height};
     Rectangle OldWaterDst{0,  WINDOW_HEIGHT - 90.0f, (float)WINDOW_WIDTH, 90.0f};
-    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen_Old_03_Sign.png");
+    Texture2D OldSign = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_Old_03_Sign.png");
     Rectangle OldSignSrc{0, 0, (float)OldSign.width,  (float)OldSign.height};
     Rectangle OldSignDst{(WINDOW_WIDTH - OldSign.width*2.5f)/2.0f, -OldSign.height * 2.5f, OldSign.width * 2.5f, OldSign.height * 2.5f};
     bool show_background = false;
     // - Copyright
     float CopySpeed = 30, copy_height_dst = WINDOW_HEIGHT - 50;
-    Texture2D Copy = LoadTexture("Assets/SPRITES/Titlescreen_07_Copyright.png");
+    Texture2D Copy = LoadTexture("Assets/SPRITES/Titlescreen/Titlescreen_07_Copyright.png");
     Rectangle CopySrc{0, 0, (float)Copy.width, (float)Copy.height};
     Rectangle CopyDst{(WINDOW_WIDTH - Copy.width*3.0f)/2.0f, WINDOW_HEIGHT + (float)Copy.height*3.0f, Copy.width * 3.0f, Copy.height * 3.0f};
 
@@ -575,6 +792,7 @@ int main() {
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
     
+    int numPlayers = 1, level = 2;
     //Game();
     
     while(!WindowShouldClose() && !close_window) {
@@ -728,7 +946,6 @@ int main() {
             }
             DrawTextEx(NES, "Select option", {WINDOW_WIDTH - 127.0f, WINDOW_HEIGHT - 28.0f}, 13, 1, LIGHTGRAY);
 
-
             switch (CURRENT_MENU) {
             case MAIN_MENU:
                 DrawTextEx(NES, "ICE CLIMBER", {500, (float)menu_start}, 35, 5, BLUE);
@@ -809,10 +1026,10 @@ int main() {
                     case 0:
                         if (fst_player && !snd_player) {
                             //StopMusicStream(ts_music);
-                            Game(1);
+                            Game(numPlayers, level);
                             //PlayMusicStream(ts_music);
                         } else if(snd_player) {
-                            Game(2);
+                            Game(numPlayers, level);
                         }
                         break;
                     case 1:
@@ -827,8 +1044,10 @@ int main() {
                 } else if (IsKeyPressed(KEY_SPACE)) {
                     if (!fst_player) {
                         fst_player = true;
+                        numPlayers = 1;
                     } else if (!snd_player) {
                         snd_player = true;
+                        numPlayers = 2;
                     }
                 } else if (IsKeyPressed(KEY_ESCAPE)) {
                     CURRENT_MENU   = NEW_GAME;
