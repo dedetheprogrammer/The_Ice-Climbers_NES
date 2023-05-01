@@ -1411,7 +1411,6 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
-
     UnloadFont(NES);
     UnloadMusicStream(ts_music);
     CloseAudioDevice();

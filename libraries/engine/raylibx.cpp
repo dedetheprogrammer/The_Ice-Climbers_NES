@@ -43,7 +43,7 @@ std::ostream& operator<<(std::ostream& os, Vector2 v) {
 }
 
 float dot(Vector2 a, Vector2 b) {
-   return a.x*b.x + a.y*b.y; 
+   return a.x*b.x + a.y*b.y;
 }
 
 float mod(Vector2 v) {
@@ -53,7 +53,6 @@ float mod(Vector2 v) {
 int mod(int a, int b) {
     return (a%b + b)%b;
 }
-
 
 Vector2 abs(Vector2 v) {
     return {std::abs(v.x), std::abs(v.y)};
