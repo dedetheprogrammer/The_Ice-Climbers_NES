@@ -28,38 +28,6 @@ int main() {
     MainTitleOST.looping = true; 
     NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
-    // De momento no habrá introducción, tengo que apañar los efectos...
-    /*
-    int intro_state = 0;
-    // - Fore pines:
-    Texture2D ForePinesTexture = LoadTexture("Assets/Sprites/Titlescreen/01_Fore_Pines.png");
-    float ForePinesHeight = (GetScreenWidth() * ForePinesTexture.height)/(float)(ForePinesTexture.width);
-    UISprite ForePines(ForePinesTexture, "Fore Pines", Vector2{0, GetScreenHeight() - ForePinesHeight}, {(float)GetScreenWidth(), ForePinesHeight});
-    //ForePines.setEffect<Parallax>(Vector2{15,0});
-    // - Mid pines
-    Texture2D MidPinesTexture  = LoadTexture("Assets/Sprites/Titlescreen/02_Mid_Pines.png");
-    float MidPinesHeight = (GetScreenWidth() * MidPinesTexture.height)/(float)(MidPinesTexture.width);
-    UISprite MidPines(MidPinesTexture, "Mid Pines", Vector2{0, GetScreenHeight() - MidPinesHeight + 5}, {(float)GetScreenWidth(), MidPinesHeight});
-    //MidPines.setEffect<Parallax>(Vector2{10,0});
-    // - Mountain
-    Texture2D MountainTexture = LoadTexture("Assets/Sprites/Titlescreen/03_Mountain.png");
-    float MountainHeight = (GetScreenWidth() * MountainTexture.height)/(float)(MountainTexture.width);
-    UISprite Mountain(MountainTexture, "Mountain", Vector2{D(e2), GetScreenHeight() - (MountainHeight)}, {(float)GetScreenWidth(), MountainHeight});
-    //Mountain.setEffect<Scroll>(1, Vector2{-7.0, 0});
-    // - Background fields
-    Texture2D FieldsTexture = LoadTexture("Assets/Sprites/Titlescreen/04_Fields.png");
-    float FieldsHeight = (GetScreenWidth() * FieldsTexture.height)/(float)(FieldsTexture.width);
-    UISprite Fields(FieldsTexture, "Fields", Vector2{0, GetScreenHeight() - FieldsHeight}, {(float)GetScreenWidth(), FieldsHeight});
-    // - Falling snow
-    UISprite Snow("Assets/Sprites/Titlescreen/05_Snow.png", "Snow", Vector2{0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
-    //Snow.setEffect<Parallax>(Vector2{7,-7});
-    // - Sign
-    //bool sign_check = false;
-    UISprite Sign("Assets/Sprites/Titlescreen/06_Sign.png", "Sign", Vector2{GetScreenWidth()/2.0f, -20}, 2.5f, 2.5f, UIObject::DOWN_CENTER);
-    //Sign.setEffect<Move>(Vector2{0, 40 + Sign.dst.height}, Vector2{0, 100});
-
-    */
-
     UISprite Sign("Assets/Sprites/Titlescreen/06_Sign.png", {GetScreenWidth()/2.0f, 20}, 2.7f, 2.7f, UIObject::UP_CENTER, false, 0.8);
     UISprite Copy("Assets/Sprites/Titlescreen/07_Copyright.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()-20.0f}, 2.2f, 2.2f, UIObject::DOWN_CENTER);
     
@@ -77,7 +45,7 @@ int main() {
     int mpparallax_s = 7;
     UISprite MidPines("Assets/Sprites/Titlescreen/02_Mid_Pines.png", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, {(float)GetScreenWidth(), 200}, UIObject::DOWN_CENTER);
 
-    enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SETTINGS, CONTROL_SETTINGS };
+    enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SELECT_LEVEL, SETTINGS, CONTROL_SETTINGS };
     // INTRO:
     int intro_state = 0;
     // - Nintendo logo:
@@ -86,7 +54,6 @@ int main() {
     float nlfadeout_s = 0.9;
     float nl_opacity  = 0;
     UISprite Nintendo_logo("Assets/Sprites/Nintendo_logo.png", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 0.3f, 0.3f, UIObject::CENTER);
-    //Nintendo_logo.setEffect<FadeInOut>(0.3, 0.9);
 
     // - Team logo:
     bool tlinout      = false;
@@ -94,7 +61,6 @@ int main() {
     float tlfadeout_s = 0.9;
     float tl_opacity  = 0;
     UISprite Team_logo("Assets/Sprites/Team_logo.png", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 2.8f, 2.8f, UIObject::CENTER);
-    //Team_logo.setEffect<FadeInOut>(0.29, 0.9);
 
     bool psshow = true;
     float pscurrent_time = 0;
@@ -122,6 +88,8 @@ int main() {
     UIText P1Press(NES, "PRESS", 27, 1, {GetScreenWidth()/2.0f - 90, GetScreenHeight()/2.0f - 75}, UIObject::CENTER);
     UISprite P1Space(space_button, {GetScreenWidth()/2.0f - 130, GetScreenHeight()/2.0f - 50}, 1.5f, 1.5f);
     UISprite P1Char("Assets/Sprites/popo.png", {GetScreenWidth()/2.0f - 130, GetScreenHeight()/2.0f - 90}, 4.5f, 4.5f);
+    // SELECT LEVEL:
+    UISprite Level1("Assets/Sprites/Level1_preview.png", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, {GetScreenWidth(), GetScreenHeight()},UIObject::CENTER);
 
     bool p2show = false;
     float p2current_time = 0;
@@ -131,7 +99,7 @@ int main() {
     UISprite P2Space(space_button, {GetScreenWidth()/2.0f + 57, GetScreenHeight()/2.0f - 50}, 1.5f, 1.5f);
     UISprite P2Char("Assets/Sprites/nana.png", {GetScreenWidth()/2.0f + 50, GetScreenHeight()/2.0f - 90}, 4.5f, 4.5f);
 
-    // VIDEO SETTINGS MENU:
+    // SETTINGS MENU:
     Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
     UIText OldStyleText(NES, "OLD STYLE?", 33, 1, {200, GetScreenHeight()/2.0f - 180}, UIObject::CENTER_LEFT);
     UISprite OldStyleCheck("Assets/Sprites/UI_Cross.png", {GetScreenWidth()/2.0f + 157, OldStyleText.pos.y - 3}, 2.0f, 2.0f);
@@ -379,8 +347,6 @@ int main() {
                     }
 
                 } else if (CURRENT_MENU == NORMAL_GAME) {
-                    //DrawRectangleV({GetScreenWidth()/2.0f - (150 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), GetScreenHeight()/2.0f - (120 * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {120 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 140 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, GRAY);
-                    //DrawRectangleV({GetScreenWidth()/2.0f + (30  * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), GetScreenHeight()/2.0f - (120 * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {120 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 140 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, GRAY);
                     if (nplayers == 0) {
                         ContinueText.Draw(GRAY);
                         P1.Draw(GRAY);
@@ -437,7 +403,8 @@ int main() {
                     } else if (IsKeyPressed(KEY_ENTER)) {
                         if (OPTION == 0) {
                             if (nplayers > 0) {
-                                std::cout << "PARA TI ALBERTO.\n";
+                                CURRENT_MENU = SELECT_LEVEL;
+                                //std::cout << "PARA TI ALBERTO.\n";
                                 //Game();
                             }
                         } else if (OPTION == 1) {
@@ -461,6 +428,13 @@ int main() {
                         }
                         p1current_time = p2current_time = 0;
                         p1show = p2show = false;
+                    }
+                } else if (CURRENT_MENU == SELECT_LEVEL) {
+                    Level1.Draw();
+                    auto new_height = 100.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
+                    DrawRectangleV({0,GetScreenHeight() - new_height}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                    if (IsKeyPressed(KEY_ESCAPE)) {
+                        CURRENT_MENU = NORMAL_GAME;
                     }
                 } else if (CURRENT_MENU == SETTINGS) {
                     // - OLD STYLE OPTION:

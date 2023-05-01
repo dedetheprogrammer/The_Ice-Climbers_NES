@@ -99,16 +99,7 @@ public:
     Vector2 size;
     Vector2 ref_pos;
 
-    UIText(
-        Font font,
-        std::string text,
-        int font_size,
-        int spacing,
-        Vector2 pos, 
-        PIVOT pivot = UP_LEFT,
-        bool hidden = false,
-        float scale_factor = 1
-    );
+    UIText(Font font, std::string text, int font_size, int spacing, Vector2 pos, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
