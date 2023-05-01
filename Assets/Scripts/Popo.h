@@ -2,6 +2,7 @@
 #include "EngineECS.h"
 #include "controllers.h"
 #include "raylib.h"
+//#include "Enemies.h"
 #include "raylibx.h"
 
 class PopoBehavior : public Script {
@@ -28,8 +29,8 @@ public:
     bool puntuacion;
     Vector2 collider_size;
     Vector2 collider_offset;
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más 
-    // eficiente que acceder una y otra vez a los componentes cada vez que 
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
+    // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     AudioPlayer& audioplayer;
@@ -39,7 +40,7 @@ public:
     Transform2D& transform;
     Controller& controller; // Pointer to the controller instance.
 
-    PopoBehavior(GameObject& gameObject, Controller& c) : Script(gameObject), 
+    PopoBehavior(GameObject& gameObject, Controller& c) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
         collider(gameObject.getComponent<Collider2D>()),
@@ -66,7 +67,7 @@ public:
         bloquesDestruidos = 0;
         frutasRecogidas = 0;
     }
-    
+
     PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
         animator(gameObject.getComponent<Animator>()),
         audioplayer(gameObject.getComponent<AudioPlayer>()),
@@ -153,7 +154,7 @@ public:
                     animator["Fall"];
                 }
                 rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
-            } 
+            }
             if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
                 (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y)))
             {
@@ -165,7 +166,7 @@ public:
                         isRight = !isRight;
                         animator.Flip();
                     }
-                } 
+                }
             }
         }
 
@@ -214,12 +215,15 @@ public:
 
         if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned")) || contact.gameObject.tag == "Icicle") {
             if (!isStunned) {
-                if (!isAttacking) {
+                if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
+                    std::cout << "if 1" << std::endl;
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
-                } else {
+                }else if(contact.contact_normal.x){
+
+                            std::cout << "else 4" << std::endl;
                     if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                         lifes--;
                         animator["Stunned"];
@@ -231,7 +235,7 @@ public:
                         isStunned = true;
                         rigidbody.velocity.x = 0;
                     }
-                } 
+                }
             }
         }
 
@@ -287,7 +291,7 @@ public:
             //move = GetAxis("Horizontal");
             if (controller.isDown(Controller::LEFT)) move -= 1;
             if (controller.isDown(Controller::RIGHT)) move += 1;
-            
+
             transform.position.x += rigidbody.velocity.x * deltaTime;
             if (!hasBounced && !onCloud) {
                 if (move) {
@@ -376,7 +380,7 @@ public:
         }
 
         if (hasCollisioned) {
-            hasCollisioned = false; 
+            hasCollisioned = false;
         } else {
             if (last_tag == "Floor") {
                 if (isGrounded) {

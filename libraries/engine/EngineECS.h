@@ -439,8 +439,7 @@ private:
     // std::unordered_map<std::string, Scene> scenes;
     // std::string current scene;
     // Instances
-    static std::unordered_map<std::string, int> nGameObjects;
-    static std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameObjects;
+    
 
     // Esto no me iba en Grafica pero aqui si, alucinante. Teneis la teoria aqui,
     // ahora no me apetece explicarla:
@@ -456,6 +455,14 @@ private:
     static bool Collides(const Collider2D& A, const Collider2D& B, Vector2& contact_point,
         Vector2& contact_normal, float& contact_time);
 public:
+    // Spoiler, but not for now:
+    // - La idea es dividir el juego en escenas, por lo que cada escena tendrá
+    //   sus objetos, y ya, opcional, puede plantearse pero se deja en el aire.
+    // std::unordered_map<std::string, Scene> scenes;
+    // std::string current scene;
+    // Instances
+    static std::unordered_map<std::string, int> nGameObjects;
+    static std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameObjects;
     static void Collisions(GameObject& gameObject);
     static void Destroy(GameObject& gameObject);
     static GameObject& Instantiate(GameObject& gameObject, GameObjectOptions options);

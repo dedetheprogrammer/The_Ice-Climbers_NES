@@ -66,3 +66,24 @@ Vector2 nor(Vector2 v, float n) {
 Vector2 reflect(Vector2 wi, Vector2 n) {
   return wi - 2.f * dot(wi, n) * n;
 }
+
+std::string millis_to_time(int millis) {
+    int seconds = millis/1000;      millis %= 1000;
+    int minutes = seconds/60;       seconds %= 60;
+    int hours = minutes/60;         minutes %= 60;
+
+    std::string time_string = std::to_string(seconds) + ":" + std::to_string(millis);
+    if (minutes > 0) time_string = std::to_string(minutes) + ":" + time_string;
+    if (hours > 0) time_string = std::to_string(hours) + ":" + time_string;
+    return "Tiempo: " + time_string;
+}
+
+std::string seconds_to_time(int seconds) {
+    int minutes = seconds/60;       seconds %= 60;
+    int hours = minutes/60;         minutes %= 60;
+
+    std::string time_string = std::to_string(seconds);
+    if (minutes > 0) time_string = std::to_string(minutes) + ":" + time_string;
+    if (hours > 0) time_string = std::to_string(hours) + ":" + time_string;
+    return "Tiempo: " + time_string;
+}

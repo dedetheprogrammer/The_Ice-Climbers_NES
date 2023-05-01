@@ -139,11 +139,11 @@ void Game(int numPlayers, int level) {
     IceSlidingBlock.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
     IceSlidingBlock.addComponent<Script, SlidingBlockBehavior>();
     IceSlidingBlock.getComponent<Script, SlidingBlockBehavior>().hole = &IceSlidingHole;
-    
+
     IceHole.addComponent<Collider2D>(&IceHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
     IceHole.addComponent<Script, HoleBehavior>();
     IceHole.getComponent<Script, HoleBehavior>().original_block = &IceBlock;
-    
+
     IceSlidingHole.addComponent<Collider2D>(&IceSlidingHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
     IceSlidingHole.addComponent<Script, HoleBehavior>();
     IceSlidingHole.getComponent<Script, HoleBehavior>().original_block = &IceSlidingHole;
@@ -283,7 +283,7 @@ void Game(int numPlayers, int level) {
     Eggplant.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
     Eggplant.addComponent<Script, FruitBehavior>();
     float eggplant_height = Eggplant.getComponent<Sprite>().GetViewDimensions().y;
-    
+
     GameObject Lettuce("Fruit", "Fruit");
     Lettuce.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", horizontal_scale, vertical_scale);
     Lettuce.addComponent<Collider2D>(&Lettuce.getComponent<Transform2D>().position, Lettuce.getComponent<Sprite>().GetViewDimensions(), ORANGE);
@@ -302,6 +302,16 @@ void Game(int numPlayers, int level) {
     Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>(Icicle);
+
+    GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
+    Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, 3, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Nutpicker - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)},
+        }
+    );
+    Nutpicker.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Nutpicker.addComponent<Collider2D>(&Nutpicker.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
+    Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
 
     /***** Elementos comunes a todos los niveles *****/
     // Suelo base
@@ -355,7 +365,7 @@ void Game(int numPlayers, int level) {
 
     std::vector<GameObject*> Enemies{};
     if(level == 1) {
-        
+
         std::vector<float> bonus_floor_levels = {
             (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
             (float)WINDOW_HEIGHT - block_height * 58.0f, // 1
@@ -372,7 +382,7 @@ void Game(int numPlayers, int level) {
             (float)WINDOW_HEIGHT - block_height * 90.0f, // 12
             (float)WINDOW_HEIGHT - block_height * 95.0f  // 13
         };
-        
+
         for (float i = 0.0f; i < 24; i++) {
             GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
         }
@@ -428,8 +438,9 @@ void Game(int numPlayers, int level) {
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - topi_size.y}}));
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[4] - topi_size.y}}));
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[6] - topi_size.y}}));
+        GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
     } else if(level == 2) {
-        
+
         std::vector<float> bonus_floor_levels = {
             (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
             (float)WINDOW_HEIGHT - block_height * 60.0f, // 1 Cloud
@@ -445,10 +456,10 @@ void Game(int numPlayers, int level) {
         };
 
         GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
-        
+
         GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
         GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
-        
+
         for (int i = 0; i < 22; i++) {
             if(i != 5 && i != 6 && i != 7 && i != 10 && i != 11 && i != 12) {
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
@@ -464,7 +475,7 @@ void Game(int numPlayers, int level) {
 
         GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
         GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
-        
+
         for (int i = 0; i < 20; i++) {
             GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
             if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17))
@@ -519,6 +530,7 @@ void Game(int numPlayers, int level) {
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[3] - topi_size.y}}));
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[5] - topi_size.y}}));
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[7] - topi_size.y}}));
+        GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
     }
 
     //GameSystem::Printout();
@@ -527,7 +539,9 @@ void Game(int numPlayers, int level) {
     bool play_music = false;
     bool paused = false;
     bool moving_camera = false;
-    float objects_offset = 100, current_objects_offset = 0;
+    float objects_offset = 80, current_objects_offset = 0;
+    float speedrun_time = 0.0f;
+    float time_limit = 120.0f;
     BGM.Init();
 
     GameSystem::Start();
@@ -583,7 +597,7 @@ void Game(int numPlayers, int level) {
                 //    objects_offset = 80;
                 //}
             }
-            if(acabar){
+            if(acabar) {
                 if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
                 else {
                     DrawText("WIN", 400, 100, 100, GREEN);
@@ -597,7 +611,12 @@ void Game(int numPlayers, int level) {
                         finished = true;
                     }
                 }
+            } else {
+                float delta_time = GetFrameTime();
+                speedrun_time += delta_time;
+                time_limit = (time_limit - delta_time < 0)? 0 : time_limit - delta_time;
             }
+
             if (!moving_camera) {
                 GameSystem::Update();
                 if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
@@ -660,6 +679,16 @@ void Game(int numPlayers, int level) {
             Player_1->getComponent<Transform2D>().position = Vector2{600,70};
         }
         DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
+
+        std::string speedrun_string = seconds_to_time(speedrun_time);
+        std::string time_limit_string = seconds_to_time(time_limit);
+
+        auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
+        DrawTextPro(NES, speedrun_string.c_str(), {WINDOW_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+
+        dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
+        DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+
         EndDrawing();
     }
     UnloadTexture(Pause_frame);
@@ -686,13 +715,13 @@ int main() {
     NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     // ---- Music
-    /*Music ts_music = LoadMusicStream("Assets/NES - Ice Climber - Sound Effects/01-Main-Title.mp3");
+    Music ts_music = LoadMusicStream("Assets/Sounds/01-Main-Title.mp3");
     ts_music.looping = true;
-    bool play_music = false;*/
+    bool play_music = false;
 
     // Initial trailer --------------------------------------------------------
      int state = 0, shown = 0;
-    
+
     Texture2D NintendoLogo = LoadTexture("Assets/SPRITES/Nintendo_logo.png");
     float nintendologo_fade = 0;
     float nintendologo_fade_add = 0.4;
@@ -791,10 +820,10 @@ int main() {
     int option_offset = menu_height/(OPTIONS+1);
     int option_drift  = 0;
     MENU_ENUM CURRENT_MENU = MAIN_MENU;
-    
+
     int numPlayers = 1, level = 2;
     //Game();
-    
+
     while(!WindowShouldClose() && !close_window) {
 
         // Delta time:
@@ -821,9 +850,9 @@ int main() {
             }
         }
 
-        /*if (play_music) {
+        if (play_music) {
             UpdateMusicStream(ts_music);
-        }*/
+        }
 
         // Begin drawing:
         BeginDrawing();
@@ -873,7 +902,7 @@ int main() {
                             SignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            //PlayMusicStream(ts_music);
+                            PlayMusicStream(ts_music);
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             SignDst.y = height_dst;
@@ -881,8 +910,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                     }
                 } else {
@@ -892,8 +921,8 @@ int main() {
                             OldSignDst.y += SignSpeed * deltaTime;
                         } else {
                             show_background = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                             OldSignDst.y = height_dst;
@@ -901,8 +930,8 @@ int main() {
                             show_background = true;
                             full_black_fade = 0;
                             first_enter = true;
-                            //PlayMusicStream(ts_music);
-                            //play_music = true;
+                            PlayMusicStream(ts_music);
+                            play_music = true;
                         }
                     }
                 }
@@ -1237,7 +1266,7 @@ int main() {
             case CONTROL_SETTINGS:
                 // MENU TITLE:
                 DrawTextEx(NES, "CONTROL SETTINGS", {500, (float)menu_start}, 35, 5, BLUE);
-                
+
                 // CURRENT PLAYER: 0, 1, 2, 3
                 static int currPlyr = 0;
                 DrawTextEx(NES, "PLAYER:", {500, menu_start + (option_offset * 1.0f)}, 30, 1, WHITE);
@@ -1277,7 +1306,7 @@ int main() {
                 DrawTexturePro(Arrow, ArrowSrc, {750, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
                 DrawTexturePro(Arrow, ArrowSrcInv, {870, menu_start + (option_offset * 3.0f) + 2, (float)Arrow.width, (float)Arrow.height}, {0,0}, 0, WHITE);
                 DrawTextEx(NES, currActionStr.c_str(), {770, menu_start + (option_offset * 3.0f) + 5}, 17, 1, WHITE);
-                
+
                 // CURRENT ACTION BINDING
                 static bool selected = false;
                 DrawTextEx(NES, "KEYBINDING:", {500, menu_start + (option_offset * 4.0f)}, 30, 1, WHITE);
@@ -1382,9 +1411,9 @@ int main() {
     UnloadTexture(Snow);
     UnloadTexture(Spacekey);
     UnloadTexture(Enterkey);
-    
+
     UnloadFont(NES);
-    //UnloadMusicStream(ts_music);
+    UnloadMusicStream(ts_music);
     CloseAudioDevice();
     save_config();
 }
