@@ -21,6 +21,7 @@ int main() {
     std::random_device rd;
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> D(0, (float)GetScreenWidth());
+    std::uniform_int_distribution<int> I(0,1);
 
     //MusicSource Main_title_music("Assets/Sounds/02-Main-Title.wav", true);
     Music MainTitleOST = LoadMusicStream("Assets/Sounds/02-Main-Title.mp3");
@@ -30,12 +31,6 @@ int main() {
     // De momento no habrá introducción, tengo que apañar los efectos...
     /*
     int intro_state = 0;
-    // - Nintendo logo:
-    UISprite Nintendo_logo("Assets/Sprites/Nintendo_logo.png", "Nintendo Logo", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 0.3f, 0.3f, UIObject::CENTER);
-    //Nintendo_logo.setEffect<FadeInOut>(0.3, 0.9);
-    // - Team logo:
-    UISprite Team_logo("Assets/Sprites/Team_logo.png", "Team logo", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 2.8f, 2.8f, UIObject::CENTER);
-    //Team_logo.setEffect<FadeInOut>(0.29, 0.9);
     // - Fore pines:
     Texture2D ForePinesTexture = LoadTexture("Assets/Sprites/Titlescreen/01_Fore_Pines.png");
     float ForePinesHeight = (GetScreenWidth() * ForePinesTexture.height)/(float)(ForePinesTexture.width);
@@ -71,16 +66,42 @@ int main() {
 
     UISprite Sign("Assets/Sprites/Titlescreen/06_Sign.png", "Sign", {GetScreenWidth()/2.0f, 20}, 2.7f, 2.7f, UIObject::UP_CENTER, false, 0.8);
     UISprite Copy("Assets/Sprites/Titlescreen/07_Copyright.png", "Copy", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()-20.0f}, 2.2f, 2.2f, UIObject::DOWN_CENTER);
+    
+    int background = I(e2);
     UISprite Background("Assets/Sprites/bg00.png", "BG", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
+    UISprite Background1("Assets/Sprites/bg01.png", "BG1", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
     UISprite Transparent("Assets/Sprites/UI_Transparent.png", "Transparent BG", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
+
+    int mscroll_s = -5;
     UISprite Mountain("Assets/Sprites/Titlescreen/03_Mountain.png", "Mountain", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, 3.6f, 3.6f, UIObject::DOWN_CENTER);
+
+    int fpparallax_s = 15;
     UISprite ForePines("Assets/Sprites/Titlescreen/01_Fore_Pines.png", "Fore Pines", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, {(float)GetScreenWidth(), 150}, UIObject::DOWN_CENTER);
+    
+    int mpparallax_s = 7;
     UISprite MidPines("Assets/Sprites/Titlescreen/02_Mid_Pines.png", "Mid Pines", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, {(float)GetScreenWidth(), 200}, UIObject::DOWN_CENTER);
 
     enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SETTINGS, CONTROL_SETTINGS };
     // INTRO:
-    //int intro_state = 0;
-    UIText PressStartText(NES, "Press <ENTER> to start", 30, 1, "Press start text", {GetScreenWidth()/2.0f, GetScreenHeight()-60.0f}, BLUE, UIObject::DOWN_CENTER);
+    int intro_state = 0;
+    // - Nintendo logo:
+    bool  nlinout     = false;
+    float nlfadein_s  = 0.3;
+    float nlfadeout_s = 0.9;
+    float nl_opacity  = 0;
+    UISprite Nintendo_logo("Assets/Sprites/Nintendo_logo.png", "Nintendo Logo", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 0.3f, 0.3f, UIObject::CENTER);
+    //Nintendo_logo.setEffect<FadeInOut>(0.3, 0.9);
+
+    // - Team logo:
+    bool tlinout      = false;
+    float tlfadein_s  = 0.3;
+    float tlfadeout_s = 0.9;
+    float tl_opacity  = 0;
+    UISprite Team_logo("Assets/Sprites/Team_logo.png", "Team logo", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, 2.8f, 2.8f, UIObject::CENTER);
+    //Team_logo.setEffect<FadeInOut>(0.29, 0.9);
+
+    UIText PressStartText(NES, "Press <ENTER> to start", 30, 1, "Press start text", {GetScreenWidth()/2.0f, GetScreenHeight()-60.0f}, COYOTEBROWN, UIObject::DOWN_CENTER);
+
     // MAIN MENU:
     UIText NewGameText(NES, "NEW GAME", 33, 1, "New game text", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 45.0f}, WHITE, UIObject::DOWN_CENTER);
     UIText SettingsText(NES, "SETTINGS", 33, 1, "Settings text", {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 105.0f}, WHITE, UIObject::DOWN_CENTER);
@@ -169,18 +190,68 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        Background.Draw();
+        if (background == 0) {
+            Background.Draw();
+        } else {
+            Background1.Draw();
+        }
+
         Mountain.Draw();
+        if (Mountain.dst.x + Mountain.dst.width >= 0) {
+            Mountain.dst.x += mscroll_s * GetFrameTime();
+        } else {
+            Mountain.dst.x = GetScreenWidth() + 100;
+        }
+        
         MidPines.Draw();
+        MidPines.src.x += mpparallax_s * GetFrameTime();
+
         ForePines.Draw();
+        ForePines.src.x += fpparallax_s * GetFrameTime();
+
         if (CURRENT_MENU == INTRO) {
-            Sign.Draw();
-            Copy.Draw();
-            PressStartText.Draw();
-            if (IsKeyPressed(KEY_ENTER)) {
-                CURRENT_MENU = MAIN_MENU;
-                PlayMusicStream(MainTitleOST);
+            if (intro_state == 0) {
+                Nintendo_logo.Draw(Fade(WHITE, nl_opacity));
+                if (!nlinout) {
+                    if (nl_opacity < 1) {
+                        nl_opacity += nlfadein_s * GetFrameTime();
+                    } else {
+                        nlinout = true;
+                    }
+                } else {
+                    if (nl_opacity > 0) {
+                        nl_opacity -= nlfadeout_s * GetFrameTime();
+                    } else {
+                        intro_state++;
+                    }
+                }
+            } else if (intro_state == 1) {
+                Team_logo.Draw(Fade(WHITE, tl_opacity));
+                if (!tlinout) {
+                    if (tl_opacity < 1) {
+                        tl_opacity += tlfadein_s * GetFrameTime();
+                    } else {
+                        tlinout = true;
+                    }
+                } else {
+                    if (tl_opacity > 0) {
+                        tl_opacity -= tlfadeout_s * GetFrameTime();
+                    } else {
+                        intro_state++;
+                    }
+                }
+            } else {
+                Sign.Draw();
+                Copy.Draw();
+                PressStartText.Draw();
             }
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+                if (intro_state++ == 2) {
+                    CURRENT_MENU = MAIN_MENU;
+                    PlayMusicStream(MainTitleOST);
+                }
+            }
+
         } else {
             UpdateMusicStream(MainTitleOST);
 
@@ -216,9 +287,6 @@ int main() {
                 DrawRectangleV({0,GetScreenHeight() - new_height}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
 
                 if (CURRENT_MENU == NEW_GAME) {
-                    DrawRectangleV({0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()}, Fade(BLACK, 0.65));
-                    auto new_height = 50.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
-                    DrawRectangleV({0,GetScreenHeight() - new_height}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
                     NormalModeText.Draw();
                     BrawlModeText.Draw();
                     NewGameReturnText.Draw();

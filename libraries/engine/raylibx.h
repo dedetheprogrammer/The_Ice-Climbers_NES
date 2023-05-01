@@ -6,7 +6,8 @@
 #include <iostream>
 #include "raylib.h"
 
-#define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }      // Jellyfish
+#define COYOTEBROWN CLITERAL(Color){ 140, 101, 45, 255 }
+#define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
 
 // ----------------------------------------------------------------------------
 // Math extension

@@ -139,9 +139,9 @@ UISprite::UISprite(Texture2D sprite, std::string name, Rectangle src, Rectangle 
     UISystem::Add(*this);
 }
 
-void UISprite::Draw() {
+void UISprite::Draw(Color color) {
     //if (effect == nullptr) {
-        DrawTexturePro(sprite, src, dst, {0,0}, 0, WHITE);
+        DrawTexturePro(sprite, src, dst, {0,0}, 0, color);
     //} else {
     //    effect->Play();
     //}
@@ -271,11 +271,11 @@ UIText::UIText(
     UISystem::Add(*this);
 }
 
-void UIText::Draw() {
+void UIText::Draw(Color color) {
     if (outlinefont_size != font_size) {
         DrawTextEx(font, text.c_str(), outline_pos, outlinefont_size, 0, outline_color);
     }
-    DrawTextEx(font, text.c_str(), pos, font_size, spacing, color);
+    DrawTextEx(font, text.c_str(), pos, font_size, spacing, this->color);
 }
 
 void UIText::Move(Vector2 translation) {

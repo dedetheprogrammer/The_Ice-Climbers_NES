@@ -40,7 +40,7 @@ public:
 
     UIObject(std::string name = "UIObject", PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
 
-    virtual void Draw() = 0;
+    virtual void Draw(Color color = WHITE) = 0;
     bool IsRendered();
     virtual void Move(Vector2 translation) = 0;
     //template <typename T, typename... Args> void setEffect(Args&&... args) {
@@ -79,7 +79,7 @@ public:
     UISprite(Texture2D sprite, std::string name, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(Texture2D sprite, std::string name, Vector2 pos, Vector2 size, PIVOT pivot =  UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(Texture2D sprite, std::string name, Rectangle src, Rectangle dst, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
-    void Draw() override;
+    void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
     void Translate(Vector2 translation);
@@ -120,7 +120,7 @@ public:
         int outline = 0,
         Color outline_color = BLACK
     );
-    void Draw() override;
+    void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
 
