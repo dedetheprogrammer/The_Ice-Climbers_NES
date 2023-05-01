@@ -590,6 +590,14 @@ void GameSystem::Destroy(GameObject& gameObject) {
     }
 }
 
+void GameSystem::DestroyAll() {
+    for (auto& [_, instances] : GameObjects) {
+        for (auto& [_, gameObject] : instances) {
+            gameObject->Destroy();
+        }
+    }
+}
+
 GameObject& GameSystem::Instantiate(GameObject& gameObject, GameObjectOptions options) {
     // Configuring the name:
     if (options.name.empty()) {
@@ -697,14 +705,6 @@ void GameSystem::Update() {
                     gameObject->getComponent<RigidBody2D>().Draw();
                 }
             }
-        }
-    }
-}
-
-void GameSystem::DestroyAll() {
-    for (auto& [_, instances] : GameObjects) {
-        for (auto& [_, gameObject] : instances) {
-            gameObject->Destroy();
         }
     }
 }

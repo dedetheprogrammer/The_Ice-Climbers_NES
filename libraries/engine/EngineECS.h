@@ -444,12 +444,14 @@ private:
 public:
     static void Collisions(GameObject& gameObject);
     static void Destroy(GameObject& gameObject);
+    static void DestroyAll();
     static GameObject& Instantiate(GameObject& gameObject, GameObjectOptions options);
     static void Move(Vector2 translation);
     static void Printout();
     static void Render();
     static void Start();
     static void Update();
+
 };
 
 #endif

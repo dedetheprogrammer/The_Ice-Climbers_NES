@@ -36,6 +36,7 @@ template <typename T> void operator*=(Vector2& a, T b) { a.x *= b; a.y *= b; }
 
 float dot(Vector2 a, Vector2 b);
 float mod(Vector2 v);
+int mod(int a, int b);
 Vector2 abs(Vector2 v);
 Vector2 nor(Vector2 v, float n = 1);
 Vector2 reflect(Vector2 wi, Vector2 n);

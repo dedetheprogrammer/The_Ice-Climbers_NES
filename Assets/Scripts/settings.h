@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include "controllers.h"
 #include "raylib.h"
 
 //-----------------------------------------------------------------------------
@@ -75,6 +76,42 @@ const float DEFAULT_MUSIC_VOLUME   = 1.0f;
 int& WINDOW_WIDTH    = std::get<int>(ini["Graphics"]["ScreenWidth"]);  // 240px
 int& WINDOW_HEIGHT   = std::get<int>(ini["Graphics"]["ScreenHeight"]); // 160px
 float MUSIC_VOLUME   = std::get<int>(ini["Audio"]["Volume"]);
+
+void controller_default_config(int controller) {
+    if(controller == 0 || controller == 2 || controller == 3){
+        std::string controllerSection = "Controller_" + std::to_string(controller);
+        ini[controllerSection]["ControllerType"]  = Controller::KEYBOARD;
+        ini[controllerSection]["GP_Left"]  = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+        ini[controllerSection]["GP_Right"] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+        ini[controllerSection]["GP_Down"]  = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+        ini[controllerSection]["GP_Up"]    = GAMEPAD_BUTTON_LEFT_FACE_UP;
+        ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+        ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
+
+        ini[controllerSection]["KB_Left"]  = KEY_A;
+        ini[controllerSection]["KB_Right"] = KEY_D;
+        ini[controllerSection]["KB_Down"]  = KEY_S;
+        ini[controllerSection]["KB_Up"]    = KEY_W;
+        ini[controllerSection]["KB_Jump"]  = KEY_SPACE;
+        ini[controllerSection]["KB_Attack"]= KEY_E;
+    } else if (controller == 1) {
+        std::string controllerSection = "Controller_" + std::to_string(controller);
+        ini[controllerSection]["ControllerType"]  = Controller::KEYBOARD;
+        ini[controllerSection]["GP_Left"]  = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
+        ini[controllerSection]["GP_Right"] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT;
+        ini[controllerSection]["GP_Down"]  = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+        ini[controllerSection]["GP_Up"]    = GAMEPAD_BUTTON_LEFT_FACE_UP;
+        ini[controllerSection]["GP_Jump"]  = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
+        ini[controllerSection]["GP_Attack"]= GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
+
+        ini[controllerSection]["KB_Left"]  = KEY_LEFT;
+        ini[controllerSection]["KB_Right"] = KEY_RIGHT;
+        ini[controllerSection]["KB_Down"]  = KEY_DOWN;
+        ini[controllerSection]["KB_Up"]    = KEY_UP;
+        ini[controllerSection]["KB_Jump"]  = KEY_RIGHT_ALT;
+        ini[controllerSection]["KB_Attack"]= KEY_RIGHT_CONTROL;
+    }
+}
 
 void default_config() {
     // Graphics settings:
@@ -148,6 +185,31 @@ void save_config() {
     controller_save_config(2, os);
     controller_save_config(3, os);
     os.close();
+}
+
+void controller_init_config(Controller& controller, int controllerNumber, std::ifstream& in) {
+    std::string controllerSection = "Controller_" + std::to_string(controllerNumber);
+    int type = std::get<int>(ini[controllerSection]["ControllerType"]);
+    controller.type = (Controller::Type)type;
+
+    if (type == Controller::KEYBOARD) {
+
+        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["KB_Left"]);
+        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["KB_Right"]);
+        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["KB_Down"]);
+        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["KB_Up"]);
+        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["KB_Jump"]);
+        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["KB_Attack"]);
+
+    } else if (type >= Controller::CONTROLLER_0 && type <= Controller::CONTROLLER_3) {
+
+        controller.controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["GP_Left"]);
+        controller.controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["GP_Right"]);
+        controller.controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["GP_Down"]);
+        controller.controls[Controller::UP] = std::get<int>(ini[controllerSection]["GP_Up"]);
+        controller.controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["GP_Jump"]);
+        controller.controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["GP_Attack"]);
+    }
 }
 
 void init_config() {
