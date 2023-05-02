@@ -165,70 +165,79 @@ public:
     enum Type{NO_TYPE=-1, CONTROLLER_0, CONTROLLER_1, CONTROLLER_2, CONTROLLER_3, KEYBOARD};
     Type type;
     enum Control{NO_CONTROL=-1, LEFT, RIGHT, DOWN, UP, ATTACK, JUMP};
-    std::unordered_map<Control, int> controls;
+    std::unordered_map<Control, int> kb_controls;
+    std::unordered_map<Control, int> gp_controls;
 
 
     bool isPressed(Control c) {
-        // Print key metadata
-        //printKey(c);
 
         if (c == NO_CONTROL) return false;
 
         if (type == KEYBOARD) {
-            return IsKeyPressed(controls[c]);
+            return IsKeyPressed(kb_controls[c]);
             
         } else if (type >= 0 && type <= 3) {
             // Gamepad checks
             if (!IsGamepadAvailable(type)) return false;
 
-            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.5);
-            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
-            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.5);
-            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
+            if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.5);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.5);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.5);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.5);
 
-            else if (isGamePadTrigger(controls[c])) return (GetGamepadAxisMovement(type, controls[c]) > 0.5);
-            else return IsGamepadButtonPressed(type, controls[c]);
+            else if (isGamePadTrigger(gp_controls[c])) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.5);
+            else return IsGamepadButtonPressed(type, gp_controls[c]);
 
         } else return false;
     }
     
     bool isDown(Control c) {
-        // Print key metadata
-        //printKey(c);
 
         if (c == NO_CONTROL) return false;
 
         if (type == KEYBOARD) {
-            return IsKeyDown(controls[c]);
+            return IsKeyDown(kb_controls[c]);
             
         } else if (type >= 0 && type <= 3) {
             // Gamepad checks
             if (!IsGamepadAvailable(type)) return false;
 
-            if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.15);
-            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
-            else if (isGamePadAxis(controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, controls[c]) < -0.15);
-            else if (isGamePadAxis(controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
+            if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.15);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.15);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
 
-            else if (isGamePadTrigger(controls[c])) return (GetGamepadAxisMovement(type, controls[c]) > 0.15);
-            else return IsGamepadButtonDown(type, controls[c]);
+            else if (isGamePadTrigger(gp_controls[c])) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
+            else return IsGamepadButtonDown(type, gp_controls[c]);
 
         } else return false;
     }
 
-    std::string getActionBind(Control c) { return (type == Type::KEYBOARD) ? code2key[controls[c]] : code2joy[controls[c]]; }
+    std::string getActionBind(Control c) { return (type == Type::KEYBOARD) ? code2key[kb_controls[c]] : code2joy[gp_controls[c]]; }
 
     void printAll() {
-        for (auto kv : controls) {
-            printKey(kv.first);
+        for (auto kv : kb_controls) {
+            printKey(KEYBOARD, kv.first);
+        }
+        for (auto kv : gp_controls) {
+            printKey(CONTROLLER_0, kv.first);
         }
     }
 
-    void printKey(Control c) {
+    void printKey(Type t, Control c) {
         std::string keybind = "NONE";
-        std::string controllerName = "Controller_" + std::to_string(type);
+        std::string controllerName;
         bool isActive = false;
-        if (type == Type::KEYBOARD) { keybind = code2key[controls[c]]; isActive = IsKeyDown(controls[c]); controllerName = "Keyboard"; }
+        if (t == Type::KEYBOARD) {
+            keybind = code2key[kb_controls[c]];
+            isActive = IsKeyDown(kb_controls[c]);
+            controllerName = "Keyboard";
+        } else {
+            keybind = code2joy[gp_controls[c]];
+            if (isGamePadAxis(gp_controls[c]) || isGamePadTrigger(gp_controls[c])) isActive = (std::fabs(GetGamepadAxisMovement(t, gp_controls[c])) > 0.15);
+            else isActive = IsGamepadButtonDown(t, gp_controls[c]);
+            controllerName = "Controller_" + std::to_string(t);
+        }
 
         std::cout << "Controller: " << controllerName << ", Control: " << c << " , Keybind: " << keybind << " , Active: " << isActive << std::endl;
     }
@@ -274,6 +283,23 @@ public:
     */
 };
 
+std::string to_string(Controller::Type type) {
+    if (type == Controller::CONTROLLER_0) {
+        return "CONTROLLER 1";
+    } else if (type == Controller::CONTROLLER_1) {
+        return "CONTROLLER 2";
+    } else if (type == Controller::CONTROLLER_2) {
+        return "CONTROLLER 3";
+    } else if (type == Controller::CONTROLLER_3) {
+        return "CONTROLLER 4";
+    } else if (type == Controller::KEYBOARD) {
+        return "KEYBOARD";
+    } else if (type == Controller::NO_TYPE) {
+        return "NOT DEFINED";
+    } else {
+        return "?!";
+    }
+}
 Controller Controller_0;
 Controller Controller_1;
 Controller Controller_2;

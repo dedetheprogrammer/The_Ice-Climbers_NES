@@ -103,6 +103,7 @@ public:
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
+    void SetText(std::string text);
 
 };
 
