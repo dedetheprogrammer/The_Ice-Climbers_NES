@@ -213,7 +213,7 @@ public:
             onCloud = false;
         }
 
-        if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned")) || contact.gameObject.tag == "Icicle") {
+        if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned"))) {
             if (!isStunned) {
                 if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
                     std::cout << "if 1" << std::endl;
@@ -222,8 +222,6 @@ public:
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 }else if(contact.contact_normal.x){
-
-                            std::cout << "else 4" << std::endl;
                     if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                         lifes--;
                         animator["Stunned"];
@@ -234,6 +232,32 @@ public:
                         animator["Stunned"];
                         isStunned = true;
                         rigidbody.velocity.x = 0;
+                    }
+                }
+            }
+        }
+
+        if (contact.gameObject.tag == "Icicle") {
+            if (!isStunned) {
+                if (!isAttacking) {
+                    std::cout << "if 1" << std::endl;
+                    lifes--;
+                    animator["Stunned"];
+                    isStunned = true;
+                    rigidbody.velocity.x = 0;
+                } else if(isAttacking && contact.contact_normal.x){
+                    if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
+                        lifes--;
+                        animator["Stunned"];
+                        isStunned = true;
+                        rigidbody.velocity.x = 0;
+                    } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
+                        lifes--;
+                        animator["Stunned"];
+                        isStunned = true;
+                        rigidbody.velocity.x = 0;
+                    } else{
+                        contact.gameObject.Destroy();
                     }
                 }
             }

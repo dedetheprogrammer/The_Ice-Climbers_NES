@@ -93,16 +93,6 @@ public:
             contact.gameObject.Destroy();
             gameObject.Destroy();
         }
-        if (contact.gameObject.tag == "Player") {
-            if (contact.gameObject.getComponent<Script, PopoBehavior>().isAttacking) {
-                if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
-                    gameObject.Destroy();
-                }
-                if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
-                    gameObject.Destroy();
-                }
-            }
-        }
     }
 
     void Update() override {
@@ -298,18 +288,18 @@ public:
                     auto icicle_size = Icicle.getComponent<Sprite>().GetViewDimensions();
                     if (last_sense > 0) {
                         transform.position.x = GetScreenWidth() + 70;
-                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, original_level - (original_level - icicle_size.y)}});
-                        std::cout << "Topi x = " << transform.position.x << std::endl;
-                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.y << std::endl;
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 1}});
+                        std::cout << "Topi x = " << transform.position.x << "Topi y = " << transform.position.y << std::endl;
+                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.x << "Icicle y = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (isRight) {
                             isRight = !isRight;
                             animator.Flip();
                         }
                     } else {
                         transform.position.x = -(animator.GetViewDimensions().x + 70);
-                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, original_level - (original_level - icicle_size.y)}});
-                        std::cout << "Topi x = " << transform.position.x << std::endl;
-                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.y << std::endl;
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 1}});
+                        std::cout << "Topi x = " << transform.position.x << "Topi y = " << transform.position.y << std::endl;
+                        std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.x << "Icicle y = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (!isRight) {
                             isRight = !isRight;
                             animator.Flip();
@@ -318,13 +308,13 @@ public:
                 } else {
                     rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
                     if (rigidbody.velocity.x < 0) {
-                        transform.position.x = GetScreenWidth() + 40;
+                        transform.position.x = GetScreenWidth();
                         if (isRight) {
                             isRight = !isRight;
                             animator.Flip();
                         }
                     } else {
-                        transform.position.x = -(animator.GetViewDimensions().x + 40);
+                        transform.position.x = -(animator.GetViewDimensions().x);
                         if (!isRight) {
                             isRight = !isRight;
                             animator.Flip();
@@ -337,6 +327,8 @@ public:
                 current_cooldown += GetFrameTime();
             }
         } else {
+            if(rigidbody.velocity.x == 0)
+                rigidbody.velocity.x = last_sense * rigidbody.acceleration.x;
             transform.position.x += rigidbody.velocity.x * deltaTime;
             if (!spawned){
                 if (transform.position.x < (GetScreenWidth()+10) && rigidbody.velocity.x < 0) {
