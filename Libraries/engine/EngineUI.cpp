@@ -297,6 +297,32 @@ void UIText::Reescale() {
     }
 }
 
+void UIText::SetText(std::string text) {
+    this->text = text;
+    size = MeasureTextEx(font, text.c_str(), font_size, spacing);
+    if (pivot == UP_LEFT) {
+        this->pos = ref_pos;
+    } else if (pivot == UP_CENTER) {
+        this->pos = {ref_pos.x - size.x/2, ref_pos.y};
+    } else if (pivot == UP_RIGHT) {
+        this->pos = {ref_pos.x - size.x, ref_pos.y};
+    } else if (pivot == CENTER_LEFT) {
+        this->pos = {ref_pos.x, ref_pos.y - size.y/2};
+    } else if (pivot == CENTER) {
+        this->pos = {ref_pos.x - size.x/2, ref_pos.y - size.y/2};
+    } else if (pivot == CENTER_RIGHT) {
+        this->pos = {ref_pos.x - size.x, ref_pos.y - size.y/2};
+    } else if (pivot == DOWN_LEFT) {
+        this->pos = {ref_pos.x, ref_pos.y - size.y};
+    } else if (pivot == DOWN_CENTER) {
+        this->pos = {ref_pos.x - size.x/2, ref_pos.y - size.y};
+    } else if (pivot == DOWN_RIGHT) {
+        this->pos = {ref_pos.x - size.x, ref_pos.y - size.y};
+    }
+    Reescale();
+}
+
+
 // ============================================================================
 // ============================================================================
 // Componentes

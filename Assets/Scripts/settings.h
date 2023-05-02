@@ -193,16 +193,13 @@ void controller_init_config(Controller& controller, int controllerNumber, std::i
     controller.type = (Controller::Type)type;
 
     if (type == Controller::KEYBOARD) {
-
         controller.kb_controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["KB_Left"]);
         controller.kb_controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["KB_Right"]);
         controller.kb_controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["KB_Down"]);
         controller.kb_controls[Controller::UP] = std::get<int>(ini[controllerSection]["KB_Up"]);
         controller.kb_controls[Controller::JUMP] = std::get<int>(ini[controllerSection]["KB_Jump"]);
         controller.kb_controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["KB_Attack"]);
-
     } else if (type >= Controller::CONTROLLER_0 && type <= Controller::CONTROLLER_3) {
-
         controller.gp_controls[Controller::LEFT] = std::get<int>(ini[controllerSection]["GP_Left"]);
         controller.gp_controls[Controller::RIGHT] = std::get<int>(ini[controllerSection]["GP_Right"]);
         controller.gp_controls[Controller::DOWN] = std::get<int>(ini[controllerSection]["GP_Down"]);
@@ -281,6 +278,7 @@ void init_config() {
     controller_init_config(Controller_3, 3, in);
     //-- Audio:
     InitAudioDevice(); // Initialize audio device.
+    SetMasterVolume(std::get<float>(ini["Audio"]["Volume"]));
     //-- Controls:
     SetExitKey(KEY_NULL);
 }

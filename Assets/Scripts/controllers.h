@@ -283,6 +283,23 @@ public:
     */
 };
 
+std::string to_string(Controller::Type type) {
+    if (type == Controller::CONTROLLER_0) {
+        return "CONTROLLER 1";
+    } else if (type == Controller::CONTROLLER_1) {
+        return "CONTROLLER 2";
+    } else if (type == Controller::CONTROLLER_2) {
+        return "CONTROLLER 3";
+    } else if (type == Controller::CONTROLLER_3) {
+        return "CONTROLLER 4";
+    } else if (type == Controller::KEYBOARD) {
+        return "KEYBOARD";
+    } else if (type == Controller::NO_TYPE) {
+        return "NOT DEFINED";
+    } else {
+        return "?!";
+    }
+}
 Controller Controller_0;
 Controller Controller_1;
 Controller Controller_2;
