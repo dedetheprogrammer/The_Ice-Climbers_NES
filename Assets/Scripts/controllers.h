@@ -5,7 +5,128 @@
 #include <iostream>
 #include "raylib.h"
 
+typedef enum {
+    GAMEPAD_EJE_IZQ_X = 18,
+    GAMEPAD_EJE_IZQ_Y,
+    GAMEPAD_EJE_DER_X,
+    GAMEPAD_EJE_DER_Y,
+    GAMEPAD_EJE_GAT_IZQ,
+    GAMEPAD_EJE_GAT_DER
+} EjesGamepad;
 
+std::unordered_map<int, bool> validKeys = {
+    {KEY_NULL, false},
+    // Alphanumeric keys
+    {KEY_APOSTROPHE, true},
+    {KEY_COMMA, true},
+    {KEY_MINUS, true},
+    {KEY_PERIOD, true},
+    {KEY_SLASH, true},
+    {KEY_ZERO, true},
+    {KEY_ONE, true},
+    {KEY_TWO, true},
+    {KEY_THREE, true},
+    {KEY_FOUR, true},
+    {KEY_FIVE, true},
+    {KEY_SIX, true},
+    {KEY_SEVEN, true},
+    {KEY_EIGHT, true},
+    {KEY_NINE, true},
+    {KEY_SEMICOLON, true},
+    {KEY_A, true},
+    {KEY_B, true},
+    {KEY_C, true},
+    {KEY_D, true},
+    {KEY_E, true},
+    {KEY_F, true},
+    {KEY_G, true},
+    {KEY_H, true},
+    {KEY_I, true},
+    {KEY_J, true},
+    {KEY_K, true},
+    {KEY_L, true},
+    {KEY_M, true},
+    {KEY_N, true},
+    {KEY_O, true},
+    {KEY_P, true},
+    {KEY_Q, true},
+    {KEY_R, true},
+    {KEY_S, true},
+    {KEY_T, true},
+    {KEY_U, true},
+    {KEY_V, true},
+    {KEY_W, true},
+    {KEY_X, true},
+    {KEY_Y, true},
+    {KEY_Z, true},
+    {KEY_LEFT_BRACKET, true},
+    {KEY_BACKSLASH, true},
+    {KEY_RIGHT_BRACKET, true},
+    {KEY_GRAVE, true},
+    // Function keys
+    {KEY_SPACE, true},
+    {KEY_ESCAPE, false},
+    {KEY_ENTER, false},
+    {KEY_TAB, true},
+    {KEY_BACKSPACE, true},
+    {KEY_RIGHT, true},
+    {KEY_LEFT, true},
+    {KEY_DOWN, true},
+    {KEY_UP, true},
+    {KEY_PAGE_UP, true},
+    {KEY_PAGE_DOWN, true},
+    {KEY_HOME, true},
+    {KEY_END, true},
+    {KEY_CAPS_LOCK, true},
+    {KEY_SCROLL_LOCK, true},
+    {KEY_NUM_LOCK, true},
+    {KEY_PRINT_SCREEN, true},
+    {KEY_PAUSE, false},
+    {KEY_F1, false},
+    {KEY_F2, false},
+    {KEY_F3, false},
+    {KEY_F4, false},
+    {KEY_F5, false},
+    {KEY_F6, false},
+    {KEY_F7, false},
+    {KEY_F8, false},
+    {KEY_F9, false},
+    {KEY_F10, false},
+    {KEY_F11, false},
+    {KEY_F12, false},
+    {KEY_LEFT_SHIFT, true},
+    {KEY_LEFT_CONTROL, true},
+    {KEY_LEFT_ALT, true},
+    {KEY_LEFT_SUPER, true},
+    {KEY_RIGHT_SHIFT, true},
+    {KEY_RIGHT_CONTROL, true},
+    {KEY_RIGHT_ALT, true},
+    {KEY_RIGHT_SUPER, true},
+    {KEY_KB_MENU, false},
+    // Keypad keys
+    {KEY_KP_0, true},
+    {KEY_KP_1, true},
+    {KEY_KP_2, true},
+    {KEY_KP_3, true},
+    {KEY_KP_4, true},
+    {KEY_KP_5, true},
+    {KEY_KP_6, true},
+    {KEY_KP_7, true},
+    {KEY_KP_8, true},
+    {KEY_KP_9, true},
+    {KEY_KP_DECIMAL, true},
+    {KEY_KP_DIVIDE, true},
+    {KEY_KP_MULTIPLY, true},
+    {KEY_KP_SUBTRACT, true},
+    {KEY_KP_ADD, true},
+    {KEY_KP_ENTER, false},
+    {KEY_KP_EQUAL, true},
+    // Android key buttons
+    {KEY_BACK, false},
+    {KEY_MENU, false},
+    {KEY_VOLUME_UP, false},
+    {KEY_VOLUME_DOWN, false}
+};
 std::unordered_map<int, std::string> code2key = {
     {KEY_NULL, "NULL"},
     // Alphanumeric keys
@@ -138,12 +259,13 @@ std::unordered_map<int, std::string> code2joy = {
     {GAMEPAD_BUTTON_MIDDLE_RIGHT, "MIDDLE_RIGHT"},
     {GAMEPAD_BUTTON_LEFT_THUMB, "LEFT_THUMB"},
     {GAMEPAD_BUTTON_RIGHT_THUMB, "RIGHT_THUMB"},
-    {GAMEPAD_AXIS_LEFT_X, "AXIS_LEFT_X"},
-    {GAMEPAD_AXIS_LEFT_Y, "AXIS_LEFT_Y"},
-    {GAMEPAD_AXIS_RIGHT_X, "AXIS_RIGHT_X"},
-    {GAMEPAD_AXIS_RIGHT_Y, "AXIS_RIGHT_Y"},
-    {GAMEPAD_AXIS_LEFT_TRIGGER, "AXIS_LEFT_TRIGGER"},
-    {GAMEPAD_AXIS_RIGHT_TRIGGER, "AXIS_RIGHT_TRIGGER"}
+
+    {GAMEPAD_EJE_IZQ_X, "AXIS_LEFT_X"},
+    {GAMEPAD_EJE_IZQ_Y, "AXIS_LEFT_Y"},
+    {GAMEPAD_EJE_DER_X, "AXIS_RIGHT_X"},
+    {GAMEPAD_EJE_DER_Y, "AXIS_RIGHT_Y"},
+    {GAMEPAD_EJE_GAT_IZQ, "AXIS_LEFT_TRIGGER"},
+    {GAMEPAD_EJE_GAT_DER, "AXIS_RIGHT_TRIGGER"}
 };
 //-----------------------------------------------------------------------------
 // Controller
@@ -152,14 +274,14 @@ class Controller {
 private:
     //...
     bool isGamePadAxis(int binding) {
-        return  binding == GAMEPAD_AXIS_LEFT_X  ||
-                binding == GAMEPAD_AXIS_LEFT_Y  ||
-                binding == GAMEPAD_AXIS_RIGHT_X ||
-                binding == GAMEPAD_AXIS_RIGHT_Y;
+        return  binding == GAMEPAD_EJE_IZQ_X    ||
+                binding == GAMEPAD_EJE_IZQ_Y    ||
+                binding == GAMEPAD_EJE_DER_X    ||
+                binding == GAMEPAD_EJE_DER_Y;
     }
     bool isGamePadTrigger(int binding) {
-        return  binding == GAMEPAD_AXIS_LEFT_TRIGGER    ||
-                binding == GAMEPAD_AXIS_RIGHT_TRIGGER;
+        return  binding == GAMEPAD_EJE_GAT_IZQ  ||
+                binding == GAMEPAD_EJE_GAT_DER;
     }
 public:
     enum Type{NO_TYPE=-1, CONTROLLER_0, CONTROLLER_1, CONTROLLER_2, CONTROLLER_3, KEYBOARD};
@@ -202,12 +324,10 @@ public:
             // Gamepad checks
             if (!IsGamepadAvailable(type)) return false;
 
-            if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.15);
-            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
-            else if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c]) < -0.15);
-            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
+            if (isGamePadAxis(gp_controls[c]) && c%2 == 0) return (GetGamepadAxisMovement(type, gp_controls[c] - GAMEPAD_EJE_IZQ_X) < -0.15);
+            else if (isGamePadAxis(gp_controls[c]) && c%2 == 1) return (GetGamepadAxisMovement(type, gp_controls[c] - GAMEPAD_EJE_IZQ_X) > 0.15);
 
-            else if (isGamePadTrigger(gp_controls[c])) return (GetGamepadAxisMovement(type, gp_controls[c]) > 0.15);
+            else if (isGamePadTrigger(gp_controls[c])) return (GetGamepadAxisMovement(type, gp_controls[c] - GAMEPAD_EJE_IZQ_X) > 0.15);
             else return IsGamepadButtonDown(type, gp_controls[c]);
 
         } else return false;
@@ -216,9 +336,11 @@ public:
     std::string getActionBind(Control c) { return (type == Type::KEYBOARD) ? code2key[kb_controls[c]] : code2joy[gp_controls[c]]; }
 
     void printAll() {
+        std::cout << "Keyboard bindings:" << std::endl;
         for (auto kv : kb_controls) {
             printKey(KEYBOARD, kv.first);
         }
+        std::cout << "Controller bindings:" << std::endl;
         for (auto kv : gp_controls) {
             printKey(CONTROLLER_0, kv.first);
         }
@@ -234,7 +356,7 @@ public:
             controllerName = "Keyboard";
         } else {
             keybind = code2joy[gp_controls[c]];
-            if (isGamePadAxis(gp_controls[c]) || isGamePadTrigger(gp_controls[c])) isActive = (std::fabs(GetGamepadAxisMovement(t, gp_controls[c])) > 0.15);
+            if (isGamePadAxis(gp_controls[c]) || isGamePadTrigger(gp_controls[c])) isActive = (std::fabs(GetGamepadAxisMovement(t, gp_controls[c] - GAMEPAD_EJE_IZQ_X)) > 0.15);
             else isActive = IsGamepadButtonDown(t, gp_controls[c]);
             controllerName = "Controller_" + std::to_string(t);
         }
@@ -300,6 +422,20 @@ std::string to_string(Controller::Type type) {
         return "?!";
     }
 }
+
+std::string to_string(Controller::Control control) {
+    switch (control) {
+        case Controller::NO_CONTROL: return "NO CONTROL";
+        case Controller::LEFT: return "MOVE LEFT";
+        case Controller::RIGHT: return "MOVE RIGHT";
+        case Controller::DOWN: return "CROUCH";
+        case Controller::UP: return "MOVE UP";
+        case Controller::JUMP: return "JUMP";
+        case Controller::ATTACK: return "ATTACK";
+        default: return "?!";
+    }
+}
+
 Controller Controller_0;
 Controller Controller_1;
 Controller Controller_2;
@@ -307,3 +443,27 @@ Controller Controller_3;
 
 
 Controller* controllers[] = {&Controller_0, &Controller_1, &Controller_2, &Controller_3};
+
+// Returns the controller number and control with which the binding is conflicted
+// (only the first one if there are multiple and excepting 'control')
+// if there is no conflict returns the pair (-1, NO_CONTROL)
+std::pair<int, Controller::Control> isBindingConflicted(int controllerNumber, Controller::Control control, int binding) {
+    if (binding <= 0) return std::pair(-1, Controller::NO_CONTROL);
+
+    auto controller = controllers[controllerNumber];
+
+    if (controller->type == Controller::KEYBOARD) {
+        for (int i = 0; i < 4; i++) {
+            for (auto kv : controllers[i]->kb_controls) {
+                if (kv.first == Controller::NO_CONTROL || (controllerNumber == i && kv.first == control)) continue;
+                if (binding == kv.second) return std::pair(i, kv.first);
+            }
+        }
+    } else {
+        for (auto kv : controller->gp_controls) {
+            if (kv.first == Controller::NO_CONTROL || kv.first == control) continue;
+            if (binding == kv.second) return std::pair(controllerNumber, kv.first);
+        }
+    }
+    return std::pair(-1, Controller::NO_CONTROL);
+}
