@@ -21,6 +21,7 @@ public:
     int lifes;
     bool brokeBlock;
     bool isAttacking; // Telling us if the object is attacking.
+    bool isCrouched;
     bool isRight;     // Telling us if the object is facing to the right.
     bool isStunned;
     int frutasRecogidas;
@@ -53,6 +54,7 @@ public:
         isJumping   = false;
         isRight     = true;
         isAttacking = false;
+        isCrouched  = false;
         hasBounced  = false;
         onCloud = false;
         isStunned = false;
@@ -82,6 +84,7 @@ public:
         isGrounded  = behavior.isGrounded;
         isRight     = behavior.isRight;
         isAttacking = behavior.isAttacking;
+        isCrouched  = behavior.isCrouched;
         onCloud     = behavior.onCloud;
         isStunned   = behavior.isStunned;
         brokeBlock  = behavior.brokeBlock;
@@ -108,8 +111,14 @@ public:
         if (controller.isDown(Controller::RIGHT)) move += 1;
 
         if (contact.gameObject.tag == "Floor") {
-            int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
+            float pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
                 pos_p2 = transform.position.x + collider.size.x;
+            
+
+            std::cout << "pos_p1 = " << transform.position.x << std::endl;
+            std::cout << "pos_p2 = " << pos_p2 << std::endl;
+            std::cout << "pos_x1 = " << pos_x1 << std::endl;
+            std::cout << "pos_x2 = " << pos_x2 << std::endl;
             if (contact.contact_normal.y != 0 && ((transform.position.x > pos_x1 && transform.position.x < pos_x2) || (pos_p2 > pos_x1 && pos_p2 < pos_x2))) {
                 if (contact.contact_normal.y < 0) {
                     if (isJumping || isBraking) {
@@ -148,12 +157,13 @@ public:
                     isGrounded = true;
                     brokeBlock = false;
                     last_save_position = transform.position;
+                    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                 }else{
                     if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
                     std::cout << contact.gameObject.name << std::endl;
                     animator["Fall"];
+                    rigidbody.velocity.y *= -1;
                 }
-                rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             }
             if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
                 (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y)))
@@ -182,6 +192,33 @@ public:
                     }
                 }
             }
+        }
+
+        if (contact.gameObject.tag == "SlidingFloor") {
+            if (contact.contact_normal.y < 0) {
+                isGrounded = true;
+                brokeBlock = false;
+                isJumping  = false;
+                onCloud = false;//true;
+                if (!move) {
+                    animator["Idle"];
+                } else {
+                    animator["Walk"];
+                    if ((move > 0 && !isRight) || (move < 0 && isRight)) {
+                        isRight = !isRight;
+                        animator.Flip();
+                    }
+                }
+                rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().max_velocity.x);
+            }
+            if (contact.contact_normal.x != 0) {
+                rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().max_velocity.x);
+                if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+                    isRight = !isRight;
+                    animator.Flip();
+                }
+            }
+            rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
         }
 
         if (contact.gameObject.tag == "Cloud") {
@@ -263,33 +300,6 @@ public:
             }
         }
 
-        if (contact.gameObject.tag == "SlidingFloor") {
-            if (contact.contact_normal.y < 0) {
-                isGrounded = true;
-                brokeBlock = false;
-                isJumping  = false;
-                onCloud = false;//true;
-                if (!move) {
-                    animator["Idle"];
-                } else {
-                    animator["Walk"];
-                    if ((move > 0 && !isRight) || (move < 0 && isRight)) {
-                        isRight = !isRight;
-                        animator.Flip();
-                    }
-                }
-                rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().velocity.x);
-            }
-            if (contact.contact_normal.x != 0) {
-                rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().velocity.x);
-                if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
-                    isRight = !isRight;
-                    animator.Flip();
-                }
-            }
-            rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
-        }
-
         if (contact.gameObject.tag == "Goal") {
             if (contact.contact_normal.y > 0) {
                 victory = true;
@@ -309,8 +319,12 @@ public:
         // Auxiliar variables:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
+        
+        /*if (controller.isDown(Controller::DOWN) && !isCrouched && isGrounded) {
+            isCrouched = true;
+        }*/
 
-        if (!isAttacking) {
+        if (!isAttacking/* && !isCrouched*/) {
             // Horizontal movement:
             //move = GetAxis("Horizontal");
             if (controller.isDown(Controller::LEFT)) move -= 1;
@@ -385,7 +399,10 @@ public:
             }
         } else if (animator.HasFinished("Attack")) {
             isAttacking = false;
-            animator["Idle"];
+            //if(!isCrouched)
+                animator["Idle"];
+            //else
+            //    animator["Crouch"];
             collider.size = collider_size;
             collider.offset = collider_offset;
         }

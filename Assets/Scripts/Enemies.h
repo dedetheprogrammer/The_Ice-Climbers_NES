@@ -99,7 +99,7 @@ public:
         float deltaTime = GetFrameTime();
         transform.position.x += rigidbody.velocity.x * deltaTime;
         //transform.position.y += rigidbody.velocity.y * deltaTime;
-        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
+        //rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
 };
@@ -191,13 +191,13 @@ public:
         original_level = transform.position.y;
         rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
         if (rigidbody.velocity.x < 0) {
-            transform.position.x = GetScreenWidth() + 70;
+            transform.position.x = GetScreenWidth();
             if (isRight) {
                 isRight = !isRight;
                 animator.Flip();
             }
         } else {
-            transform.position.x = -(animator.GetViewDimensions().x + 70);
+            transform.position.x = -(animator.GetViewDimensions().x);
         }
     }
 
@@ -214,7 +214,7 @@ public:
             int pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
                 dis_x1x2_2 = (pos_x2 - pos_x1)/2,
                 pos_p2 = collider.Pos().x + collider.size.x;
-            if (!hasFallen) {
+            if (!hasFallen && !isRunning) {
                 std::cout << collider.Pos().x << "," << pos_x2 << "," << isRight << "\n";
                 if (((isRight && (pos_p2 <= pos_x1-1)) || (!isRight && (collider.Pos().x >= pos_x2)))) {
                     rigidbody.velocity.x *= -2;
@@ -288,7 +288,7 @@ public:
                     auto icicle_size = Icicle.getComponent<Sprite>().GetViewDimensions();
                     if (last_sense > 0) {
                         transform.position.x = GetScreenWidth() + 70;
-                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 1}});
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
                         std::cout << "Topi x = " << transform.position.x << "Topi y = " << transform.position.y << std::endl;
                         std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.x << "Icicle y = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (isRight) {
@@ -297,7 +297,7 @@ public:
                         }
                     } else {
                         transform.position.x = -(animator.GetViewDimensions().x + 70);
-                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 1}});
+                        auto ic = GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + 40, original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
                         std::cout << "Topi x = " << transform.position.x << "Topi y = " << transform.position.y << std::endl;
                         std::cout << "Icicle x = " << ic.getComponent<Transform2D>().position.x << "Icicle y = " << ic.getComponent<Transform2D>().position.y << std::endl;
                         if (!isRight) {

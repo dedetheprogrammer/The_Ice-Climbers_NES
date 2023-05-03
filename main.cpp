@@ -93,7 +93,7 @@ void Game(int numPlayers, int level) {
 
     // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
-    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{1224, 8.0f*vertical_scale*2.0f}, PINK);
+    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{WINDOW_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
 
     // Bloque de hierba
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
@@ -138,7 +138,7 @@ void Game(int numPlayers, int level) {
 
     IceSlidingBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_sliding_block.png", horizontal_scale, vertical_scale);
     IceSlidingBlock.addComponent<Collider2D>(&IceSlidingBlock.getComponent<Transform2D>().position, IceSlidingBlock  .getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
-    IceSlidingBlock.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    IceSlidingBlock.addComponent<RigidBody2D>(1, 0, Vector2{100,0}, Vector2{0, 0});
     IceSlidingBlock.addComponent<Script, SlidingBlockBehavior>();
     IceSlidingBlock.getComponent<Script, SlidingBlockBehavior>().hole = &IceSlidingHole;
 
@@ -148,7 +148,7 @@ void Game(int numPlayers, int level) {
 
     IceSlidingHole.addComponent<Collider2D>(&IceSlidingHole.getComponent<Transform2D>().position, Vector2{(float)block_width, (float)block_height}, RED);
     IceSlidingHole.addComponent<Script, HoleBehavior>();
-    IceSlidingHole.getComponent<Script, HoleBehavior>().original_block = &IceSlidingHole;
+    IceSlidingHole.getComponent<Script, HoleBehavior>().original_block = &IceSlidingBlock;
 
     // Muros fino
     GameObject Wall("Wall", "Wall");
@@ -210,7 +210,7 @@ void Game(int numPlayers, int level) {
         {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, scale, 0.3, false)},
         {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, scale, 0.5, true)},
         {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, scale, 0.3, false)},
-        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 15, 15, scale, 0.75, false)},
     });
     Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, scale, 0.75, true)},
@@ -220,7 +220,7 @@ void Game(int numPlayers, int level) {
         {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, scale, 0.3, false)},
         {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 21, scale, 0.5, true)},
         {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, scale, 0.3, false)},
-        //{"Crouch", Animation("Assets/Sprites/Popo/06_Crouch.png", 0,0,0,0, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 15, 15, scale, 0.75, false)},
     });
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
@@ -230,7 +230,8 @@ void Game(int numPlayers, int level) {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
+    std::cout << block_height << std::endl;
+    Popo.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{70,0}, Vector2{200, block_height * 18.0f});
     Nana.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
@@ -434,12 +435,12 @@ void Game(int numPlayers, int level) {
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - eggplant_height}});
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - eggplant_height}});
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
 
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[4] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[6] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[4] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[6] - (topi_size.y + 1)}}));
         GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
     } else if(level == 1) {
 
@@ -463,15 +464,16 @@ void Game(int numPlayers, int level) {
         GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
 
         for (int i = 0; i < 22; i++) {
-            if(i != 5 && i != 6 && i != 7 && i != 10 && i != 11 && i != 12) {
+            if(i != 5 && i != 6 && i != 7 && i != 10 && i != 8 && i != 9 && i != 11 && i != 12)
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            } else if(i == 5 || i == 10) {
+            else if(i == 5 || i == 10) 
                 GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            }
-        }
-        for (int i = 0; i < 22; i++) {
+            else if(i == 8 || i == 9)
+                GameSystem::Instantiate(DirtHole, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
             if(i != 6 && i != 11)
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+        }
+        for (int i = 0; i < 22; i++) {
         }
         GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
 
@@ -527,11 +529,11 @@ void Game(int numPlayers, int level) {
         GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
         GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - lettuce_height}});
 
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[3] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[5] - topi_size.y}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[7] - topi_size.y}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[2] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[3] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[5] - (topi_size.y + 1)}}));
+        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[7] - (topi_size.y + 1)}}));
         GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
     }
 
@@ -699,7 +701,33 @@ void Game(int numPlayers, int level) {
     LevelFloor_0.Destroy();
     LevelFloor_1.Destroy();
     LevelFloor_2.Destroy();
+    LevelFloor_3.Destroy();
+    LevelFloor_4.Destroy();
+    BaseFloor.Destroy();
     GrassBlock.Destroy();
+    DirtBlock.Destroy();
+    IceBlock.Destroy();
+    GrassHole.Destroy();
+    DirtHole.Destroy();
+    IceHole.Destroy();
+    GrassWall.Destroy();
+    DirtWall.Destroy();
+    IceWall.Destroy();
+    IceSlidingBlock.Destroy();
+    IceSlidingHole.Destroy();
+    Wall.Destroy();
+    LevelWall_0.Destroy();
+    LevelWall_1.Destroy();
+    LevelWall_2.Destroy();
+    Topi.Destroy();
+    Nutpicker.Destroy();
+    Eggplant.Destroy();
+    Lettuce.Destroy();
+    Icicle.Destroy();
+    Condor.Destroy();
+    Cloud.Destroy();
+    SmallCloud.Destroy();
+    Death.Destroy();
     GameSystem::DestroyAll();
     BGM.Unload();
 }
@@ -1065,6 +1093,11 @@ int main() {
                     if (!CONFIGURE_MATCH) {
                         if (IsKeyPressed(KEY_ESCAPE)) {
                             CURRENT_MENU = NORMAL_GAME;
+                            BLOCK = false;
+                            HV = 2;
+                            Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
+                            OPTION = 0;
+                            OPTIONS = 2;
                         } else if (IsKeyPressed(KEY_LEFT)) {
                             selected_level = mod(selected_level-1, 4);
                         } else if (IsKeyPressed(KEY_RIGHT)) {
@@ -1224,6 +1257,7 @@ int main() {
                                 OPTION  = 0;
                                 OPTIONS = 3;
                                 HV = 0;
+                                BLOCK = false;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                             }
                             p1current_time = p2current_time = 0;
@@ -1562,7 +1596,6 @@ int main() {
                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + (OPTIONS - (OPTIONS-OPTION))*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                 }
             }
-
         }
 
         if (IsKeyPressed(KEY_TWO)) {
