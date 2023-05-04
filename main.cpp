@@ -168,6 +168,8 @@ void Game(int numPlayers, int level) {
     GameObject LevelFloor_2("Level Floor 2", "Floor");
     GameObject LevelFloor_3("Level Floor 3", "Floor");
     GameObject LevelFloor_4("Level Floor 4", "Floor");
+    GameObject BonusLevelFloor_0("Bonus 0", "Floor");
+    GameObject BonusLevelFloor_1("Bonus 1", "Floor");
     GameObject LevelWall_0("Level Wall 0", "Wall");
     GameObject LevelWall_1("Level Wall 1", "Wall");
     GameObject LevelWall_2("Level Wall 2", "Wall");
@@ -179,6 +181,8 @@ void Game(int numPlayers, int level) {
     LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
     LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width, block_height}, PINK);
     LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width, block_height}, PINK);
+    BonusLevelFloor_0.addComponent<Collider2D>(&BonusLevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
+    BonusLevelFloor_1.addComponent<Collider2D>(&BonusLevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width, block_height}, PINK);
     LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 6.0f}, YELLOW);
     LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 7.0f}, YELLOW);
     LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 3.0f}, YELLOW);
@@ -210,8 +214,19 @@ void Game(int numPlayers, int level) {
         {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, scale, 0.3, false)},
         {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, scale, 0.5, true)},
         {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, scale, 0.3, false)},
-        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 15, 15, scale, 0.75, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 16, 24, scale, 0.75, true)},
     });
+    auto PopoBonusAnimator = std::unordered_map<std::string, Animation> {
+        {"Idle", Animation("Assets/Sprites/Popo/00_Idle_Bonus.png", 16, 24, scale, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/02_Walk_Bonus.png", 16, 24, scale, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/03_Brake_Bonus.png", 16, 24, scale, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/04_Jump_Bonus.png", 20, 25, scale, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/05_Attack_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, scale, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/07_Fall_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch_Bonus.png", 16, 24, scale, 0.75, true)},
+    };
+
     Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, scale, 0.75, true)},
         {"Walk", Animation("Assets/Sprites/Nana/02_Walk.png", 16, 24, scale, 0.135, true)},
@@ -220,7 +235,7 @@ void Game(int numPlayers, int level) {
         {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, scale, 0.3, false)},
         {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 21, scale, 0.5, true)},
         {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, scale, 0.3, false)},
-        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 15, 15, scale, 0.75, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 16, 24, scale, 0.75, true)},
     });
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
@@ -231,8 +246,8 @@ void Game(int numPlayers, int level) {
     });
     // 4. Añadimos el Rigidbody:
     std::cout << block_height << std::endl;
-    Popo.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{70,0}, Vector2{200, block_height * 18.0f});
-    Nana.addComponent<RigidBody2D>(1, 500, Vector2{70,0}, Vector2{200,400});
+    Popo.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
+    Nana.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
@@ -301,18 +316,18 @@ void Game(int numPlayers, int level) {
             {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, scale, 0.5, true)},
         }
     );
-    Topi.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Topi.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 3.0f,0});
     Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>(Icicle);
 
     GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
     Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
-            {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, 3, 0.3, true)},
-            {"Stunned", Animation("Assets/Sprites/Nutpicker - Spritesheet 02 - Stunned.png", 16, 16, 3, 0.5, true)},
+            {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, scale, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Nutpicker - Spritesheet 02 - Stunned.png", 16, 16, scale, 0.5, true)},
         }
     );
-    Nutpicker.addComponent<RigidBody2D>(1, 375, Vector2{0,0}, Vector2{70,0});
+    Nutpicker.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 3.0f,0});
     Nutpicker.addComponent<Collider2D>(&Nutpicker.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
 
@@ -367,10 +382,12 @@ void Game(int numPlayers, int level) {
     GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, (float)WINDOW_HEIGHT - block_height * 104.0f}});
 
     std::vector<GameObject*> Enemies{};
+    GameObject* bonusLevel = nullptr;
+
     if(level == 0) {
 
         std::vector<float> bonus_floor_levels = {
-            (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
+            (float)WINDOW_HEIGHT - block_height * 55.0f, // 0
             (float)WINDOW_HEIGHT - block_height * 58.0f, // 1
             (float)WINDOW_HEIGHT - block_height * 60.0f, // 2  Cloud
             (float)WINDOW_HEIGHT - block_height * 65.0f, // 3
@@ -405,11 +422,10 @@ void Game(int numPlayers, int level) {
         GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
         GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
 
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+        bonusLevel = &GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(BonusLevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+        GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
 
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[1]}});
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[2]}});
 
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
@@ -434,7 +450,7 @@ void Game(int numPlayers, int level) {
 
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - eggplant_height}});
+        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[3] - eggplant_height}});
         GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
 
         Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{0,floor_levels[0] - (topi_size.y + 1)}}));
@@ -445,7 +461,7 @@ void Game(int numPlayers, int level) {
     } else if(level == 1) {
 
         std::vector<float> bonus_floor_levels = {
-            (float)WINDOW_HEIGHT - block_height * 54.0f, // 0
+            (float)WINDOW_HEIGHT - block_height * 55.0f, // 0
             (float)WINDOW_HEIGHT - block_height * 60.0f, // 1 Cloud
             (float)WINDOW_HEIGHT - block_height * 65.0f, // 2
             (float)WINDOW_HEIGHT - block_height * 66.0f, // 3
@@ -546,6 +562,7 @@ void Game(int numPlayers, int level) {
     float objects_offset = 80, current_objects_offset = 0;
     float speedrun_time = 0.0f;
     float time_limit = 120.0f;
+    bool onBonus = false;
     BGM.Init();
 
     GameSystem::Start();
@@ -568,25 +585,25 @@ void Game(int numPlayers, int level) {
             paused = !paused;
         }
         if (!paused) {
-            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0) {
+            if(Player_1->getComponent<Script, PopoBehavior>().bonusLevel && !onBonus) {
+                onBonus = true;
+                GameSystem::DestroyByTag("Enemy");
+                //Player_1->removeComponent<Animator>();
+                //Player_1->addComponent<Animator>("Idle", PopoBonusAnimator);
+            }
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                 LifePopo1.Draw();
-            }
-            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1) {
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
                 LifePopo2.Draw();
-            }
-            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 2) {
+            if(Player_1->getComponent<Script, PopoBehavior>().lifes > 2)
                 LifePopo3.Draw();
-            }
-            if(numPlayers == 2){
-                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 0) {
+            if(numPlayers == 2) {
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifeNana1.Draw();
-                }
-                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 1) {
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 1)
                     LifeNana2.Draw();
-                }
-                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 2) {
+                if(Player_2->getComponent<Script, PopoBehavior>().lifes > 2)
                     LifeNana3.Draw();
-                }
             }
             if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < 150) {
                 moving_camera = true;
@@ -644,14 +661,14 @@ void Game(int numPlayers, int level) {
                 }
             } else {
                 //std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
-                float shift = 100 * GetFrameTime();
+                float shift = block_height * 6.0f * GetFrameTime();
                 current_objects_offset  += shift;
                 if (current_objects_offset <= objects_offset) {
                     GameSystem::Move({0,shift});
                     Mountain.Move({0,shift});
-                    for(auto enemy : Enemies) {
-                        enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
-                    }
+                    if(!onBonus)
+                        for(auto enemy : Enemies)
+                            enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
                 } else {
                     current_objects_offset = 0;
                     moving_camera = false;

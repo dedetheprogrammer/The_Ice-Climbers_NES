@@ -724,3 +724,9 @@ void GameSystem::DestroyAll() {
         }
     }
 }
+
+void GameSystem::DestroyByTag(std::string tag) {
+    for (auto& [_, gameObject] : GameObjects[tag]) {
+        gameObject->Destroy();
+    }
+}

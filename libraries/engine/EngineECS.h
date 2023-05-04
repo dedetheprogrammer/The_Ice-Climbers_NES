@@ -472,6 +472,7 @@ public:
     static void Start();
     static void Update();
     static void DestroyAll();
+    static void DestroyByTag(std::string tag);
 };
 
 #endif

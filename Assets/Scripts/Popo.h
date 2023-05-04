@@ -28,8 +28,10 @@ public:
     int bloquesDestruidos;
     bool victory;
     bool puntuacion;
+    bool bonusLevel;
     Vector2 collider_size;
     Vector2 collider_offset;
+    Vector2 last_collider_pos;
     // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
     // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.
@@ -61,6 +63,7 @@ public:
         brokeBlock = false;
         collider_size = collider.size;
         collider_offset = collider.offset;
+        last_collider_pos = *collider.pos;
         isBraking = false;
         last_tag = "";
         hasCollisioned = false;
@@ -68,6 +71,7 @@ public:
         puntuacion = false;
         bloquesDestruidos = 0;
         frutasRecogidas = 0;
+        bonusLevel = false;
     }
 
     PopoBehavior(GameObject& gameObject, PopoBehavior& behavior) : Script(gameObject),
@@ -90,6 +94,7 @@ public:
         brokeBlock  = behavior.brokeBlock;
         collider_size = behavior.collider_size;
         collider_offset = behavior.collider_offset;
+        last_collider_pos = behavior.last_collider_pos;
         isBraking = behavior.isBraking;
         last_tag = behavior.last_tag;
         hasCollisioned = behavior.hasCollisioned;
@@ -97,6 +102,7 @@ public:
         puntuacion = false;
         bloquesDestruidos = 0;
         frutasRecogidas = 0;
+        bonusLevel = false;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -111,17 +117,12 @@ public:
         if (controller.isDown(Controller::RIGHT)) move += 1;
 
         if (contact.gameObject.tag == "Floor") {
-            float pos_x1 = contact.gameObject.getComponent<Collider2D>().Pos().x, pos_x2 = pos_x1 + contact.gameObject.getComponent<Collider2D>().size.x,
-                pos_p2 = transform.position.x + collider.size.x;
-            
-
-            std::cout << "pos_p1 = " << transform.position.x << std::endl;
-            std::cout << "pos_p2 = " << pos_p2 << std::endl;
-            std::cout << "pos_x1 = " << pos_x1 << std::endl;
-            std::cout << "pos_x2 = " << pos_x2 << std::endl;
-            if (contact.contact_normal.y != 0 && ((transform.position.x > pos_x1 && transform.position.x < pos_x2) || (pos_p2 > pos_x1 && pos_p2 < pos_x2))) {
+            if (contact.contact_normal.y != 0) {
                 if (contact.contact_normal.y < 0) {
+
                     if (isJumping || isBraking) {
+                        if(contact.gameObject.name == "Bonus 0" || contact.gameObject.name == "Bonus 1")
+                            bonusLevel = true;
                         isBraking = true;
                         if (rigidbody.velocity.x > 0) {
                             rigidbody.velocity.x -= rigidbody.acceleration.x * deltaTime;
@@ -147,9 +148,11 @@ public:
                             isBraking = false;
                         }
                     } else {
-                        if (!isStunned && !isAttacking && !move) {
+                        if (!isStunned && !isAttacking && !move && !isCrouched) {
                             rigidbody.velocity.x = 0;
                             animator["Idle"];
+                        } else if(!isStunned && !isAttacking && !move && isCrouched && !animator.InState("Crouch")) {
+                            animator["Crouch"];
                         }
                     }
                     isJumping  = false;
@@ -162,11 +165,11 @@ public:
                     if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
                     std::cout << contact.gameObject.name << std::endl;
                     animator["Fall"];
-                    rigidbody.velocity.y *= -1;
+                    rigidbody.velocity.y *= -0.7;
                 }
             }
-            if (contact.contact_normal.x != 0 && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
-                (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y)))
+            if (contact.contact_normal.x != 0/* && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
+                (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y))*/)
             {
                 rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.02;
                 if (!isGrounded) {
@@ -180,6 +183,13 @@ public:
             }
         }
 
+        if (contact.gameObject.tag == "Hole") {
+            if (contact.contact_normal.y < 0 && !isGrounded) {
+                animator["Fall"];
+                isGrounded = false;
+            }
+        }
+        
         if (contact.gameObject.tag == "Wall") {
             rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
             if (contact.contact_normal.y != 0) {
@@ -320,13 +330,14 @@ public:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
         
-        /*if (controller.isDown(Controller::DOWN) && !isCrouched && isGrounded) {
-            isCrouched = true;
-        }*/
+        if (controller.isDown(Controller::DOWN)) {
+            if(!isCrouched && isGrounded)
+                isCrouched = true;
+        } else if(isCrouched) {
+            isCrouched = false;
+        }
 
-        if (!isAttacking/* && !isCrouched*/) {
-            // Horizontal movement:
-            //move = GetAxis("Horizontal");
+        if (!isAttacking && !isCrouched) {
             if (controller.isDown(Controller::LEFT)) move -= 1;
             if (controller.isDown(Controller::RIGHT)) move += 1;
 
@@ -375,7 +386,6 @@ public:
             // Vertical movement:
             if (!isJumping && isGrounded) {
                 if (controller.isDown(Controller::JUMP)) {
-                //if (IsKeyDown(KEY_SPACE)) {
                     isGrounded = false;
                     isJumping  = true;
                     rigidbody.velocity.x = momentum;
@@ -388,8 +398,7 @@ public:
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
                     animator["Jump"];
                     audioplayer["Jump"];
-                } else if (controller.isDown(Controller::ATTACK)) {
-                //} else if (IsKeyDown(KEY_E)) {
+                } else if (controller.isDown(Controller::ATTACK) && !bonusLevel) {
                     isAttacking = true;
                     rigidbody.velocity.x = 0;
                     animator["Attack"];
@@ -399,10 +408,10 @@ public:
             }
         } else if (animator.HasFinished("Attack")) {
             isAttacking = false;
-            //if(!isCrouched)
+            if(!isCrouched)
                 animator["Idle"];
-            //else
-            //    animator["Crouch"];
+            else if(!animator.InState("Crouch"))
+                animator["Crouch"];
             collider.size = collider_size;
             collider.offset = collider_offset;
         }
@@ -440,4 +449,3 @@ public:
     }
 
 };
-
