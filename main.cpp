@@ -733,7 +733,9 @@ void Game(int numPlayers, int level, bool speed_run) {
     float time_limit = 120.0f;
     bool onBonus = false;
     bool game_over = false;
-    int fruits_harvested = 0, blocks_destroyed = 0;
+    int fruits_harvested1 = 0, blocks_destroyed1 = 0;
+    int fruits_harvested2 = 0, blocks_destroyed2 = 0;
+    bool win1 = false, win2 = false;
     BGM.Init();
     BGM2.Init();
 
@@ -743,7 +745,7 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     UISprite BigFrame1("Assets/Sprites/Record-frame1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
     UIText Player1Text(NES, "Player 1", 40, 1, {GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
-    UIText Player1Status(NES, "YOU LOOSE! HA LOOSER", 40, 1, {GetScreenWidth()/4.0f, Player1Text.pos.y + 60}, UIObject::CENTER);
+    UIText Player1Status(NES, "YOU LOOSE!", 40, 1, {GetScreenWidth()/4.0f, Player1Text.pos.y + 60}, UIObject::CENTER);
     UISprite Icicler1("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth()/8.0f, Player1Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
     UISprite Monster1("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth()/8.0f, Icicler1.dst.y + Icicler1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
     UISprite Vegetabler1("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth()/8.0f, Monster1.dst.y + Monster1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
@@ -761,7 +763,7 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     UISprite BigFrame2("Assets/Sprites/Record-frame2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
     UIText Player2Text(NES, "Player 2", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
-    UIText Player2Status(NES, "YOU LOOSE! HA LOOSER", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Player2Text.pos.y + 60}, UIObject::CENTER);
+    UIText Player2Status(NES, "YOU LOOSE!", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Player2Text.pos.y + 60}, UIObject::CENTER);
     UISprite Icicler2("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Player2Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
     UISprite Monster2("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Icicler2.dst.y + Icicler2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
     UISprite Vegetabler2("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Monster2.dst.y + Monster2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
@@ -777,7 +779,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
     
     UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
-
+    std::cout << "1" << std::endl;
     GameSystem::Start();
     while(!finished) {
         BeginDrawing();
@@ -796,24 +798,29 @@ void Game(int numPlayers, int level, bool speed_run) {
         } else if (IsKeyPressed(KEY_BACKSPACE)){
             paused = !paused;
         }
+        std::cout << "1" << std::endl;
         if(acabar) {
+            std::cout << "2" << std::endl;
             if(current_objects_offset <= objects_offset) {
                 BackGrounds[level].Draw();
                 float shift = block_height * 6.0f * GetFrameTime();
                 current_objects_offset  += shift;
                 GameSystem::Move({0,shift});
                 BackGrounds[level].Move({0,shift});
-                fruits_harvested = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                blocks_destroyed = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
+                blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
+                blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                win1 = Player_1->getComponent<Script, PopoBehavior>().victory;
+                win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
             } else {
                 if (timeToShowScores < 3.0) timeToShowScores += GetFrameTime();
                 else {
                     GameSystem::DestroyAll();
                     BigFrame1.Draw();
                     Player1Text.Draw();
-                    if (!game_over) {
+                    if (win1)
                         Player1Status.SetText("YOU WIN!", false);
-                    }
                     Player1Status.Draw();
                     Icicler1.Draw();
                     Icicler1Text.Draw();
@@ -823,28 +830,56 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Monster1N.Draw();
                     Vegetabler1.Draw();
                     Vegetabler1Text.Draw();
-                    Vegetabler1N.SetText(std::to_string(fruits_harvested), false);
+                    Vegetabler1N.SetText(std::to_string(fruits_harvested1), false);
                     Vegetabler1N.Draw();
-                    Block1N.SetText(std::to_string(blocks_destroyed), false);
+                    Block1N.SetText(std::to_string(blocks_destroyed1), false);
                     Block1.Draw();
                     Block1Text.Draw();
 
                     Block1N.Draw();
                     SmallFrame1.Draw();
-                    auto pts1 = fruits_harvested * 300 + blocks_destroyed *10;
+                    auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 *10;
                     if (!game_over) {
                         pts1+=3000;
                     }
                     Total1.SetText(std::to_string(pts1), false);
                     Total1.Draw();
+
+                    if(numPlayers == 2) {
+                        BigFrame2.Draw();
+                        Player2Text.Draw();
+                        if (win2)
+                            Player2Status.SetText("YOU WIN!", false);
+                        Player2Status.Draw();
+                        Icicler2.Draw();
+                        Icicler2Text.Draw();
+                        Monster2.Draw();
+                        Monster2Text.Draw();
+                        Vegetabler2.Draw();
+                        Vegetabler2N.SetText(std::to_string(fruits_harvested2));
+                        Vegetabler2Text.Draw();
+                        Block2.Draw();
+                        Block2N.SetText(std::to_string(blocks_destroyed1));
+                        Block2N.Draw();
+                        Block2Text.Draw();
+                        SmallFrame2.Draw();
+                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed1 *10;
+                        if (!game_over) {
+                            pts2+=3000;
+                        }
+                        Total2.SetText(std::to_string(pts2), false);
+                        Total2.Draw();
+                    }
                     if(IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
                         finished = true;
                     }
                 }
             }
         } else {
+            
             BackGrounds[level].Draw();
             if (!paused) {
+                std::cout << "3" << std::endl;
                 float delta_time = GetFrameTime();
                 chrono_time += delta_time;
 
@@ -868,6 +903,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
                 }
+                std::cout << "4" << std::endl;
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
@@ -898,35 +934,32 @@ void Game(int numPlayers, int level, bool speed_run) {
                     if(Player_4->getComponent<Script, PopoBehavior>().lifes > 2)
                         LifeLili3.Draw();
                 }
-                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < (4.0f * block_height) && level < 2) {
+                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && (
+                    Player_1->getComponent<Transform2D>().position.y < (4.0f * block_height) || (numPlayers == 2 &&
+                    Player_2->getComponent<Transform2D>().position.y < (4.0f * block_height))) && level < 2) {
                     moving_camera = true;
                     switch (level_phase) {
                     case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
                         level_phase++;
                         break;
                     }
-                    //if (level_phase++ == 8) {
-                    //    objects_offset = 150;
-                    //} else {
-                    //    objects_offset = 80;
-                    //}
                 }
-                
 
                 if (!moving_camera) {
                     GameSystem::Update();
-                    if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
+                    if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
+                        (numPlayers == 1 || Player_2->getComponent<Script, PopoBehavior>().lifes <= 0) && !acabar) {
                         std::cout << "GAME OVER!\n";
                         game_over = true;
                         acabar = true;
                         objects_offset = 0;
                         current_objects_offset = 1;
-                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory){
+                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory || (numPlayers == 2 &&
+                        Player_2->getComponent<Script, PopoBehavior>().victory)){
                         objects_offset = 20.0f * block_height;
                         acabar = true;
                     }
                 } else {
-                    //std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
                     float shift = block_height * 6.0f * GetFrameTime();
                     current_objects_offset  += shift;
                     if (current_objects_offset <= objects_offset) {
@@ -976,9 +1009,8 @@ void Game(int numPlayers, int level, bool speed_run) {
         }
         if (IsKeyPressed(KEY_R)) {
             Player_1->getComponent<Transform2D>().position = Vector2{600,70};
+            if(numPlayers == 2) Player_2->getComponent<Transform2D>().position = Vector2{600,70};
         }
-
-
         EndDrawing();
     }
     UnloadTexture(Pause_frame);
@@ -1571,7 +1603,6 @@ int main() {
 
 
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                            std::cout << OPTION << "\n";
                             if (OPTION == 0) {
                                 Game(nplayers, selected_level, speed_run);
                             } else if (OPTION == 1) {

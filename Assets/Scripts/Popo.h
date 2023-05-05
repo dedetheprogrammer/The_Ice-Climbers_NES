@@ -262,7 +262,6 @@ public:
         if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned"))) {
             if (!isStunned) {
                 if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
-                    std::cout << "if 1" << std::endl;
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
@@ -286,7 +285,6 @@ public:
         if (contact.gameObject.tag == "Player") {
             if (!isStunned) {
                 if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
-                    std::cout << "if 1" << std::endl;
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
@@ -310,7 +308,6 @@ public:
         if (contact.gameObject.tag == "Icicle") {
             if (!isStunned) {
                 if (!isAttacking) {
-                    std::cout << "if 1" << std::endl;
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;

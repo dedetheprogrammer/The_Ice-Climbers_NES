@@ -241,7 +241,6 @@ public:
                     rigidbody.velocity.x = 0;
                     isGrounded = false;
                     hasFallen = true;
-                    std::cout << "Ignorando" << std::endl;
                     ignoreFloor = true;
                 }
             } else {
@@ -252,7 +251,6 @@ public:
                     last_sense = sgn(rigidbody.velocity.x);
                     rigidbody.velocity.x = 0;
                     isGrounded = false;
-                    std::cout << "Ignorando" << std::endl;
                     ignoreFloor = true;
                 } else {
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
@@ -428,14 +426,12 @@ public:
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                     t0 = clock();
-                    std::cout << "stun 1" << std::endl;
                 }
                 if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                     t0 = clock();
-                    std::cout << "stun 2" << std::endl;
                 }
             }
             if(!isStunned && (!contact.gameObject.getComponent<Script, PopoBehavior>().isGrounded) && (contact.contact_normal.y < 0)){
@@ -443,7 +439,6 @@ public:
                 isStunned = true;
                 rigidbody.velocity.x = 0;
                 t0 = clock();
-                std::cout << "stun 3" << std::endl;
             }
         }
     }
