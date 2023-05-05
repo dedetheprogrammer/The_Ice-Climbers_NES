@@ -34,6 +34,7 @@ Font NES;
 void Game(int numPlayers, int level) {
     SetExitKey(KEY_NULL);
     Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
+    Texture2D arena_sprite = LoadTexture("Assets/Sprites/02_Brawl.png");
     float GAME_WIDTH = WINDOW_WIDTH;
     float GAME_HEIGHT = WINDOW_HEIGHT;
     if(DISPLAY_MODE_OPTION == FULLSCREEN) {
@@ -41,32 +42,15 @@ void Game(int numPlayers, int level) {
         GAME_HEIGHT = GetScreenHeight();
     }
     
-    float vertical_scale = GAME_WIDTH * 2.3f / (float)mountain_sprite.height;
-    float horizontal_scale = GAME_WIDTH / (float)mountain_sprite.width;
+    float vertical_scale = 0.0f, horizontal_scale = 0.0f;
+    if(level < 2) {
+        horizontal_scale = GAME_WIDTH / (float)mountain_sprite.width;
+        vertical_scale = GAME_WIDTH * 2.3f / (float)mountain_sprite.height;
+    } else {
+        horizontal_scale = GAME_WIDTH / (float)arena_sprite.width;
+        vertical_scale = GAME_WIDTH * 0.7f / (float)arena_sprite.height;
+    }
     Vector2 scale = {horizontal_scale, vertical_scale};
-
-    std::vector<float> floor_levels = {
-        GAME_HEIGHT - 8.0f*vertical_scale*2.0f,  // 0
-        GAME_HEIGHT - 8.0f*vertical_scale*8.0f,  // 1
-        GAME_HEIGHT - 8.0f*vertical_scale*14.0f, // 2
-        GAME_HEIGHT - 8.0f*vertical_scale*20.0f, // 3
-        GAME_HEIGHT - 8.0f*vertical_scale*26.0f, // 4
-        GAME_HEIGHT - 8.0f*vertical_scale*32.0f, // 5
-        GAME_HEIGHT - 8.0f*vertical_scale*38.0f, // 6
-        GAME_HEIGHT - 8.0f*vertical_scale*44.0f, // 7
-        GAME_HEIGHT - 8.0f*vertical_scale*50.0f  // 8
-    };
-
-    std::vector<float> wall_levels = {
-        GAME_HEIGHT - 8.0f*vertical_scale*56.0f, // 0
-        GAME_HEIGHT - 8.0f*vertical_scale*63.0f, // 1
-        GAME_HEIGHT - 8.0f*vertical_scale*70.0f, // 2
-        GAME_HEIGHT - 8.0f*vertical_scale*77.0f, // 3
-        GAME_HEIGHT - 8.0f*vertical_scale*84.0f, // 4
-        GAME_HEIGHT - 8.0f*vertical_scale*91.0f, // 5
-        GAME_HEIGHT - 8.0f*vertical_scale*94.0f, // 6
-    };
-
 
     int level_phase = 0;
     bool acabar = false;
@@ -74,12 +58,14 @@ void Game(int numPlayers, int level) {
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
-    std::string MountainPath;
+    auto BackGrounds = std::vector<Canvas>();
     if(level == 0)
-        MountainPath = "Assets/Sprites/00_Mountain.png";
+        BackGrounds.push_back(Canvas("Assets/Sprites/00_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}));
     else if(level == 1)
-        MountainPath = "Assets/Sprites/01_Mountain.png";
-    Canvas Mountain(MountainPath.c_str(), {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f});
+        BackGrounds.push_back(Canvas("Assets/Sprites/01_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}));
+    else if(level == 2)
+        BackGrounds.push_back(Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT}));
+
     Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
     Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
     Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
@@ -398,259 +384,328 @@ void Game(int numPlayers, int level) {
     Nutpicker.addComponent<Collider2D>(&Nutpicker.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
 
-    /***** Elementos comunes a todos los niveles *****/
-    // Suelo base
-    GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,floor_levels[0]}});
-
-    // Plataformas laterales
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*4.0f, floor_levels[1]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[2]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
-
-    // Muros de la fase bonus
-    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{0, wall_levels[0]}});
-    GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{block_width * 29.0f, wall_levels[0]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width, wall_levels[1]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 28.0f, wall_levels[1]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 2.0f, wall_levels[2]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 27.0f, wall_levels[2]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 3.0f, wall_levels[3]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 26.0f, wall_levels[3]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 4.0f, wall_levels[4]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 25.0f, wall_levels[4]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 5.0f, wall_levels[5]}});
-    GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
-
-    // Players
-    Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
-    if (numPlayers > 1)
-        Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
-    if (numPlayers > 2)
-        Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,floor_levels[0] - player_size.y}});
-    if (numPlayers > 3)
-        Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
-
-    // Zona de muerte y Condor en la cima de la montaña
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, GAME_HEIGHT - block_height * 95.0f}});
-    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
-
     std::vector<GameObject*> Enemies{};
     GameObject* bonusLevel = nullptr;
 
-    if(level == 0) {
-
-        std::vector<float> bonus_floor_levels = {
-            GAME_HEIGHT - block_height * 55.0f, // 0
-            GAME_HEIGHT - block_height * 58.0f, // 1
-            GAME_HEIGHT - block_height * 60.0f, // 2  Cloud
-            GAME_HEIGHT - block_height * 65.0f, // 3
-            GAME_HEIGHT - block_height * 66.0f, // 4
-            GAME_HEIGHT - block_height * 70.0f, // 5
-            GAME_HEIGHT - block_height * 71.0f, // 6
-            GAME_HEIGHT - block_height * 76.0f, // 7  Cloud
-            GAME_HEIGHT - block_height * 81.0f, // 8
-            GAME_HEIGHT - block_height * 82.0f, // 9
-            GAME_HEIGHT - block_height * 85.0f, // 10
-            GAME_HEIGHT - block_height * 87.0f, // 11
-            GAME_HEIGHT - block_height * 90.0f, // 12
-            GAME_HEIGHT - block_height * 95.0f  // 13
+    // Exclusivos del modo arena
+    GameObject ArenaFloor("Base Floor", "Floor");
+    ArenaFloor.addComponent<Collider2D>(&ArenaFloor.getComponent<Transform2D>().position, Vector2{GAME_WIDTH * 1.5f, block_height*1.0f}, PINK);
+    GameObject ArenaGrassWall("Wall", "Floor");
+    ArenaGrassWall.addComponent<Collider2D>(&ArenaGrassWall.getComponent<Transform2D>().position, Vector2{block_width * 4.0f, block_height * 5.0f}, YELLOW);
+    GameObject DirtWallThin("Wall", "Floor");
+    DirtWallThin.addComponent<Collider2D>(&DirtWallThin.getComponent<Transform2D>().position, Vector2{block_width * 2.0f, block_height * 5.0f}, YELLOW);
+    GameObject IceWallSuperThin("Wall", "Floor");
+    IceWallSuperThin.addComponent<Collider2D>(&IceWallSuperThin.getComponent<Transform2D>().position, Vector2{block_width * 1.0f, block_height * 21.0f}, YELLOW);
+    
+    if(level < 2) {
+        std::vector<float> floor_levels = {
+            GAME_HEIGHT - 8.0f*vertical_scale*2.0f,  // 0
+            GAME_HEIGHT - 8.0f*vertical_scale*8.0f,  // 1
+            GAME_HEIGHT - 8.0f*vertical_scale*14.0f, // 2
+            GAME_HEIGHT - 8.0f*vertical_scale*20.0f, // 3
+            GAME_HEIGHT - 8.0f*vertical_scale*26.0f, // 4
+            GAME_HEIGHT - 8.0f*vertical_scale*32.0f, // 5
+            GAME_HEIGHT - 8.0f*vertical_scale*38.0f, // 6
+            GAME_HEIGHT - 8.0f*vertical_scale*44.0f, // 7
+            GAME_HEIGHT - 8.0f*vertical_scale*50.0f  // 8
         };
 
-        for (float i = 0.0f; i < 24; i++) {
-            GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-            if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))            
-                GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
-            if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)            
-                GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
-        }
-
-        for (int i = 0; i < 22; i++) {
-            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            if(i < 6 || (i > 8 && i < 12) || i > 18)            
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
-            if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19))            
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-            GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
-            if(i < 12 || i == 15 || i > 18)            
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-        }
-
-        for (int i = 0; i < 20; i++) {
-            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
-            if(i == 0 || (i > 2 && i < 9) || i > 15)            
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
-            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
-            if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19))            
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
-            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
-            if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16))            
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
-        }
-
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
-
-        bonusLevel = &GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(BonusLevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
-
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[2]}});
-
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
-        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[4]}});
-
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[5]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[6]}});
-
-        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
-
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 16.0f, bonus_floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 8.0f, bonus_floor_levels[9]}});
-
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 19.0f, bonus_floor_levels[10]}});
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[11]}});
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[12]}});
-
-        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
-        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[13]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[13]}});
-
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[3] - eggplant_height}});
-        GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
-
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
-        GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
-    } else if(level == 1) {
-
-        std::vector<float> bonus_floor_levels = {
-            GAME_HEIGHT - block_height * 55.0f, // 0
-            GAME_HEIGHT - block_height * 60.0f, // 1 Cloud
-            GAME_HEIGHT - block_height * 65.0f, // 2
-            GAME_HEIGHT - block_height * 66.0f, // 3
-            GAME_HEIGHT - block_height * 70.0f, // 4
-            GAME_HEIGHT - block_height * 71.0f, // 5
-            GAME_HEIGHT - block_height * 76.0f, // 6 Cloud
-            GAME_HEIGHT - block_height * 79.0f, // 7 Cloud
-            GAME_HEIGHT - block_height * 85.0f, // 8
-            GAME_HEIGHT - block_height * 90.0f, // 9
-            GAME_HEIGHT - block_height * 95.0f  // 10
+        std::vector<float> wall_levels = {
+            GAME_HEIGHT - 8.0f*vertical_scale*56.0f, // 0
+            GAME_HEIGHT - 8.0f*vertical_scale*63.0f, // 1
+            GAME_HEIGHT - 8.0f*vertical_scale*70.0f, // 2
+            GAME_HEIGHT - 8.0f*vertical_scale*77.0f, // 3
+            GAME_HEIGHT - 8.0f*vertical_scale*84.0f, // 4
+            GAME_HEIGHT - 8.0f*vertical_scale*91.0f, // 5
+            GAME_HEIGHT - 8.0f*vertical_scale*94.0f, // 6
         };
 
-        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
+        /***** Elementos comunes a las montañas *****/
+        // Suelo base
+        GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,floor_levels[0]}});
 
-        GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
-        GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
-        for (int i = 0; i < 24; i++)
-            if(i != 7)
-                GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-        for (int i = 0; i < 22; i++) {
-            if(i < 5 && i > 12)
+        // Plataformas laterales
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*4.0f, floor_levels[1]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[2]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
+        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
+
+        // Muros de la fase bonus
+        GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{0, wall_levels[0]}});
+        GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{block_width * 29.0f, wall_levels[0]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width, wall_levels[1]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 28.0f, wall_levels[1]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 2.0f, wall_levels[2]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 27.0f, wall_levels[2]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 3.0f, wall_levels[3]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 26.0f, wall_levels[3]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 4.0f, wall_levels[4]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 25.0f, wall_levels[4]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 5.0f, wall_levels[5]}});
+        GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
+
+        // Players
+        Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
+        if (numPlayers > 1)
+            Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
+        if (numPlayers > 2)
+            Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,floor_levels[0] - player_size.y}});
+        if (numPlayers > 3)
+            Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
+
+        // Zona de muerte y Condor en la cima de la montaña
+        GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
+        GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, GAME_HEIGHT - block_height * 95.0f}});
+        GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
+
+        if(level == 0) {
+
+            std::vector<float> bonus_floor_levels = {
+                GAME_HEIGHT - block_height * 55.0f, // 0
+                GAME_HEIGHT - block_height * 58.0f, // 1
+                GAME_HEIGHT - block_height * 60.0f, // 2  Cloud
+                GAME_HEIGHT - block_height * 65.0f, // 3
+                GAME_HEIGHT - block_height * 66.0f, // 4
+                GAME_HEIGHT - block_height * 70.0f, // 5
+                GAME_HEIGHT - block_height * 71.0f, // 6
+                GAME_HEIGHT - block_height * 76.0f, // 7  Cloud
+                GAME_HEIGHT - block_height * 81.0f, // 8
+                GAME_HEIGHT - block_height * 82.0f, // 9
+                GAME_HEIGHT - block_height * 85.0f, // 10
+                GAME_HEIGHT - block_height * 87.0f, // 11
+                GAME_HEIGHT - block_height * 90.0f, // 12
+                GAME_HEIGHT - block_height * 95.0f  // 13
+            };
+
+            for (float i = 0.0f; i < 24; i++) {
+                GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))            
+                    GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
+                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)            
+                    GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
+            }
+
+            for (int i = 0; i < 22; i++) {
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            else if(i == 5 || i == 10) 
-                GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            else if(i == 8 || i == 9)
-                GameSystem::Instantiate(DirtHole, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-            if((i > 2 && i < 7) || i == 11 || (i > 14 && i < 18))
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-            if(i == 0 || i == 2 || i == 12 || i == 14 || i == 18)
-                GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-            if(i != 6 && i != 11)
+                if(i < 6 || (i > 8 && i < 12) || i > 18)            
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
-            if(i < 4 || (i > 7 && i < 10) || (i > 14 && i < 18))
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-            if(i == 5 || i == 10 || i == 14 || i == 18)
-                GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19))            
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
+                if(i < 12 || i == 15 || i > 18)            
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
+            }
+
+            for (int i = 0; i < 20; i++) {
+                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+                if(i == 0 || (i > 2 && i < 9) || i > 15)            
+                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
+                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
+                if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19))            
+                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
+                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+                if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16))            
+                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
+            }
+
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+
+            bonusLevel = &GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+            GameSystem::Instantiate(BonusLevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+            GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[2]}});
+
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
+            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[4]}});
+
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[5]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[6]}});
+
+            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 16.0f, bonus_floor_levels[8]}});
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 8.0f, bonus_floor_levels[9]}});
+
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 19.0f, bonus_floor_levels[10]}});
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[11]}});
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[12]}});
+
+            GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
+            GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
+            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[13]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[13]}});
+
+            GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
+            GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
+            GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[3] - eggplant_height}});
+            GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
+
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
+            GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+        } else if(level == 1) {
+
+            std::vector<float> bonus_floor_levels = {
+                GAME_HEIGHT - block_height * 55.0f, // 0
+                GAME_HEIGHT - block_height * 60.0f, // 1 Cloud
+                GAME_HEIGHT - block_height * 65.0f, // 2
+                GAME_HEIGHT - block_height * 66.0f, // 3
+                GAME_HEIGHT - block_height * 70.0f, // 4
+                GAME_HEIGHT - block_height * 71.0f, // 5
+                GAME_HEIGHT - block_height * 76.0f, // 6 Cloud
+                GAME_HEIGHT - block_height * 79.0f, // 7 Cloud
+                GAME_HEIGHT - block_height * 85.0f, // 8
+                GAME_HEIGHT - block_height * 90.0f, // 9
+                GAME_HEIGHT - block_height * 95.0f  // 10
+            };
+
+            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
+
+            GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
+            GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
+            for (int i = 0; i < 24; i++)
+                if(i != 7)
+                    GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+            for (int i = 0; i < 22; i++) {
+                if(i < 5 && i > 12)
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                else if(i == 5 || i == 10) 
+                    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                else if(i == 8 || i == 9)
+                    GameSystem::Instantiate(DirtHole, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                if((i > 2 && i < 7) || i == 11 || (i > 14 && i < 18))
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                if(i == 0 || i == 2 || i == 12 || i == 14 || i == 18)
+                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                if(i != 6 && i != 11)
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+                if(i < 4 || (i > 7 && i < 10) || (i > 14 && i < 18))
+                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                if(i == 5 || i == 10 || i == 14 || i == 18)
+                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+            }
+            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
+
+            GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
+            GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
+
+            for (int i = 0; i < 20; i++) {
+                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+                if(i == 0 || (i > 9 && i < 17))
+                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
+                if(i == 1 || i == 9 || i == 17)
+                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
+                GameSystem::Instantiate(IceHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
+                if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17))
+                    GameSystem::Instantiate(IceSlidingBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+                else
+                    GameSystem::Instantiate(IceSlidingHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});          
+                if((i > 2 && i < 5) || (i > 9 && i < 14 ))
+                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
+                if(i == 2 || i == 5)
+                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
+            }
+            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[6]}});
+
+            GameSystem::Instantiate(IceWall, GameObjectOptions{.position{0, floor_levels[7] + block_height}});
+            GameSystem::Instantiate(IceWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 6.0f, floor_levels[7] + block_height}});
+
+            GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[1]}});
+            GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[3]}});
+            GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 16.0f, floor_levels[3]}});
+
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+
+            // Fase bonus
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+
+            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[1]}});
+
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[2]}});
+            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[3]}});
+
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[4]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[5]}});
+
+            GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[6]}});
+            GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+
+            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[8]}});
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 17.0f, bonus_floor_levels[8]}});
+            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[9]}});
+
+            GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
+            GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
+            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[10]}});
+            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[10]}});
+
+            GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - lettuce_height}});
+            GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - lettuce_height}});
+            GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
+            GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - lettuce_height}});
+
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}}));
+            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}}));
+            GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
         }
-        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
+    } else if (level == 2) {
+        std::vector<float> levels = {
+            GAME_HEIGHT - block_height,  // 0
+            GAME_HEIGHT - block_height*6.0f,  // 1
+            GAME_HEIGHT - block_height*11.0f, // 2
+            GAME_HEIGHT - block_height*16.0f, // 3
+            GAME_HEIGHT - block_height*32.0f, // 3
+        };
 
-        GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
-        GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
+        // Floor
+        GameSystem::Instantiate(ArenaFloor, GameObjectOptions{.position{-(GAME_WIDTH/4.0f),levels[0]}});
 
-        for (int i = 0; i < 20; i++) {
-            GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
-            if(i == 0 || (i > 9 && i < 17))
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
-            if(i == 1 || i == 9 || i == 17)
-                GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
-            GameSystem::Instantiate(IceHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
-            if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17))
-                GameSystem::Instantiate(IceSlidingBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
-            else
-                GameSystem::Instantiate(IceSlidingHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});          
-            if((i > 2 && i < 5) || (i > 9 && i < 14 ))
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
-            if(i == 2 || i == 5)
-                GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
-        }
-        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[6]}});
+        // Players
+        Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, levels[0] - player_size.y}});
+        if (numPlayers > 1)
+            Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, levels[0] - player_size.y}});
+        if (numPlayers > 2)
+            Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,levels[0] - player_size.y}});
+        if (numPlayers > 3)
+            Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,levels[0] - player_size.y}});
 
-        GameSystem::Instantiate(IceWall, GameObjectOptions{.position{0, floor_levels[7] + block_height}});
-        GameSystem::Instantiate(IceWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 6.0f, floor_levels[7] + block_height}});
+        GameSystem::Instantiate(ArenaGrassWall, GameObjectOptions{.position{0, levels[1]}});
+        GameSystem::Instantiate(ArenaGrassWall, GameObjectOptions{.position{GAME_WIDTH - 4.0f * block_width, levels[1]}});
+        GameSystem::Instantiate(DirtWallThin, GameObjectOptions{.position{0, levels[2]}});
+        GameSystem::Instantiate(DirtWallThin, GameObjectOptions{.position{GAME_WIDTH - 2.0f * block_width, levels[2]}});
+        GameSystem::Instantiate(IceWallSuperThin, GameObjectOptions{.position{0, levels[4]}});
+        GameSystem::Instantiate(IceWallSuperThin, GameObjectOptions{.position{GAME_WIDTH - block_width, levels[4]}});
 
-        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[1]}});
-        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[3]}});
-        GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 16.0f, floor_levels[3]}});
-
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
-
-        // Fase bonus
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
-
-        GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[1]}});
-
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[2]}});
-        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[3]}});
-
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[4]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[5]}});
-
-        GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[6]}});
-        GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
-
-        GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 17.0f, bonus_floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[9]}});
-
-        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
-        GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[10]}});
-        GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[10]}});
-
-        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - lettuce_height}});
-        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - lettuce_height}});
-        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
-        GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - lettuce_height}});
-
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}}));
-        Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}}));
-        GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 9.0f, levels[1]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 19.0f, levels[1]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 4.0f, levels[2]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, levels[2]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 24.0f, levels[2]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 9.0f, levels[3]}});
+        GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 19.0f, levels[3]}});
     }
 
     //GameSystem::Printout();
@@ -676,7 +731,7 @@ void Game(int numPlayers, int level) {
             BGM.Play();
         }
 
-        Mountain.Draw();
+        BackGrounds[level].Draw();
         if (IsGamepadAvailable(0)) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
                 paused = !paused;
@@ -721,7 +776,7 @@ void Game(int numPlayers, int level) {
                 if(Player_4->getComponent<Script, PopoBehavior>().lifes > 2)
                     LifeLili3.Draw();
             }
-            if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < 150) {
+            if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < 150 && level < 2) {
                 moving_camera = true;
                 switch (level_phase) {
                 case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -768,7 +823,7 @@ void Game(int numPlayers, int level) {
                     current_objects_offset  += shift;
                     if (current_objects_offset <= objects_offset) {
                         GameSystem::Move({0,shift});
-                        Mountain.Move({0,shift});
+                        BackGrounds[level].Move({0,shift});
 
                     }else{
                         acabar = true;
@@ -781,7 +836,7 @@ void Game(int numPlayers, int level) {
                 current_objects_offset  += shift;
                 if (current_objects_offset <= objects_offset) {
                     GameSystem::Move({0,shift});
-                    Mountain.Move({0,shift});   
+                    BackGrounds[level].Move({0,shift});   
                     if(!onBonus)
                         for(auto enemy : Enemies)
                             enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
@@ -831,6 +886,8 @@ void Game(int numPlayers, int level) {
     UnloadTexture(Pause_frame);
     Popo.Destroy();
     Nana.Destroy();
+    Amam.Destroy();
+    Lili.Destroy();
     LevelFloor_0.Destroy();
     LevelFloor_1.Destroy();
     LevelFloor_2.Destroy();
@@ -861,6 +918,10 @@ void Game(int numPlayers, int level) {
     Cloud.Destroy();
     SmallCloud.Destroy();
     Death.Destroy();
+    ArenaFloor.Destroy();
+    ArenaGrassWall.Destroy();
+    DirtWallThin.Destroy();
+    IceWallSuperThin.Destroy();
     GameSystem::DestroyAll();
     BGM.Unload();
 }

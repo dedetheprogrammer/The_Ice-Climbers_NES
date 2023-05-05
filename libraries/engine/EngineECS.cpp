@@ -76,7 +76,7 @@ void GameObject::Destroy() {
         scripts.erase(type);
     }
     GameSystem::Destroy(*this);
-    delete this;
+    //delete this;
 }
 
 bool GameObject::hasSecondTag(std::string tag) {
@@ -500,7 +500,7 @@ int GetAxis(std::string axis) {
  */
 std::unordered_map<std::string, int> GameSystem::nGameObjects;
 std::unordered_map<std::string, std::unordered_map<std::string, GameObject*>> GameSystem::GameObjects;
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 Collision::Collision(GameObject& gameObject, float contact_time, Vector2 contact_point, Vector2 contact_normal)
     : gameObject(gameObject), contact_time(contact_time), contact_point(contact_point), contact_normal(contact_normal) {}
