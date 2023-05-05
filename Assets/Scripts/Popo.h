@@ -283,6 +283,30 @@ public:
             }
         }
 
+        if (contact.gameObject.tag == "Player") {
+            if (!isStunned) {
+                if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
+                    std::cout << "if 1" << std::endl;
+                    lifes--;
+                    animator["Stunned"];
+                    isStunned = true;
+                    rigidbody.velocity.x = 0;
+                }else if(contact.contact_normal.x){
+                    if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
+                        lifes--;
+                        animator["Stunned"];
+                        isStunned = true;
+                        rigidbody.velocity.x = 0;
+                    } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
+                        lifes--;
+                        animator["Stunned"];
+                        isStunned = true;
+                        rigidbody.velocity.x = 0;
+                    }
+                }
+            }
+        }
+
         if (contact.gameObject.tag == "Icicle") {
             if (!isStunned) {
                 if (!isAttacking) {
