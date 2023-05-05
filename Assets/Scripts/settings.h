@@ -58,8 +58,9 @@ std::string to_string(DISPLAY_MODE_ENUM dme) {
     }
 }
 // ---- SCREEN SIZE
-const int DEFAULT_SCREEN_WIDTH     = 904;
+const int DEFAULT_SCREEN_WIDTH     = 900;
 const int DEFAULT_SCREEN_HEIGHT    = 600;
+int OLD_RESOLUTION_OPTION          = 2;
 int RESOLUTION_OPTION              = 2;
 std::vector<std::pair<int, int>> RESOLUTION_OPTIONS {
     {640, 480}, {800, 600}, {900, 600}, {1024, 768}, {1280, 720}, {1366, 768}, {1680, 1050}, {1920, 1080}
@@ -161,6 +162,148 @@ void save_controls(int controller) {
     }
 }
 
+bool GamepadDetected(int gamepad) {
+    if (IsGamepadAvailable(gamepad)) {
+        if (IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_UP) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_FACE_LEFT) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_1) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_TRIGGER_2) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_1) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_TRIGGER_2) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_MIDDLE_LEFT) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_MIDDLE_RIGHT) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_LEFT_THUMB) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_BUTTON_RIGHT_THUMB) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_LEFT_X) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_LEFT_Y) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_RIGHT_X) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_RIGHT_Y) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_LEFT_TRIGGER) ||
+            IsGamepadButtonPressed(gamepad, GAMEPAD_AXIS_RIGHT_TRIGGER)
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool KeyboardDetected() {
+    if (IsKeyPressed(KEY_APOSTROPHE) ||
+        IsKeyPressed(KEY_COMMA) ||
+        IsKeyPressed(KEY_MINUS) ||
+        IsKeyPressed(KEY_PERIOD) ||
+        IsKeyPressed(KEY_SLASH) ||
+        IsKeyPressed(KEY_ZERO) ||
+        IsKeyPressed(KEY_ONE) ||
+        IsKeyPressed(KEY_TWO) ||
+        IsKeyPressed(KEY_THREE) ||
+        IsKeyPressed(KEY_FOUR) ||
+        IsKeyPressed(KEY_FIVE) ||
+        IsKeyPressed(KEY_SIX) ||
+        IsKeyPressed(KEY_SEVEN) ||
+        IsKeyPressed(KEY_EIGHT) ||
+        IsKeyPressed(KEY_NINE) ||
+        IsKeyPressed(KEY_SEMICOLON) ||
+        IsKeyPressed(KEY_EQUAL) ||
+        IsKeyPressed(KEY_A) ||
+        IsKeyPressed(KEY_B) ||
+        IsKeyPressed(KEY_C) ||
+        IsKeyPressed(KEY_D) ||
+        IsKeyPressed(KEY_E) ||
+        IsKeyPressed(KEY_F) ||
+        IsKeyPressed(KEY_G) ||
+        IsKeyPressed(KEY_H) ||
+        IsKeyPressed(KEY_I) ||
+        IsKeyPressed(KEY_J) ||
+        IsKeyPressed(KEY_K) ||
+        IsKeyPressed(KEY_L) ||
+        IsKeyPressed(KEY_M) ||
+        IsKeyPressed(KEY_N) ||
+        IsKeyPressed(KEY_O) ||
+        IsKeyPressed(KEY_P) ||
+        IsKeyPressed(KEY_Q) ||
+        IsKeyPressed(KEY_R) ||
+        IsKeyPressed(KEY_S) ||
+        IsKeyPressed(KEY_T) ||
+        IsKeyPressed(KEY_U) ||
+        IsKeyPressed(KEY_V) ||
+        IsKeyPressed(KEY_W) ||
+        IsKeyPressed(KEY_X) ||
+        IsKeyPressed(KEY_Y) ||
+        IsKeyPressed(KEY_Z) ||
+        IsKeyPressed(KEY_LEFT_BRACKET) ||
+        IsKeyPressed(KEY_BACKSLASH) ||
+        IsKeyPressed(KEY_RIGHT_BRACKET) ||
+        IsKeyPressed(KEY_GRAVE) ||
+        IsKeyPressed(KEY_SPACE) ||
+        IsKeyPressed(KEY_ESCAPE) ||
+        IsKeyPressed(KEY_ENTER) ||
+        IsKeyPressed(KEY_TAB) ||
+        IsKeyPressed(KEY_BACKSPACE) ||
+        IsKeyPressed(KEY_INSERT) ||
+        IsKeyPressed(KEY_DELETE) ||
+        IsKeyPressed(KEY_RIGHT) ||
+        IsKeyPressed(KEY_LEFT) ||
+        IsKeyPressed(KEY_DOWN) ||
+        IsKeyPressed(KEY_UP) ||
+        IsKeyPressed(KEY_PAGE_UP) ||
+        IsKeyPressed(KEY_PAGE_DOWN) ||
+        IsKeyPressed(KEY_HOME) ||
+        IsKeyPressed(KEY_END) ||
+        IsKeyPressed(KEY_CAPS_LOCK) ||
+        IsKeyPressed(KEY_SCROLL_LOCK) ||
+        IsKeyPressed(KEY_NUM_LOCK) ||
+        IsKeyPressed(KEY_PRINT_SCREEN) ||
+        IsKeyPressed(KEY_PAUSE) ||
+        IsKeyPressed(KEY_F1) ||
+        IsKeyPressed(KEY_F2) ||
+        IsKeyPressed(KEY_F3) ||
+        IsKeyPressed(KEY_F4) ||
+        IsKeyPressed(KEY_F5) ||
+        IsKeyPressed(KEY_F6) ||
+        IsKeyPressed(KEY_F7) ||
+        IsKeyPressed(KEY_F8) ||
+        IsKeyPressed(KEY_F9) ||
+        IsKeyPressed(KEY_F10) ||
+        IsKeyPressed(KEY_F11) ||
+        IsKeyPressed(KEY_F12) ||
+        IsKeyPressed(KEY_LEFT_SHIFT) ||
+        IsKeyPressed(KEY_LEFT_CONTROL) ||
+        IsKeyPressed(KEY_LEFT_ALT) ||
+        IsKeyPressed(KEY_LEFT_SUPER) ||
+        IsKeyPressed(KEY_RIGHT_SHIFT) ||
+        IsKeyPressed(KEY_RIGHT_CONTROL) ||
+        IsKeyPressed(KEY_RIGHT_ALT) ||
+        IsKeyPressed(KEY_RIGHT_SUPER) ||
+        IsKeyPressed(KEY_KB_MENU) ||
+        IsKeyPressed(KEY_KP_0) ||
+        IsKeyPressed(KEY_KP_1) ||
+        IsKeyPressed(KEY_KP_2) ||
+        IsKeyPressed(KEY_KP_3) ||
+        IsKeyPressed(KEY_KP_4) ||
+        IsKeyPressed(KEY_KP_5) ||
+        IsKeyPressed(KEY_KP_6) ||
+        IsKeyPressed(KEY_KP_7) ||
+        IsKeyPressed(KEY_KP_8) ||
+        IsKeyPressed(KEY_KP_9) ||
+        IsKeyPressed(KEY_KP_DECIMAL) ||
+        IsKeyPressed(KEY_KP_DIVIDE) ||
+        IsKeyPressed(KEY_KP_MULTIPLY) ||
+        IsKeyPressed(KEY_KP_SUBTRACT) ||
+        IsKeyPressed(KEY_KP_ADD) ||
+        IsKeyPressed(KEY_KP_ENTER) ||
+        IsKeyPressed(KEY_KP_EQUAL)
+    ) {
+        return true;
+    }
+    return false;
+}
+
 void controller_save_config(int controller, std::ofstream& os) {
     std::string controllerSection = "Controller_" + std::to_string(controller);
     os  << "[" << controllerSection << "]"
@@ -190,7 +333,7 @@ void save_config() {
         << "\nDisplayMode="   << std::get<int>(ini["Graphics"]["DisplayMode"]) // 0: Full screen, 1: Full screen with borders, 2: Windowed.
         << "\nFPSLimit="      << std::get<int>(ini["Graphics"]["FPSLimit"]) << std::endl;
     os << "[Audio]"
-        << "\nVolume="   << std::fixed << std::setprecision(2) << std::get<float>(ini["Audio"]["Volume"]) << std::endl;
+        << "\nVolume="   << std::get<float>(ini["Audio"]["Volume"]) << std::endl;
     controller_save_config(0, os);
     controller_save_config(1, os);
     controller_save_config(2, os);
@@ -246,24 +389,9 @@ void init_config() {
     }
 
     //-- Graphics
+    InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "COÑO");
     int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
     int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
-    DISPLAY_MODE_OPTION = std::get<int>(ini["Graphics"]["DisplayMode"]);
-    if (DISPLAY_MODE_OPTION == WINDOWED) {
-        InitWindow(aux_0, aux_1, "Ice Climber");
-        SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
-        if (IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-        InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "Ice Climber");
-        SetWindowPosition(0, 30);
-    } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
-        InitWindow(aux_0, aux_1, "Ice Climber");
-        if (!IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-    }
     //---- Screen size
     for (size_t i = 0; i < RESOLUTION_OPTIONS.size(); i++) {
         if (RESOLUTION_OPTIONS[i].first == aux_0 && RESOLUTION_OPTIONS[i].second == aux_1) {
@@ -290,4 +418,28 @@ void init_config() {
     SetMasterVolume(std::get<float>(ini["Audio"]["Volume"]));
     //-- Controls:
     SetExitKey(KEY_NULL);
+}
+
+void update_window() {
+    DISPLAY_MODE_OPTION = std::get<int>(ini["Graphics"]["DisplayMode"]);
+    if (DISPLAY_MODE_OPTION == WINDOWED) {
+        SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        SetWindowPosition((GetMonitorWidth(0) - WINDOW_WIDTH)/2, (GetMonitorHeight(0) - WINDOW_HEIGHT)/2 + 30);
+    } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
+        if (IsWindowFullscreen()) {
+            ToggleFullscreen();
+        }
+        SetWindowPosition(0, 30);
+        SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
+        OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+        RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
+        
+    } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
+        if (!IsWindowFullscreen()) {
+            SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
+            OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+            RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
+            ToggleFullscreen();
+        }
+    }
 }

@@ -8,6 +8,7 @@
 
 #define COYOTEBROWN CLITERAL(Color){ 140, 101, 45, 255 }
 #define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
+#define JELLYBEANBLUE CLITERAL(Color){ 66, 117, 133, 255 }
 
 // ----------------------------------------------------------------------------
 // Math extension

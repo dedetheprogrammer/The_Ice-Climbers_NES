@@ -105,9 +105,32 @@ UISprite::UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, 
 {
     this->sprite = sprite;
     src = {0, 0, (float)sprite.width, (float)sprite.height};
-    dst = {pos.x, pos.y, src.width * scale_x, src.height * scale_y};
-    this->ref = {pos.x, pos.y, dst.width, dst.height};
+    //dst = {pos.x, pos.y, src.width * scale_x, src.height * scale_y};
+    Vector2 size{src.width * scale_x, src.height * scale_y};
+    if (pivot == UP_LEFT) {
+        dst = {pos.x, pos.y, size.x, size.y};
+    } else if (pivot == UP_CENTER) {
+        dst = {pos.x - size.x/2, pos.y, size.x, size.y};
+    } else if (pivot == UP_RIGHT) {
+        dst = {pos.x - size.x, pos.y, size.x, size.y};
+    } else if (pivot == CENTER_LEFT) {
+        dst = {pos.x, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == CENTER) {
+        dst = {pos.x - size.x/2, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == CENTER_RIGHT) {
+        dst = {pos.x - size.x, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == DOWN_LEFT) {
+        dst = {pos.x, pos.y - size.y, size.x, size.y};
+    } else if (pivot == DOWN_CENTER) {
+        dst = {pos.x - size.x/2, pos.y - size.y, size.x, size.y};
+    } else if (pivot == DOWN_RIGHT) {
+        dst = {pos.x - size.x, pos.y - size.y, size.x, size.y};
+    }
+    ref = {pos.x, pos.y, dst.width, dst.height};
+    //this->ref = {pos.x, pos.y, dst.width, dst.height};
     UISystem::Add(*this);
+
+
 }
 
 UISprite::UISprite(Texture2D sprite, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
