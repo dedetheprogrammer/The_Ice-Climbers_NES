@@ -659,7 +659,7 @@ void Game(int numPlayers, int level) {
     BGM.Init();
 
     GameSystem::Start();
-    while(!WindowShouldClose() && !finished) {
+    while(!finished) {
         BeginDrawing();
         ClearBackground(BLACK);
         if (IsKeyPressed(KEY_M)) {
@@ -737,7 +737,7 @@ void Game(int numPlayers, int level) {
                     DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
                         Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
 
-                    if(IsKeyPressed(KEY_ENTER)){
+                    if(IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
                         finished = true;
                     }
                 }
@@ -801,7 +801,7 @@ void Game(int numPlayers, int level) {
             }
             paused_showtime -= GetFrameTime();
         }
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
             finished = true;
             break;
         }
@@ -873,12 +873,12 @@ enum MENU_NAVIGATION {
 
 int main() {
 
-    init_config();
-    UISystem::init_UI_system(900, 600);
     std::random_device rd;
     std::mt19937 e2(rd());
     std::uniform_real_distribution<float> D(0, (float)GetScreenWidth());
     std::uniform_int_distribution<int> I(0,1);
+    init_config();
+    UISystem::init_UI_system(900, 600);
 
     //MusicSource Main_title_music("Assets/Sounds/02-Main-Title.wav", true);
     Music MainTitleOST = LoadMusicStream("Assets/Sounds/02-Main-Title.mp3");
@@ -894,13 +894,13 @@ int main() {
     UISprite Transparent("Assets/Sprites/UI_Transparent.png", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
 
     int mscroll_s = -5;
-    UISprite Mountain("Assets/Sprites/Titlescreen/03_Mountain.png", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, 3.6f, 3.6f, UIObject::DOWN_CENTER);
+    UISprite Mountain("Assets/Sprites/Titlescreen/03_Mountain.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()+10.0f}, 3.6f, 3.6f, UIObject::DOWN_CENTER);
 
     int fpparallax_s = 15;
-    UISprite ForePines("Assets/Sprites/Titlescreen/01_Fore_Pines.png", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, {(float)GetScreenWidth(), 150}, UIObject::DOWN_CENTER);
+    UISprite ForePines("Assets/Sprites/Titlescreen/01_Fore_Pines.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()+10.0f}, {(float)GetScreenWidth(), 150}, UIObject::DOWN_CENTER);
     
     int mpparallax_s = 7;
-    UISprite MidPines("Assets/Sprites/Titlescreen/02_Mid_Pines.png", Vector2{GetScreenWidth()/2.0f, (float)GetScreenHeight()}, {(float)GetScreenWidth(), 200}, UIObject::DOWN_CENTER);
+    UISprite MidPines("Assets/Sprites/Titlescreen/02_Mid_Pines.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()+10.0f}, {(float)GetScreenWidth(), 200}, UIObject::DOWN_CENTER);
 
     enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SELECT_LEVEL, SETTINGS, CONTROL_SETTINGS };
     // INTRO:
@@ -953,6 +953,10 @@ int main() {
     UISprite P2Space(space_button, {GetScreenWidth()/2.0f + 57, GetScreenHeight()/2.0f - 50}, 1.5f, 1.5f);
     UISprite P2Char("Assets/Sprites/nana.png", {GetScreenWidth()/2.0f + 50, GetScreenHeight()/2.0f - 90}, 4.5f, 4.5f);
 
+    Texture2D OptionsButton = LoadTexture("Assets/Sprites/Buttons/MR(PS4).png");
+    UISprite P1Options(OptionsButton, {GetScreenWidth()/2.0f - 125, GetScreenHeight()/2.0f - 50}, 2.7f, 2.7f);
+    UISprite P2Options(OptionsButton, {GetScreenWidth()/2.0f + 60, GetScreenHeight()/2.0f - 50}, 2.7f, 2.7f);
+
     // SELECT LEVEL:
     Texture2D cross = LoadTexture("Assets/Sprites/UI_Cross.png");
     bool CONFIGURE_MATCH = false, fuego_amigo = false, speed_run = false;
@@ -966,12 +970,13 @@ int main() {
     UIText Level4Text(NES, "LEVEL 4: A NEW CHALLENGER", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level4WIP(NES, "NO TIME FOR THIS LEVEL :(", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, UIObject::CENTER);
 
-    UIText StartText(NES, "START!", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 90}, UIObject::CENTER_LEFT);
-    UIText SpeedRunText(NES, "SPEED RUN?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 140}, UIObject::CENTER_LEFT);
+
+    UIText StartText(NES, "START!", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 50}, UIObject::CENTER_LEFT);
+    UIText SpeedRunText(NES, "SPEED RUN?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 100}, UIObject::CENTER_LEFT);
     UISprite SpeedRunCheck(cross, {GetScreenWidth() - 78.0f, SpeedRunText.pos.y - 1}, 2.0f, 2.0f);
-    UIText FriendlyFireText(NES, "FRIEND FIRE?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 190}, UIObject::CENTER_LEFT);
+    UIText FriendlyFireText(NES, "FRIEND FIRE?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 150}, UIObject::CENTER_LEFT);
     UISprite FriendlyFireCheck(cross, {GetScreenWidth() - 78.0f, FriendlyFireText.pos.y - 1}, 2.0f, 2.0f);
-    UIText BindigsText(NES, "BINDINGS", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 240}, UIObject::CENTER_LEFT);
+    UIText BindigsText(NES, "BINDINGS", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 200}, UIObject::CENTER_LEFT);
 
     // SETTINGS MENU:
     Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
@@ -1084,6 +1089,84 @@ int main() {
             {(StartText.pos.x-70)*1920/900, StartText.pos.y*1080/600 - 15}
         }}
     };
+    // KEYS (KEYBOARD):
+    bool keyboard = true;
+
+    UIText EnterText(NES, "SELECT", 15, 1, {GetScreenWidth()-20.0f, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EnterKey("Assets/Sprites/Keys/enter.png", {GetScreenWidth() - EnterText.size.x - 30.0f, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    Texture2D RightKey = LoadTexture("Assets/Sprites/Keys/pader.png"), LeftKey = LoadTexture("Assets/Sprites/Keys/paizq.png");
+    UIText ChangeOptionText(NES, "CHANGE", 15, 1, {EnterKey.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite RightKeySettings(RightKey, {ChangeOptionText.pos.x - 10.0f, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite LeftKeySettings(LeftKey, {RightKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    
+    UIText SelectLevelText(NES, "CHANGE LEVEL", 15, 1, {EnterKey.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite RightKeyLevel(RightKey, {SelectLevelText.pos.x - 10.0f, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite LeftKeyLevel(LeftKey, {RightKeyLevel.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    
+    Texture2D UpKey = LoadTexture("Assets/Sprites/Keys/parriba.png"), DownKey = LoadTexture("Assets/Sprites/Keys/pabajo.png");
+    UIText MoveTextNormal(NES, "MOVE", 15, 1, {EnterKey.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite UpKeyNormal(UpKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite DownKeyNormal(DownKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    UIText MoveTextSettings(NES, "MOVE", 15, 1, {LeftKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite UpKeySettings(UpKey, {MoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite DownKeySettings(DownKey, {UpKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    Texture EscKey = LoadTexture("Assets/Sprites/Keys/esc.png"), ReturnKey = LoadTexture("Assets/Sprites/Keys/backspace.png");
+    UIText ReturnTextNormal(NES, "RETURN", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EscKeyNormal(EscKey, {ReturnTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite ReturnKeyNormal(ReturnKey, {EscKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    UIText ReturnTextSettings(NES, "RETURN", 15, 1, {DownKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EscKeySettings(EscKey, {ReturnTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite ReturnKeySettings(ReturnKey, {EscKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    // KEYS (PS4)
+    UIText XText(NES, "SELECT", 15, 1, {GetScreenWidth()-20.0f, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite XButton("Assets/Sprites/Buttons/RFDown(PS4).png", {GetScreenWidth() - EnterText.size.x - 30.0f, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+    Texture2D DpadRight = LoadTexture("Assets/Sprites/Buttons/LFRight(PS4).png"), DpadLeft = LoadTexture("Assets/Sprites/Buttons/LFLeft(PS4).png");
+    UIText DpadOptionText(NES, "CHANGE", 15, 1, {XButton.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite DpadRightSettings(DpadRight, {DpadOptionText.pos.x - 10.0f, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadLeftSettings(DpadLeft, {DpadRightSettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    
+    UIText DpadSelectLevelText(NES, "CHANGE LEVEL", 15, 1, {XButton.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite DpadRightLevel(DpadRight, {DpadSelectLevelText.pos.x - 10.0f, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadLeftLevel(DpadLeft, {DpadRightLevel.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+    Texture2D DpadUp = LoadTexture("Assets/Sprites/Buttons/LFUp(PS4).png"), DpadDown = LoadTexture("Assets/Sprites/Buttons/LFDown(PS4).png");
+    UIText DpadMoveTextNormal(NES, "MOVE", 15, 1, {XButton.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite DpadUpNormal(DpadUp, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadDownNormal(DpadDown, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+ 
+    UIText DpadMoveTextSettings(NES, "MOVE", 15, 1, {DpadLeftSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite DpadUpSettings(DpadUp, {DpadMoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadDownSettings(DpadDown, {DpadUpSettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+
+    Texture OButton = LoadTexture("Assets/Sprites/Buttons/RFRight(PS4).png");
+    UIText OTextNormal(NES, "RETURN", 15, 1, {DpadDownNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite OButtonNormal(OButton, {OTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    
+    UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+/*
+
+    Texture EscKey = LoadTexture("Assets/Sprites/Keys/esc.png"), ReturnKey = LoadTexture("Assets/Sprites/Keys/backspace.png");
+    UIText ReturnTextNormal(NES, "RETURN", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EscKeyNormal(EscKey, {ReturnTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite ReturnKeyNormal(ReturnKey, {EscKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    
+    UIText ReturnTextSettings(NES, "RETURN", 15, 1, {DownKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EscKeySettings(EscKey, {ReturnTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite ReturnKeySettings(ReturnKey, {EscKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+*/
+
+
+
+
     std::vector<int> HammerOffsets {
         60, 60, 60, 50
     };
@@ -1092,9 +1175,18 @@ int main() {
     int OPTION  = 0;
     int OPTIONS = 3;
     MENU_ENUM CURRENT_MENU = INTRO, OLD_MENU = INTRO;
+    update_window();
+    UISystem::Reescale();
+    
     while(!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
+
+        if (GamepadDetected(0)) {
+            keyboard = false;
+        } else if (KeyboardDetected()) {
+            keyboard = true;
+        }
 
         if (background == 0) {
             Background.Draw();
@@ -1161,7 +1253,7 @@ int main() {
                     PressStartText.Draw(COYOTEBROWN);
                 }
             }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                 if (intro_state++ == 2) {
                     CURRENT_MENU = MAIN_MENU;
                     PlayMusicStream(MainTitleOST);
@@ -1173,12 +1265,29 @@ int main() {
 
             if (CURRENT_MENU == MAIN_MENU) {
                 Sign.Draw();
-                Copy.Draw();
                 NewGameText.Draw();
                 SettingsText.Draw();
                 ExitText.Draw(BLUE);
 
-                if (IsKeyPressed(KEY_ENTER)) {
+                auto new_height = 80.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
+                DrawRectangleV({0,GetScreenHeight() - new_height+20.0f*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                
+                if (keyboard) {
+                    EnterText.Draw();
+                    EnterKey.Draw();
+                    MoveTextNormal.Draw();
+                    UpKeyNormal.Draw();
+                    DownKeyNormal.Draw();
+                } else {
+                    XText.Draw();
+                    XButton.Draw();
+                    DpadMoveTextNormal.Draw();
+                    DpadUpNormal.Draw();
+                    DpadDownNormal.Draw();
+                }
+
+
+                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = NEW_GAME;
                     } else {
@@ -1192,7 +1301,7 @@ int main() {
                         OPTION = 0;
                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                     }
-                } else if (IsKeyPressed(KEY_ESCAPE)) {
+                } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                     break; 
                 }
 
@@ -1200,6 +1309,7 @@ int main() {
                 // - BACKGROUND:
                 DrawRectangleV({0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()}, Fade(BLACK, 0.65));
                 if (CURRENT_MENU == SELECT_LEVEL) {
+
                     DrawRectangleLinesEx({Level1.dst.x-7, Level1.dst.y-7, Level1.dst.width+14, Level1.dst.height+14}, 7, COYOTEBROWN);
                     if (selected_level == 0) {
                         Level1.Draw();
@@ -1218,26 +1328,44 @@ int main() {
                         Level4WIP.Draw();
                     }
 
+
                     if (!CONFIGURE_MATCH) {
-                        if (IsKeyPressed(KEY_ESCAPE)) {
+                        auto new_height = 80.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
+                        DrawRectangleV({0,GetScreenHeight() - new_height+20.0f*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                        if (keyboard) {
+                            EnterText.Draw();
+                            EnterKey.Draw();
+                            SelectLevelText.Draw();
+                            RightKeyLevel.Draw();
+                            LeftKeyLevel.Draw();
+                        } else {
+                            XText.Draw();
+                            XButton.Draw();
+                            DpadSelectLevelText.Draw();
+                            DpadRightLevel.Draw();
+                            DpadLeftLevel.Draw();
+                        }
+
+
+                        if (IsKeyPressed(KEY_ESCAPE)  || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             CURRENT_MENU = NORMAL_GAME;
                             BLOCK = false;
                             HV = 2;
                             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                             OPTION = 0;
                             OPTIONS = 2;
-                        } else if (IsKeyPressed(KEY_LEFT)) {
+                        } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                             selected_level = mod(selected_level-1, 4);
-                        } else if (IsKeyPressed(KEY_RIGHT)) {
+                        } else if (IsKeyPressed(KEY_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                             selected_level = mod(selected_level+1, 4);
-                        } else if (IsKeyPressed(KEY_ENTER)) {
+                        } else if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             OPTION  = 0;
                             CONFIGURE_MATCH = true;
                             BLOCK = false;
                         }
                     } else {
                         auto menuv_x = GetScreenWidth() - (20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF) - (400*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF);
-                        auto menuv_y = GetScreenHeight() - (20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF) - (250*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF);
+                        auto menuv_y = GetScreenHeight()/2.0f;
                         DrawRectangleV({menuv_x,menuv_y}, {400*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 250*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, Fade(BLACK, 0.65));
                         StartText.Draw(PINK);
                         SpeedRunText.Draw();
@@ -1253,7 +1381,32 @@ int main() {
                             FriendlyFireCheck.Draw();
                         }
                         BindigsText.Draw(YELLOW);
-                        if (IsKeyPressed(KEY_ENTER)) {
+
+                        auto new_height = 80.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
+                        DrawRectangleV({0,GetScreenHeight() - new_height+20.0f*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                        
+                        if (keyboard) {
+                            EnterText.Draw();
+                            EnterKey.Draw();
+                            MoveTextNormal.Draw();
+                            UpKeyNormal.Draw();
+                            DownKeyNormal.Draw();
+                            ReturnTextNormal.Draw();
+                            ReturnKeyNormal.Draw();
+                            EscKeyNormal.Draw();
+                        } else {
+                            XText.Draw();
+                            XButton.Draw();
+                            DpadMoveTextNormal.Draw();
+                            DpadUpNormal.Draw();
+                            DpadDownNormal.Draw();
+                            OTextNormal.Draw();
+                            OButtonNormal.Draw();
+                        }
+
+
+                        if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+                            std::cout << OPTION << "\n";
                             if (OPTION == 0) {
                                 Game(nplayers, selected_level);
                             } else if (OPTION == 1) {
@@ -1268,7 +1421,7 @@ int main() {
                                 OPTION = 0;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             }
-                        } else if (IsKeyPressed(KEY_ESCAPE)) {
+                        } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             BLOCK = true;
                             CONFIGURE_MATCH = false;
                             speed_run = fuego_amigo = false;
@@ -1276,16 +1429,41 @@ int main() {
                     }
                 } else {
 
-                    auto new_height = 50.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
-                    DrawRectangleV({0,GetScreenHeight() - new_height}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                    auto new_height = 80.0f * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
+                    DrawRectangleV({0,GetScreenHeight() - new_height+20.0f*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, {(float)GetScreenWidth(), new_height}, Fade(BLACK, 0.65));
+                    if (keyboard) {
+                        EnterText.Draw();
+                        EnterKey.Draw();
+                    } else {
+                        XText.Draw();
+                        XButton.Draw();
+                    }
+
 
                     if (CURRENT_MENU == NEW_GAME) {
+
+                        if (keyboard) {
+                            MoveTextNormal.Draw();
+                            UpKeyNormal.Draw();
+                            DownKeyNormal.Draw();
+
+                            ReturnTextNormal.Draw();
+                            EscKeyNormal.Draw();
+                            ReturnKeyNormal.Draw();
+                        } else {
+                            DpadMoveTextNormal.Draw();
+                            DpadUpNormal.Draw();
+                            DpadDownNormal.Draw();
+                            OTextNormal.Draw();
+                            OButtonNormal.Draw();
+                        }
+
 
                         NormalModeText.Draw(WHITE);
                         BrawlModeText.Draw(GRAY);
                         NewGameReturnText.Draw(BLUE);
 
-                        if (IsKeyPressed(KEY_ENTER)) {
+                        if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
                                 CURRENT_MENU = NORMAL_GAME;
                                 OPTIONS = 2;
@@ -1300,13 +1478,31 @@ int main() {
                                 OPTION = 0;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             }
-                        } else if (IsKeyPressed(KEY_ESCAPE)) {
+                        } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             CURRENT_MENU = MAIN_MENU;
                             OPTION = 0;
                             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                         }
 
                     } else if (CURRENT_MENU == NORMAL_GAME) {
+
+                        if (keyboard) {
+                            MoveTextNormal.Draw();
+                            UpKeyNormal.Draw();
+                            DownKeyNormal.Draw();
+
+                            ReturnTextNormal.Draw();
+                            EscKeyNormal.Draw();
+                            ReturnKeyNormal.Draw();
+                        } else {
+                            DpadMoveTextNormal.Draw();
+                            DpadUpNormal.Draw();
+                            DpadDownNormal.Draw();
+                            OTextNormal.Draw();
+                            OButtonNormal.Draw();
+                        }
+
+
                         if (nplayers == 0) {
                             ContinueText.Draw(GRAY);
                             P1.Draw(GRAY);
@@ -1318,7 +1514,11 @@ int main() {
                             }
                             if (p1show) {
                                 P1Press.Draw();
-                                P1Space.Draw();
+                                if (keyboard) {
+                                    P1Space.Draw();
+                                } else {
+                                    P1Options.Draw();
+                                }
                             }
 
                             P2.Draw(GRAY);
@@ -1330,7 +1530,11 @@ int main() {
                             }
                             if (p2show) {
                                 P2Press.Draw();
-                                P2Space.Draw();
+                                if (keyboard) {
+                                    P2Space.Draw();
+                                } else {
+                                    P2Options.Draw();
+                                }
                             }
                         } else {
                             ContinueText.Draw(WHITE);
@@ -1347,7 +1551,11 @@ int main() {
                                 }
                                 if (p2show) {
                                     P2Press.Draw();
-                                    P2Space.Draw();
+                                    if (keyboard) {
+                                        P2Space.Draw();
+                                    } else {
+                                        P2Options.Draw();
+                                    }
                                 }
                             } else {
                                 P2.Draw(WHITE);
@@ -1356,11 +1564,11 @@ int main() {
                         }
 
                         NormalGameReturnText.Draw(BLUE);
-                        if (IsKeyPressed(KEY_SPACE)) {
+                        if (IsKeyPressed(KEY_SPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) || IsGamepadButtonPressed(1, GAMEPAD_BUTTON_MIDDLE_RIGHT) ) {
                             p1current_time = p2current_time = 0;
                             p1show = p2show = false;
                             nplayers++;
-                        } else if (IsKeyPressed(KEY_ENTER)) {
+                        } else if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
                                 if (nplayers > 0) {
                                     CURRENT_MENU = SELECT_LEVEL;
@@ -1379,7 +1587,7 @@ int main() {
                                 p1show = p2show = false;
                                 nplayers = 0;
                             }
-                        } else if (IsKeyPressed(KEY_ESCAPE)) {
+                        } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             if (nplayers > 0) {
                                 nplayers--;
                             } else {
@@ -1394,7 +1602,33 @@ int main() {
                             p1show = p2show = false;
                         }
                     } else if (CURRENT_MENU == SETTINGS) {
-                        if (IsKeyPressed(KEY_ESCAPE)) {
+
+                        if (keyboard) {
+                            ChangeOptionText.Draw();
+                            RightKeySettings.Draw();
+                            LeftKeySettings.Draw();
+
+                            MoveTextSettings.Draw();
+                            UpKeySettings.Draw();
+                            DownKeySettings.Draw();
+
+                            ReturnTextSettings.Draw();
+                            EscKeySettings.Draw();
+                            ReturnKeySettings.Draw();
+                        } else {
+                            DpadOptionText.Draw();
+                            DpadRightSettings.Draw();
+                            DpadLeftSettings.Draw();
+
+                            DpadMoveTextSettings.Draw();
+                            DpadUpSettings.Draw();
+                            DpadDownSettings.Draw();
+
+                            OTextSettings.Draw();
+                            OButtonSettings.Draw();
+                        }
+
+                        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             CURRENT_MENU = MAIN_MENU;
                             OPTION = 1;
                             OPTIONS = 3;
@@ -1402,17 +1636,20 @@ int main() {
                             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                         } else {
                             if (OPTION == 0) {
-                                if (IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     ini["Graphics"]["OldFashioned"] = !std::get<bool>(ini["Graphics"]["OldFashioned"]);
                                 }
                             } else if (OPTION == 1) {
-                                if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     DISPLAY_MODE_OPTION = (DISPLAY_MODE_OPTION+1)%3;
                                     ini["Graphics"]["DisplayMode"] = DISPLAY_MODE_OPTION;
                                     if (DISPLAY_MODE_OPTION == WINDOWED) {
                                         if (IsWindowFullscreen()) {
                                             ToggleFullscreen();
                                         }
+                                        RESOLUTION_OPTION = OLD_RESOLUTION_OPTION;
+                                        OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                        SetWindowPosition((GetMonitorWidth(0) - WINDOW_WIDTH)/2, (GetMonitorHeight(0) - WINDOW_HEIGHT)/2);
                                         SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
                                     } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
                                         if (IsWindowFullscreen()) {
@@ -1420,20 +1657,29 @@ int main() {
                                         }
                                         SetWindowPosition(0, 30);
                                         SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
+                                        OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                        RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
                                     } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
                                         if (!IsWindowFullscreen()) {
+                                            OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                            RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
+                                            SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
                                             ToggleFullscreen();
                                         }
                                     }
-                                    SelectedDisplayModeText.text = to_string((DISPLAY_MODE_ENUM)DISPLAY_MODE_OPTION);
+                                    SelectedDisplayModeText.SetText(to_string((DISPLAY_MODE_ENUM)DISPLAY_MODE_OPTION));
                                     UISystem::Reescale();
-                                } else if (IsKeyPressed(KEY_LEFT)) {
+                                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                                } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                     DISPLAY_MODE_OPTION = (DISPLAY_MODE_OPTION+2)%3;
                                     ini["Graphics"]["DisplayMode"] = DISPLAY_MODE_OPTION;
                                     if (DISPLAY_MODE_OPTION == WINDOWED) {
                                         if (IsWindowFullscreen()) {
                                             ToggleFullscreen();
                                         }
+                                        RESOLUTION_OPTION = OLD_RESOLUTION_OPTION;
+                                        OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                        SetWindowPosition((GetMonitorWidth(0) - WINDOW_WIDTH)/2, (GetMonitorHeight(0) - WINDOW_HEIGHT)/2);
                                         SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
                                     } else if (DISPLAY_MODE_OPTION == WINDOWED_FULLSCREEN) {
                                         if (IsWindowFullscreen()) {
@@ -1441,54 +1687,62 @@ int main() {
                                         }
                                         SetWindowPosition(0, 30);
                                         SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
+                                        OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                        RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
                                     } else if (DISPLAY_MODE_OPTION == FULLSCREEN) {
                                         if (!IsWindowFullscreen()) {
+                                            OLD_RESOLUTION_OPTION = RESOLUTION_OPTION;
+                                            RESOLUTION_OPTION = RESOLUTION_OPTIONS.size()-1;
+                                            SetWindowSize(GetMonitorWidth(0), GetMonitorHeight(0));
                                             ToggleFullscreen();
                                         }
                                     }
-                                    SelectedDisplayModeText.text = to_string((DISPLAY_MODE_ENUM)DISPLAY_MODE_OPTION);
+                                    SelectedDisplayModeText.SetText(to_string((DISPLAY_MODE_ENUM)DISPLAY_MODE_OPTION));
                                     UISystem::Reescale();
+                                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                 }
                             } else if (OPTION == 2) {
-                                if (DISPLAY_MODE_OPTION != WINDOWED_FULLSCREEN) {
-                                    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                                if (DISPLAY_MODE_OPTION == WINDOWED) {
+                                    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                         RESOLUTION_OPTION = (RESOLUTION_OPTION+1)%RESOLUTION_OPTIONS.size();
                                         ini["Graphics"]["ScreenWidth"] = RESOLUTION_OPTIONS[RESOLUTION_OPTION].first;
                                         ini["Graphics"]["ScreenHeight"] = RESOLUTION_OPTIONS[RESOLUTION_OPTION].second;
+                                        SetWindowPosition((GetMonitorWidth(0) - WINDOW_WIDTH)/2, (GetMonitorHeight(0) - WINDOW_HEIGHT)/2 + 30);
                                         SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
                                         UISystem::Reescale();
-                                        SelectedResolutionText.text = std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]));
+                                        SelectedResolutionText.SetText(std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"])));
                                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
-                                    } else if (IsKeyPressed(KEY_LEFT)) {
+                                    } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                         RESOLUTION_OPTION = (RESOLUTION_OPTION+RESOLUTION_OPTIONS.size()-1)%RESOLUTION_OPTIONS.size();
                                         ini["Graphics"]["ScreenWidth"] = RESOLUTION_OPTIONS[RESOLUTION_OPTION].first;
                                         ini["Graphics"]["ScreenHeight"] = RESOLUTION_OPTIONS[RESOLUTION_OPTION].second;
+                                        SetWindowPosition((GetMonitorWidth(0) - WINDOW_WIDTH)/2, (GetMonitorHeight(0) - WINDOW_HEIGHT)/2 + 30);
                                         SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
                                         UISystem::Reescale();
-                                        SelectedResolutionText.text = std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"]));
+                                        SelectedResolutionText.SetText(std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"])));
                                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                     }
                                 }
                             } else if (OPTION == 3) {
-                                if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     FPS_LIMIT_OPTION = ((FPS_LIMIT_OPTION+1)%FPS_LIMIT_OPTIONS.size());
                                     ini["Graphics"]["FPSLimit"] = FPS_LIMIT_OPTIONS[FPS_LIMIT_OPTION];
                                     SetTargetFPS(std::get<int>(ini["Graphics"]["FPSLimit"]));
-                                    SelectedFPSLimitText.text = std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"]));
-                                } else if (IsKeyPressed(KEY_LEFT)) {
+                                    SelectedFPSLimitText.SetText(std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])));
+                                } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                     FPS_LIMIT_OPTION = ((FPS_LIMIT_OPTION + FPS_LIMIT_OPTIONS.size() - 1) % FPS_LIMIT_OPTIONS.size());
                                     ini["Graphics"]["FPSLimit"] = FPS_LIMIT_OPTIONS[FPS_LIMIT_OPTION];
                                     SetTargetFPS(std::get<int>(ini["Graphics"]["FPSLimit"]));
-                                    SelectedFPSLimitText.text = std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"]));
+                                    SelectedFPSLimitText.SetText(std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])));
                                 }
                             } else if (OPTION == 4) {
-                                if (IsKeyDown(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyDown(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     if (std::get<float>(ini["Audio"]["Volume"]) < 1) {
                                         ini["Audio"]["Volume"] = std::get<float>(ini["Audio"]["Volume"]) + 0.05f;
                                     } else {
                                         ini["Audio"]["Volume"] = 1.0f;
                                     }
-                                } else if (IsKeyDown(KEY_LEFT)) {
+                                } else if (IsKeyDown(KEY_LEFT) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                     if (std::get<float>(ini["Audio"]["Volume"]) > 0) {
                                         ini["Audio"]["Volume"] = std::get<float>(ini["Audio"]["Volume"]) - 0.05f;
                                     } else {
@@ -1496,16 +1750,15 @@ int main() {
                                     }
                                 }
                                 SetMasterVolume(std::get<float>(ini["Audio"]["Volume"]));
-                                VolumePercentageText.text = std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100));
+                                VolumePercentageText.SetText(std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100)));
                             } else if (OPTION == 5) {
-                                if (IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = CONTROL_SETTINGS;
                                     OPTION = 0;
-                                    // OPTIONS = ?;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                                 }
                             } else if (OPTION == 6) {
-                                if (IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = MAIN_MENU;
                                     OPTION = 1;
                                     OPTIONS = 3;
@@ -1529,9 +1782,9 @@ int main() {
                         DisplayModeRArrow.Draw();
 
                         // - RESOLUTION. 640x480, 800x600, 900x600, 1024x768, 1280x720, 1920x1080:
-                        ResolutionText.Draw();
+                        ResolutionText.Draw(DISPLAY_MODE_OPTION == WINDOWED ? WHITE : GRAY);
                         ResolutionLArrow.Draw();
-                        SelectedResolutionText.Draw(JELLYFISH);
+                        SelectedResolutionText.Draw(DISPLAY_MODE_OPTION == WINDOWED ? JELLYFISH : JELLYBEANBLUE);
                         ResolutionRArrow.Draw();
 
                         // - FPS LIMIT
@@ -1552,6 +1805,32 @@ int main() {
 
                     } else if (CURRENT_MENU == CONTROL_SETTINGS) {
 
+                        if (keyboard) {
+                            ChangeOptionText.Draw();
+                            RightKeySettings.Draw();
+                            LeftKeySettings.Draw();
+
+                            MoveTextSettings.Draw();
+                            UpKeySettings.Draw();
+                            DownKeySettings.Draw();
+
+                            ReturnTextSettings.Draw();
+                            EscKeySettings.Draw();
+                            ReturnKeySettings.Draw();
+                        } else {
+                            DpadOptionText.Draw();
+                            DpadRightSettings.Draw();
+                            DpadLeftSettings.Draw();
+
+                            DpadMoveTextSettings.Draw();
+                            DpadUpSettings.Draw();
+                            DpadDownSettings.Draw();
+
+                            OTextSettings.Draw();
+                            OButtonSettings.Draw();
+                        }
+
+
                         // CURRENT ACTION
                         Controller::Control currAction = Controller::NO_CONTROL;
                         switch (OPTION) {
@@ -1562,9 +1841,9 @@ int main() {
                             case 6: currAction = Controller::ATTACK;    break;
                         }
                         if (OPTION == 0) {
-                            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                 PLAYER = mod(PLAYER+1, 4);
-                                SelectedPlayer.text = std::to_string(PLAYER+1);
+                                SelectedPlayer.SetText(std::to_string(PLAYER+1));
                                 CONTROLLER = controllers[PLAYER]->type;
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
@@ -1572,9 +1851,9 @@ int main() {
                                 DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
                                 UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
                                 AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
-                            } else if (IsKeyPressed(KEY_LEFT)) {
+                            } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                 PLAYER = mod(PLAYER-1, 4);
-                                SelectedPlayer.text = std::to_string(PLAYER+1);
+                                SelectedPlayer.SetText(std::to_string(PLAYER+1));
                                 CONTROLLER = controllers[PLAYER]->type;
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
@@ -1584,7 +1863,7 @@ int main() {
                                 AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
                             }
                         } else if (OPTION == 1) {
-                            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
+                            if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                 CONTROLLER = mod(CONTROLLER+1,5);
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 controllers[PLAYER]->type = (Controller::Type)CONTROLLER;
@@ -1593,7 +1872,7 @@ int main() {
                                 DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
                                 UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
                                 AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
-                            } else if (IsKeyPressed(KEY_LEFT)) {
+                            } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                 CONTROLLER = mod(CONTROLLER-1,5);
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 controllers[PLAYER]->type = (Controller::Type)CONTROLLER;
@@ -1605,7 +1884,7 @@ int main() {
                             }
                         } else {
                             if (!SELECTED) {
-                                if (IsKeyPressed(KEY_ENTER)) {
+                                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     SELECTED = true;
                                     BLOCK    = true;
                                 }
@@ -1653,7 +1932,7 @@ int main() {
                                     }
                                     save_controls(PLAYER);
                                     SELECTED = false;
-                                    BLOCK = false;
+                                    BLOCK    = false;
                                     SHOW_ERROR_MESSAGE = false;
                                 }
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
@@ -1665,7 +1944,9 @@ int main() {
                         }
 
                         // Error Message:
-                        if (SHOW_ERROR_MESSAGE) BindingErrorText.Draw(RED);
+                        if (SHOW_ERROR_MESSAGE) {
+                            BindingErrorText.Draw(RED);
+                        }
                         // Player:
                         PlayerText.Draw();
                         PlayerLArrow.Draw();
@@ -1712,7 +1993,7 @@ int main() {
                             AttackActionKeybind.Draw(JELLYFISH);
                         }
 
-                        if (IsKeyPressed(KEY_ESCAPE)) {
+                        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             if (!SELECTED) {
                                 if (OLD_MENU == SELECT_LEVEL) {
                                     CURRENT_MENU = SELECT_LEVEL;
@@ -1738,11 +2019,11 @@ int main() {
             // Hammer movement:
             if (!BLOCK) {
                 Hammer.Draw();
-                if (IsKeyPressed(KEY_DOWN)) {
+                if (IsKeyPressed(KEY_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
                     OPTION = mod(OPTION+1, OPTIONS);
                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                 }
-                if (IsKeyPressed(KEY_UP)) {
+                if (IsKeyPressed(KEY_UP) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) {
                     OPTION = mod(OPTION-1, OPTIONS);
                     Hammer.Translate({Hammer.dst.x, Hammer.dst.y - 20});
                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + (OPTIONS - (OPTIONS-OPTION))*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
@@ -1767,7 +2048,6 @@ int main() {
         EndDrawing();
 
     }
-
 	save_config();
     UnloadMusicStream(MainTitleOST);
     UnloadFont(NES);

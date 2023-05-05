@@ -213,29 +213,29 @@ Libraries/engine/raylibx.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/raylibx.cpp.s
 .PHONY : Libraries/engine/raylibx.cpp.s
 
-migration.obj: migration.cpp.obj
-.PHONY : migration.obj
+main.obj: main.cpp.obj
+.PHONY : main.obj
 
 # target to build an object file
-migration.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.obj
-.PHONY : migration.cpp.obj
+main.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.obj
+.PHONY : main.cpp.obj
 
-migration.i: migration.cpp.i
-.PHONY : migration.i
+main.i: main.cpp.i
+.PHONY : main.i
 
 # target to preprocess a source file
-migration.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.i
-.PHONY : migration.cpp.i
+main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.i
+.PHONY : main.cpp.i
 
-migration.s: migration.cpp.s
-.PHONY : migration.s
+main.s: main.cpp.s
+.PHONY : main.s
 
 # target to generate assembly for a file
-migration.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/migration.cpp.s
-.PHONY : migration.cpp.s
+main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/main.cpp.s
+.PHONY : main.cpp.s
 
 # Help Target
 help:
@@ -256,9 +256,9 @@ help:
 	@echo ... Libraries/engine/raylibx.obj
 	@echo ... Libraries/engine/raylibx.i
 	@echo ... Libraries/engine/raylibx.s
-	@echo ... migration.obj
-	@echo ... migration.i
-	@echo ... migration.s
+	@echo ... main.obj
+	@echo ... main.i
+	@echo ... main.s
 .PHONY : help
 
 

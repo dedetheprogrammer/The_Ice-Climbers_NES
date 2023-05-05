@@ -64,15 +64,15 @@ public:
 };
 */
 
-class UISprite : public UIObject {
+class  UISprite : public UIObject {
 private:
     bool fullscreen;
 public:
     Rectangle src; // What pixels of the sprite do I want to draw?
     Rectangle ref; // Default (window reference) position and size properties.
     Rectangle dst; // Where and how do I draw these pixels?
-
     Texture2D sprite;
+    
     UISprite(const char* fileName, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(const char* fileName, Vector2 pos, Vector2 size, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
