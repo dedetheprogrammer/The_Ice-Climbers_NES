@@ -893,7 +893,7 @@ int main() {
     UIText SettingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 180}, UIObject::CENTER);
 
     // KEY BINDING SETTNGS:
-    bool SELECTED = false;
+    bool SELECTED = false, SHOW_ERROR_MESSAGE = false;
     int PLAYER = 0, CONTROLLER = Controller::KEYBOARD;
     UIText PlayerText(NES, "PLAYER", 33, 1, {200, GetScreenHeight()/2.0f - 185}, UIObject::CENTER_LEFT);
     UISprite PlayerLArrow(LArrow, {GetScreenWidth()/2.0f + 7, PlayerText.pos.y}, 1.0f, 1.0f);
@@ -905,30 +905,32 @@ int main() {
     UIText SelectedController(NES, to_string(Controller::KEYBOARD), 25, 1, {GetScreenWidth()/2.0f + 130, ControllerText.pos.y}, UIObject::UP_CENTER);
     UISprite ControllerRArrow(RArrow, {GetScreenWidth()/2.0f + 240, ControllerText.pos.y}, 1.0f, 1.0f);
     
-    UIText LeftActionText(NES, "MOVE LEFT", 27, 1, {250, GetScreenHeight()/2.0f - 65}, UIObject::CENTER_LEFT);
+    UIText LeftActionText(NES, to_string(Controller::LEFT), 27, 1, {250, GetScreenHeight()/2.0f - 65}, UIObject::CENTER_LEFT);
     //UISprite LeftActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, LeftActionText.pos.y}, 1.0f, 1.0f);
     UIText LeftActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::LEFT), 25, 1, {GetScreenWidth()/2.0f + 130, LeftActionText.pos.y}, UIObject::UP_CENTER);
     //UISprite LeftActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, LeftActionText.pos.y}, 1.0f, 1.0f);
 
-    UIText RightActionText(NES, "MOVE RIGHT", 27, 1, {250, GetScreenHeight()/2.0f - 5}, UIObject::CENTER_LEFT);
+    UIText RightActionText(NES, to_string(Controller::RIGHT), 27, 1, {250, GetScreenHeight()/2.0f - 5}, UIObject::CENTER_LEFT);
     //UISprite RightActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, RightActionText.pos.y}, 1.0f, 1.0f);
     UIText RightActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::RIGHT), 25, 1, {GetScreenWidth()/2.0f + 130, RightActionText.pos.y}, UIObject::UP_CENTER);
     //UISprite RightActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, RightActionText.pos.y}, 1.0f, 1.0f);
 
-    UIText DownActionText(NES, "CROUCH", 27, 1, {250, GetScreenHeight()/2.0f + 55}, UIObject::CENTER_LEFT);
+    UIText DownActionText(NES, to_string(Controller::DOWN), 27, 1, {250, GetScreenHeight()/2.0f + 55}, UIObject::CENTER_LEFT);
     //UISprite DownActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, DownActionText.pos.y}, 1.0f, 1.0f);
     UIText DownActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::DOWN), 25, 1, {GetScreenWidth()/2.0f + 130, DownActionText.pos.y}, UIObject::UP_CENTER);
     //UISprite DownActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, DownActionText.pos.y}, 1.0f, 1.0f);
 
-    UIText UpActionText(NES, "JUMP", 27, 1, {250, GetScreenHeight()/2.0f + 115}, UIObject::CENTER_LEFT);
+    UIText UpActionText(NES, to_string(Controller::JUMP), 27, 1, {250, GetScreenHeight()/2.0f + 115}, UIObject::CENTER_LEFT);
     //UISprite UpActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, UpActionText.pos.y}, 1.0f, 1.0f);
     UIText UpActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::JUMP), 25, 1, {GetScreenWidth()/2.0f + 130, UpActionText.pos.y}, UIObject::UP_CENTER);
     //UISprite UpActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, UpActionText.pos.y}, 1.0f, 1.0f);
 
-    UIText AttackActionText(NES, "ATTACK", 27, 1, {250, GetScreenHeight()/2.0f + 175}, UIObject::CENTER_LEFT);
+    UIText AttackActionText(NES, to_string(Controller::ATTACK), 27, 1, {250, GetScreenHeight()/2.0f + 175}, UIObject::CENTER_LEFT);
     //UISprite AttackActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, AttackActionText.pos.y}, 1.0f, 1.0f);
     UIText AttackActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::ATTACK), 25, 1, {GetScreenWidth()/2.0f + 130, AttackActionText.pos.y}, UIObject::UP_CENTER);
     //UISprite AttackActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, AttackActionText.pos.y}, 1.0f, 1.0f);
+
+    UIText BindingErrorText(NES, "Binding conflict with (PLAYER: -1, CONTROL: NO_CONTROL)", 20, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 250}, UIObject::DOWN_CENTER);
 
     // GENERAL UI:
     bool BLOCK = false;
@@ -1120,6 +1122,7 @@ int main() {
                         } else if (IsKeyPressed(KEY_RIGHT)) {
                             selected_level = mod(selected_level+1, 4);
                         } else if (IsKeyPressed(KEY_ENTER)) {
+                            OPTION  = 0;
                             CONFIGURE_MATCH = true;
                             BLOCK = false;
                         }
@@ -1252,6 +1255,7 @@ int main() {
                             if (OPTION == 0) {
                                 if (nplayers > 0) {
                                     CURRENT_MENU = SELECT_LEVEL;
+                                    OPTION  = 0;
                                     BLOCK = true;
                                     OPTIONS = 4;
                                     HV = 3;
@@ -1440,11 +1444,20 @@ int main() {
                     } else if (CURRENT_MENU == CONTROL_SETTINGS) {
 
                         // CURRENT ACTION
-                        int currAction = (OPTION < 2)? Controller::NO_CONTROL : OPTION - 2;
+                        Controller::Control currAction = Controller::NO_CONTROL;
+                        switch (OPTION) {
+                            case 2: currAction = Controller::LEFT;      break;
+                            case 3: currAction = Controller::RIGHT;     break;
+                            case 4: currAction = Controller::DOWN;      break;
+                            case 5: currAction = Controller::JUMP;      break;
+                            case 6: currAction = Controller::ATTACK;    break;
+                        }
                         if (OPTION == 0) {
                             if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER)) {
                                 PLAYER = mod(PLAYER+1, 4);
                                 SelectedPlayer.text = std::to_string(PLAYER+1);
+                                CONTROLLER = controllers[PLAYER]->type;
+                                SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
                                 RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
                                 DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
@@ -1453,6 +1466,8 @@ int main() {
                             } else if (IsKeyPressed(KEY_LEFT)) {
                                 PLAYER = mod(PLAYER-1, 4);
                                 SelectedPlayer.text = std::to_string(PLAYER+1);
+                                CONTROLLER = controllers[PLAYER]->type;
+                                SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
                                 RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
                                 DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
@@ -1489,30 +1504,36 @@ int main() {
                                 int binding = 0;
                                 int axisOffset = 0;
                                 //Keyboard
-                                if ((controllers[PLAYER]->type == Controller::Type::KEYBOARD)) {
+                                if ((controllers[PLAYER]->type == Controller::KEYBOARD)) {
                                     binding = GetKeyPressed();
                                 }
                                 //Gamepad Trigger
                                 else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_TRIGGER) > 0.5) {
-                                    binding = GAMEPAD_AXIS_LEFT_TRIGGER;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                    binding = GAMEPAD_EJE_GAT_IZQ;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
                                 } else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5) { 
-                                    binding = GAMEPAD_AXIS_RIGHT_TRIGGER; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                    binding = GAMEPAD_EJE_GAT_DER; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
                                 }
                                 //Gamepad Axis
-                                else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_X) > 0.5 || GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_X) < -0.5) {
-                                    binding = GAMEPAD_AXIS_LEFT_X;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
-                                } else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_Y) > 0.5 || GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_Y) < -0.5) {
-                                    binding = GAMEPAD_AXIS_LEFT_Y;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
-                                } else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_X) > 0.5 || GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_X) < -0.5) {
-                                    binding = GAMEPAD_AXIS_RIGHT_X; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
-                                } else if (GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_Y) > 0.5 || GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_Y) < -0.5) {
-                                    binding = GAMEPAD_AXIS_RIGHT_Y; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                else if (std::fabs(GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_X)) > 0.5) {
+                                    binding = GAMEPAD_EJE_IZQ_X;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                } else if (std::fabs(GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_LEFT_Y)) > 0.5) {
+                                    binding = GAMEPAD_EJE_IZQ_Y;  axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                } else if (std::fabs(GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_X)) > 0.5) {
+                                    binding = GAMEPAD_EJE_DER_X; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
+                                } else if (std::fabs(GetGamepadAxisMovement(CONTROLLER, GAMEPAD_AXIS_RIGHT_Y)) > 0.5) {
+                                    binding = GAMEPAD_EJE_DER_Y; axisOffset = (currAction < 4) ? ((currAction%2 == 0) ? 1 : -1) : 0;
                                 } else {
                                     //Gamepad Button
                                     binding = GetGamepadButtonPressed();
                                 }
 
-                                if (binding != 0) {
+                                bool validKey = (controllers[PLAYER]->type == Controller::KEYBOARD) ? validKeys[binding] : binding;
+                                auto conflict = isBindingConflicted(PLAYER, currAction, binding);
+
+                                if (conflict.first != -1) {
+                                    BindingErrorText.SetText("Binding conflict with (PLAYER: " + std::to_string(conflict.first) + ", CONTROL: " + to_string(conflict.second) + ")");
+                                    SHOW_ERROR_MESSAGE = true;
+                                } else if (validKey) {
                                     if (CONTROLLER == Controller::KEYBOARD) {
                                         controllers[PLAYER]->kb_controls[(Controller::Control)currAction] = binding;
                                     } else {
@@ -1524,6 +1545,7 @@ int main() {
                                     save_controls(PLAYER);
                                     SELECTED = false;
                                     BLOCK = false;
+                                    SHOW_ERROR_MESSAGE = false;
                                 }
                                 LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
                                 RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
@@ -1533,6 +1555,8 @@ int main() {
                             }
                         }
 
+                        // Error Message:
+                        if (SHOW_ERROR_MESSAGE) BindingErrorText.Draw(RED);
                         // Player:
                         PlayerText.Draw();
                         PlayerLArrow.Draw();
@@ -1595,6 +1619,8 @@ int main() {
                                 }
                             } else {
                                 SELECTED = false;
+                                BLOCK = false;
+                                SHOW_ERROR_MESSAGE = false;
                             }
                         }
                     }
