@@ -64,18 +64,18 @@ void Game(int numPlayers, int level) {
         Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT})
     };
 
-    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {30,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {60,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {90,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {30,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {60,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {90,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {30,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {60,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {90,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {8.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {16.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {24.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {8.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {16.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {24.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {8.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {16.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {24.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {8.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {16.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {24.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -146,7 +146,7 @@ void Game(int numPlayers, int level) {
     IceBlock.addComponent<Script, BlockBehavior>();
     IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
 
-    IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_thin.png", horizontal_scale, vertical_scale);
+    IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_block_thin.png", horizontal_scale, vertical_scale);
     IceBlockThin.addComponent<Collider2D>(&IceBlockThin.getComponent<Transform2D>().position, IceBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlockThin.addComponent<Script, BlockBehavior>();
     IceBlockThin.getComponent<Script, BlockBehavior>().hole = &IceHole;
@@ -489,9 +489,9 @@ void Game(int numPlayers, int level) {
 
             for (float i = 0.0f; i < 24; i++) {
                 GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))            
+                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))
                     GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
-                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)            
+                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)
                     GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
             }
 
@@ -499,25 +499,38 @@ void Game(int numPlayers, int level) {
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
                 if(i < 6 || (i > 8 && i < 12) || i > 18)            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                if(i == 6 || i == 8 || i == 12 || i == 18)            
+                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
                 if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19))            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                if(i == 1 || i == 3 || i == 7 || i == 9 || i == 13 || i == 15 || i == 19 )            
+                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
                 if(i < 12 || i == 15 || i > 18)            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-            }
+                if(i == 12 || i == 14 || i == 16 || i == 18)            
+                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
+                
+            }   
 
             for (int i = 0; i < 20; i++) {
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
                 if(i == 0 || (i > 2 && i < 9) || i > 15)            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
+                if(i == 1 || i == 2 || i == 9 || i == 15)            
+                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
                 if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19))            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
+                if(i == 5 || i == 9 || i == 13 || i == 15 || i == 19)            
+                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
                 if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16))            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
-            }
+                if(i == 2 || i == 5 || i == 7 || i == 11 || i == 13 || i == 16)            
+                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
+            } 
 
             GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
             GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
@@ -712,7 +725,7 @@ void Game(int numPlayers, int level) {
     bool play_music = false;
     bool paused = false;
     bool moving_camera = false;
-    float objects_offset = 80, current_objects_offset = 0;
+    float objects_offset = 6.0f * block_height, current_objects_offset = 0;
     float speedrun_time = 0.0f;
     float time_limit = 120.0f;
     bool onBonus = false;
@@ -868,7 +881,6 @@ void Game(int numPlayers, int level) {
         if (IsKeyPressed(KEY_R)) {
             Player_1->getComponent<Transform2D>().position = Vector2{600,70};
         }
-        DrawText("Press [M] to mute the music", 20, 20, 20, WHITE);
 
         std::string speedrun_string = seconds_to_time(speedrun_time);
         std::string time_limit_string = seconds_to_time(time_limit);
