@@ -58,13 +58,11 @@ void Game(int numPlayers, int level) {
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
 
-    auto BackGrounds = std::vector<Canvas>();
-    if(level == 0)
-        BackGrounds.push_back(Canvas("Assets/Sprites/00_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}));
-    else if(level == 1)
-        BackGrounds.push_back(Canvas("Assets/Sprites/01_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}));
-    else if(level == 2)
-        BackGrounds.push_back(Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT}));
+    auto BackGrounds = std::vector<Canvas>{
+        Canvas("Assets/Sprites/00_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}),
+        Canvas("Assets/Sprites/01_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}),
+        Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT})
+    };
 
     Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
     Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
@@ -584,7 +582,7 @@ void Game(int numPlayers, int level) {
                 if(i != 7)
                     GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
             for (int i = 0; i < 22; i++) {
-                if(i < 5 && i > 12)
+                if(i < 5 || i > 12)
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
                 else if(i == 5 || i == 10) 
                     GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
