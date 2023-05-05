@@ -72,7 +72,7 @@ public:
     Rectangle ref; // Default (window reference) position and size properties.
     Rectangle dst; // Where and how do I draw these pixels?
     Texture2D sprite;
-    
+
     UISprite(const char* fileName, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(const char* fileName, Vector2 pos, Vector2 size, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
     UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, PIVOT pivot = UP_LEFT, bool hidden = false, float scale_factor = 1);
@@ -103,7 +103,7 @@ public:
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
-    void SetText(std::string text);
+    void SetText(std::string text, bool rescale = true);
 
 };
 

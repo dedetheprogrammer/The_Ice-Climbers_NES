@@ -130,7 +130,6 @@ UISprite::UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, 
     //this->ref = {pos.x, pos.y, dst.width, dst.height};
     UISystem::Add(*this);
 
-
 }
 
 UISprite::UISprite(Texture2D sprite, Vector2 pos, Vector2 size, PIVOT pivot, bool hidden, float scale_factor)
@@ -154,6 +153,7 @@ UISprite::UISprite(Texture2D sprite, Rectangle src, Rectangle dst, PIVOT pivot, 
     if (dst.width == GetScreenWidth() || dst.height == GetScreenHeight()) {
         fullscreen = true;
     } else {
+     
         fullscreen = false;
     }
     this->sprite = sprite;
@@ -320,7 +320,7 @@ void UIText::Reescale() {
     }
 }
 
-void UIText::SetText(std::string text) {
+void UIText::SetText(std::string text, bool rescale) {
     this->text = text;
     size = MeasureTextEx(font, text.c_str(), font_size, spacing);
     if (pivot == UP_LEFT) {
@@ -342,7 +342,9 @@ void UIText::SetText(std::string text) {
     } else if (pivot == DOWN_RIGHT) {
         this->pos = {ref_pos.x - size.x, ref_pos.y - size.y};
     }
-    Reescale();
+    if (rescale) {
+        Reescale();
+    }
 }
 
 

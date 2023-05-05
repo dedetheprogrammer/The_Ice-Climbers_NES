@@ -31,31 +31,7 @@ public:
 
 Font NES;
 
-void Game(int numPlayers, int level, bool speed_run) {
-
-    /*
-    
-                    DrawText("WIN", 400, 100, 100, GREEN);
-                    DrawText("Victoria 3000", 250, 200, 60, WHITE);
-                    DrawText(("Frutas x " +  std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
-                    DrawText(("Bloques rotos x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
-                    DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
-                        Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
-    
-    */
-
-    UIText WinOrLoseText(NES, "WIN", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 - 40.0f}, UIObject::CENTER);
-
-    Texture IceBlockTexture = LoadTexture("Assets/Sprites/Blocks/Ice_block_large.png");
-    UIText BlocksDestroyedText(NES, "x 15", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 - 20.0f}, UIObject::CENTER);
-    UISprite IceBlockUISprite(IceBlockTexture, {BlocksDestroyedText.pos.x - 10.0f, BlocksDestroyedText.pos.y}, 1.7f, 1.7f, UIObject::CENTER);
-    
-    Texture EggplantTexture = LoadTexture("Assets/Sprites/Fruit_Eggplant.png");
-    UIText FruitsCollectedText(NES, "x 15", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 + 20.0f}, UIObject::CENTER);
-    UISprite EggplantUISprite(EggplantTexture, {FruitsCollectedText.pos.x - 10.0f, FruitsCollectedText.pos.y}, 1.7f, 1.7f, UIObject::CENTER);
-    
-    UIText FinalPointsText(NES, "x 3000", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 + 40.0f}, UIObject::CENTER);
-
+void Game(int numPlayers, int level) {
     SetExitKey(KEY_NULL);
     Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
     Texture2D arena_sprite = LoadTexture("Assets/Sprites/02_Brawl.png");
@@ -77,10 +53,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     Vector2 scale = {horizontal_scale, vertical_scale};
 
     int level_phase = 0;
-    bool acabar = false;
 
     //MusicSource BGM("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
     MusicSource BGM("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
+    MusicSource BGM2("Assets/Sounds/03-Play-BGM.mp3",true);
 
     auto BackGrounds = std::vector<Canvas>{
         Canvas("Assets/Sprites/00_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}),
@@ -88,30 +64,20 @@ void Game(int numPlayers, int level, bool speed_run) {
         Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT})
     };
 
-    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {8.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {16.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {24.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {8.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {16.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {24.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {8.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {16.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {24.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {8.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {16.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {24.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {30,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {60,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {90,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {30,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {60,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {90,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {30,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {60,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {90,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
 
     // Rectangles = Sprites component?
-    // Mountain background:
-    //Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
-    //Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
-    // PAUSE frame:
-    Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
-    float paused_showtime = 0.75;
-    bool show = true;
-    Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
-    Rectangle dst_1{(GAME_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (GAME_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
-
     // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
     BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{GAME_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
@@ -170,7 +136,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     IceBlock.addComponent<Script, BlockBehavior>();
     IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
 
-    IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_block_thin.png", horizontal_scale, vertical_scale);
+    IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_thin.png", horizontal_scale, vertical_scale);
     IceBlockThin.addComponent<Collider2D>(&IceBlockThin.getComponent<Transform2D>().position, IceBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlockThin.addComponent<Script, BlockBehavior>();
     IceBlockThin.getComponent<Script, BlockBehavior>().hole = &IceHole;
@@ -479,7 +445,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
 
         // Players
-        Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
+        Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 12, floor_levels[0] - player_size.y}});
         if (numPlayers > 1)
             Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
         if (numPlayers > 2)
@@ -513,9 +479,9 @@ void Game(int numPlayers, int level, bool speed_run) {
 
             for (float i = 0.0f; i < 24; i++) {
                 GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))
+                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))            
                     GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
-                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)
+                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)            
                     GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
             }
 
@@ -523,38 +489,25 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
                 if(i < 6 || (i > 8 && i < 12) || i > 18)            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-                if(i == 6 || i == 8 || i == 12 || i == 18)            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
                 if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19))            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-                if(i == 1 || i == 3 || i == 7 || i == 9 || i == 13 || i == 15 || i == 19 )            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
                 GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
                 if(i < 12 || i == 15 || i > 18)            
                     GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-                if(i == 12 || i == 14 || i == 16 || i == 18)            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-                
-            }   
+            }
 
             for (int i = 0; i < 20; i++) {
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
                 if(i == 0 || (i > 2 && i < 9) || i > 15)            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
-                if(i == 1 || i == 2 || i == 9 || i == 15)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
                 if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19))            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
-                if(i == 5 || i == 9 || i == 13 || i == 15 || i == 19)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
                 GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
                 if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16))            
                     GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
-                if(i == 2 || i == 5 || i == 7 || i == 11 || i == 13 || i == 16)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
-            } 
+            }
 
             GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
             GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
@@ -746,95 +699,161 @@ void Game(int numPlayers, int level, bool speed_run) {
     //GameSystem::Printout();
     float timeToShowScores = 0.0f;
     bool finished = false;
-    bool play_music = false;
-    bool paused = false;
+    bool play_music = true;
     bool moving_camera = false;
-    float objects_offset = 6.0f * block_height, current_objects_offset = 0;
-    float old_offset = objects_offset;
+    float objects_offset = 80, current_objects_offset = 0;
     float speedrun_time = 0.0f;
-    float chrono_time = 0.0f;
     float time_limit = 120.0f;
     bool onBonus = false;
-    bool game_over = false;
-    int fruits_harvested = 0, blocks_destroyed = 0;
+    BGM2.Init();
     BGM.Init();
 
+    UIText ContinueText(NES, "CONTINUE", 40, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f - 30}, UIObject::CENTER);
+    UIText ExitText(NES, "EXIT", 40, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 30}, UIObject::CENTER);
+    UISprite Hammer("Assets/Sprites/UI_Old_Hammer.png", {ContinueText.pos.x - 50, ContinueText.pos.y}, 4.0f, 4.0f, UIObject::UP_RIGHT);
+    int OPTION = 0, OPTIONS = 2; // HammerView
+
+    UISprite BigFrame1("Assets/Sprites/Record-frame1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
+    UIText Player1Text(NES, "Player 1", 40, 1, {GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
+    UIText Player1Status(NES, "YOU LOOSE! HA LOOSER", 40, 1, {GetScreenWidth()/4.0f, Player1Text.pos.y + 60}, UIObject::CENTER);
+    UISprite Icicler1("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth()/8.0f, Player1Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Monster1("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth()/8.0f, Icicler1.dst.y + Icicler1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Vegetabler1("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth()/8.0f, Monster1.dst.y + Monster1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Block1("Assets/Sprites/Ranking-block.png", {GetScreenWidth()/8.0f, Vegetabler1.dst.y + Vegetabler1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite SmallFrame1("Assets/Sprites/Record-frames1.png", {GetScreenWidth()/4.0f, Block1.dst.y + Block1.dst.height + 80}, 3.5f, 3.5f, UIObject::CENTER);
+    UIText Icicler1Text(NES, "400x", 40, 1, {GetScreenWidth()/4.0f, Icicler1.dst.y + Icicler1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster1Text(NES, "800x", 40, 1, {GetScreenWidth()/4.0f, Monster1.dst.y + Monster1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Vegetabler1Text(NES, "300x", 40, 1, {GetScreenWidth()/4.0f, Vegetabler1.dst.y + Vegetabler1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block1Text(NES, "10x", 40, 1, {GetScreenWidth()/4.0f, Block1.dst.y + Block1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler1N(NES, "00", 40, 1, {Icicler1Text.pos.x + Icicler1Text.size.x + 10, Icicler1Text.pos.y});
+    UIText Monster1N(NES, "00", 40, 1, {Monster1Text.pos.x + Monster1Text.size.x + 10, Monster1Text.pos.y});
+    UIText Vegetabler1N(NES, "00", 40, 1, {Vegetabler1Text.pos.x + Vegetabler1Text.size.x + 10, Vegetabler1Text.pos.y});
+    UIText Block1N(NES, "00", 40, 1, {Block1Text.pos.x + Block1Text.size.x + 10, Block1Text.pos.y});
+    UIText Total1(NES, "000000", 40, 1, {GetScreenWidth()/4.0f, SmallFrame1.dst.y + 10}, UIObject::UP_CENTER);
+
+    UISprite BigFrame2("Assets/Sprites/Record-frame2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
+    UIText Player2Text(NES, "Player 2", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
+    UIText Player2Status(NES, "YOU LOOSE! HA LOOSER", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Player2Text.pos.y + 60}, UIObject::CENTER);
+    UISprite Icicler2("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Player2Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Monster2("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Icicler2.dst.y + Icicler2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Vegetabler2("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Monster2.dst.y + Monster2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite Block2("Assets/Sprites/Ranking-block.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Vegetabler2.dst.y + Vegetabler2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
+    UISprite SmallFrame2("Assets/Sprites/Record-frames2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, Block2.dst.y + Block2.dst.height + 80}, 3.5f, 3.5f, UIObject::CENTER);
+    UIText Icicler2Text(NES, "400x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Icicler2.dst.y + Icicler2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster2Text(NES, "800x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Monster2.dst.y + Monster2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Vegetabler2Text(NES, "300x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Vegetabler2.dst.y + Vegetabler2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block2Text(NES, "10x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Block2.dst.y + Block2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler2N(NES, "00", 40, 1, {Icicler2Text.pos.x + Icicler2Text.size.x + 10, Icicler2Text.pos.y});
+    UIText Monster2N(NES, "00", 40, 1, {Monster2Text.pos.x + Monster2Text.size.x + 10, Monster2Text.pos.y});
+    UIText Vegetabler2N(NES, "00", 40, 1, {Vegetabler2Text.pos.x + Vegetabler2Text.size.x + 10, Vegetabler2Text.pos.y});
+    UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
+    
+    UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
+
+    enum GAME_MENU {GAME, PAUSED, RANKING};
+    GAME_MENU CURRENT_MENU = GAME;
+    bool bonus = false;
+
     GameSystem::Start();
-    while(!finished) {
+    while(!WindowShouldClose() && !finished) {
         BeginDrawing();
         ClearBackground(BLACK);
-        if (IsKeyPressed(KEY_M)) {
-            play_music = !play_music;
-        }
-        if (play_music) {
-            BGM.Play();
-        }
 
-        if (IsGamepadAvailable(0)) {
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
-                paused = !paused;
-            }
-        } else if (IsKeyPressed(KEY_BACKSPACE)){
-            paused = !paused;
-        }
-        if(acabar) {
-            if(current_objects_offset <= objects_offset) {
-                BackGrounds[level].Draw();
-                float shift = block_height * 6.0f * GetFrameTime();
-                current_objects_offset  += shift;
-                GameSystem::Move({0,shift});
-                BackGrounds[level].Move({0,shift});
-                fruits_harvested = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                blocks_destroyed = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-            } else {
-                if (timeToShowScores < 3.0) timeToShowScores += GetFrameTime();
-                else {
-                    GameSystem::DestroyAll();
-                    if (game_over) WinOrLoseText.SetText("Lose");
-                    WinOrLoseText.Draw();
+        if (CURRENT_MENU == RANKING) {
 
-                    BlocksDestroyedText.SetText("x " + std::to_string(fruits_harvested));
-                    BlocksDestroyedText.Draw();
-                    IceBlockUISprite.Draw();
+            if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
+            else {
+                BigFrame1.Draw();
+                Player1Text.Draw();
+                if (bonus) {
+                    Player1Status.SetText("YOU WIN!", false);
+                }
+                Player1Status.Draw();
+                Icicler1.Draw();
+                Icicler1Text.Draw();
+                Icicler1N.Draw();
+                Monster1.Draw();
+                Monster1Text.Draw();
+                Monster1N.Draw();
+                Vegetabler1.Draw();
+                Vegetabler1Text.Draw();
+                Vegetabler1N.SetText(std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas), false);
+                Vegetabler1N.Draw();
+                Block1N.SetText(std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos), false);
+                Block1.Draw();
+                Block1Text.Draw();
 
-                    FruitsCollectedText.SetText("x " + std::to_string(blocks_destroyed));
-                    FruitsCollectedText.Draw();
-                    EggplantUISprite.Draw();
+                Block1N.Draw();
+                SmallFrame1.Draw();
+                auto pts1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 + Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10;
+                if (bonus) {
+                    pts1+=3000;
+                }
+                Total1.SetText(std::to_string(pts1), false);
+                Total1.Draw();
 
-                    FinalPointsText.SetText("Puntuación: " + std::to_string(3000 + fruits_harvested * 300 +
-                        blocks_destroyed *10));
-                    FinalPointsText.Draw();
+                //BigFrame2.Draw();
+                //Player2Text.Draw();
+                //Icicler2.Draw();
+                //Icicler2Text.Draw();
+                //Monster2.Draw();
+                //Monster2Text.Draw();
+                //Vegetabler2.Draw();
+                //Vegetabler2N.SetText(std::to_string(Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas));
+                //Vegetabler2Text.Draw();
+                //Block2.Draw();
+                //Block2N.SetText(std::to_string(Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos));
+                //Block2N.Draw();
+                //Block2Text.Draw();
+                //SmallFrame2.Draw();
+                //auto pts2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 + Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos *10;
+                //if (bonus) {
+                //    pts2+=3000;
+                //}
+                //Total2.SetText(std::to_string(pts2));
+                //Total2.Draw();
 
-                    if(IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
-                        finished = true;
-                    }
+                //DrawText("WIN", 400, 100, 100, GREEN);
+                //DrawText("Victoria 3000", 250, 200, 60, WHITE);
+                //DrawText(("Frutas x " +  std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
+                //DrawText(("Bloques rotos x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
+                //DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
+                //    Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+
+                if(KeyboardDetected() || GamepadDetected(0)){
+                    break;
                 }
             }
         } else {
+            if (IsKeyPressed(KEY_M)) {
+                play_music = !play_music;
+            }
+            if (play_music) {
+                BGM2.Play();
+            } else {
+                BGM.Play();
+            }
+
             BackGrounds[level].Draw();
-            if (!paused) {
-                float delta_time = GetFrameTime();
-                chrono_time += delta_time;
-
-                if (speed_run) {
-                    time_limit = time_limit - delta_time;
-
-                    if (time_limit < 0) {
-                        time_limit = 0;
-                        game_over = true;
-                        acabar = true;
-                    }
+            if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+                if (CURRENT_MENU == PAUSED) {
+                    CURRENT_MENU = GAME;
+                } else if (CURRENT_MENU == GAME) {
+                    CURRENT_MENU = PAUSED;
                 }
+            }
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+                if (CURRENT_MENU == PAUSED) {
+                    CURRENT_MENU = GAME;
+                }
+            }
 
-                if((Player_1->getComponent<Script, PopoBehavior>().bonusLevel ||
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel || 
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel ||
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel) &&
-                    !onBonus) {
-                    objects_offset = ((GAME_HEIGHT - 6.0f * block_height) - bonusLevel->getComponent<Transform2D>().position.y);
+            if (CURRENT_MENU == GAME) {
+                if(Player_1->getComponent<Script, PopoBehavior>().bonusLevel && !onBonus) {
                     onBonus = true;
-                    moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
+                    //Player_1->removeComponent<Animator>();
+                    //Player_1->addComponent<Animator>("Idle", PopoBonusAnimator);
                 }
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
@@ -866,35 +885,37 @@ void Game(int numPlayers, int level, bool speed_run) {
                     if(Player_4->getComponent<Script, PopoBehavior>().lifes > 2)
                         LifeLili3.Draw();
                 }
-                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < (4.0f * block_height) && level < 2) {
+                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && Player_1->getComponent<Transform2D>().position.y < 150 && level < 2) {
                     moving_camera = true;
                     switch (level_phase) {
                     case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
                         level_phase++;
                         break;
                     }
-                    //if (level_phase++ == 8) {
-                    //    objects_offset = 150;
-                    //} else {
-                    //    objects_offset = 80;
-                    //}
                 }
+                float delta_time = GetFrameTime();
+                speedrun_time += delta_time;
+                time_limit = (time_limit - delta_time < 0)? 0 : time_limit - delta_time;
                 
-
                 if (!moving_camera) {
                     GameSystem::Update();
-                    if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && !acabar) {
-                        std::cout << "GAME OVER!\n";
-                        game_over = true;
-                        acabar = true;
-                        objects_offset = 0;
-                        current_objects_offset = 1;
-                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory){
-                        objects_offset = 20.0f * block_height;
-                        acabar = true;
+                    if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0) {
+                        CURRENT_MENU = RANKING;
+                    }
+                    if(Player_1->getComponent<Script, PopoBehavior>().victory){
+                        Player_1->getComponent<Script, PopoBehavior>().victory;
+                        float shift = 300 * GetFrameTime();
+                        current_objects_offset  += shift;
+                        if (current_objects_offset <= objects_offset) {
+                            GameSystem::Move({0,shift});
+                            BackGrounds[level].Move({0,shift});
+                        }else{
+                            CURRENT_MENU = RANKING;
+                            current_objects_offset = 0;
+                        }
                     }
                 } else {
-                    //std::cout << Player.getComponent<Script, PopoBehavior>().victory  << std::endl;
+
                     float shift = block_height * 6.0f * GetFrameTime();
                     current_objects_offset  += shift;
                     if (current_objects_offset <= objects_offset) {
@@ -904,52 +925,48 @@ void Game(int numPlayers, int level, bool speed_run) {
                             for(auto enemy : Enemies)
                                 enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
                     } else {
-                        objects_offset = old_offset;
                         current_objects_offset = 0;
                         moving_camera = false;
                     }
                     GameSystem::Render();
                 }
-                
-                if (speed_run) {
-                    std::string speedrun_string = seconds_to_time(chrono_time);
-                    auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
-                    DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
-                    std::string time_limit_string = seconds_to_time(time_limit);
-                    dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
-                    DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+
+                if (IsKeyPressed(KEY_R)) {
+                    Player_1->getComponent<Transform2D>().position = Vector2{600,70};
                 }
-            } else {
-                DrawTexturePro(Pause_frame, src_0, dst_1, Vector2{0,0}, 0, WHITE);
-                if (show) {
-                    if (paused_showtime <= 0) {
-                        paused_showtime = 0.75;
-                        show = false;
+                std::string speedrun_string = seconds_to_time(speedrun_time);
+                std::string time_limit_string = seconds_to_time(time_limit);
+                auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
+                DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+
+                dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
+                DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+
+            } else if (CURRENT_MENU == PAUSED) {
+                ContinueText.Draw();
+                ExitText.Draw();
+                Hammer.Draw();
+                if (IsKeyPressed(KEY_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
+                    OPTION = mod(OPTION+1, OPTIONS);
+                    Hammer.Translate({ContinueText.pos.x - 70, ContinueText.pos.y + OPTION*60*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                }
+                if (IsKeyPressed(KEY_UP) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) {
+                    OPTION = mod(OPTION-1, OPTIONS);
+                    Hammer.Translate({ContinueText.pos.x - 70, ContinueText.pos.y + (OPTIONS - (OPTIONS-OPTION))*60*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                }
+
+                if (IsKeyPressed(KEY_ENTER)) {
+                    if (OPTION == 0) {
+                        CURRENT_MENU = GAME;
                     } else {
-                        DrawTextPro(NES, "PAUSED", Vector2{GAME_WIDTH/2.0f-55, GAME_HEIGHT/2.0f}, Vector2{0,0}, 0, 30, 1.5, WHITE);
-                    }
-                } else {
-                    if (paused_showtime <= 0){
-                        paused_showtime = 0.75;
-                        show = true;
+                        CURRENT_MENU = RANKING;
                     }
                 }
-                paused_showtime -= GetFrameTime();
             }
         }
-        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
-            GameSystem::DestroyAll();
-            finished = true;
-            break;
-        }
-        if (IsKeyPressed(KEY_R)) {
-            Player_1->getComponent<Transform2D>().position = Vector2{600,70};
-        }
-
-
         EndDrawing();
+
     }
-    UnloadTexture(Pause_frame);
     Popo.Destroy();
     Nana.Destroy();
     Amam.Destroy();
@@ -988,7 +1005,9 @@ void Game(int numPlayers, int level, bool speed_run) {
     ArenaGrassWall.Destroy();
     DirtWallThin.Destroy();
     IceWallSuperThin.Destroy();
+    GameSystem::DestroyAll();
     BGM.Unload();
+    BGM2.Unload();
 }
 
 //-----------------------------------------------------------------------------
@@ -1095,6 +1114,7 @@ int main() {
     bool CONFIGURE_MATCH = false, fuego_amigo = false, speed_run = false;
     int selected_level = 0;
     UISprite Level1("Assets/Sprites/Level1_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
+    UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, {Level1.dst.width, Level1.dst.height}, UIObject::UP_CENTER);
     UIText Level1Text(NES, "LEVEL 1: BASICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     //UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level2Text(NES, "LEVEL 2: ADVANCED MECHANICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
@@ -1222,6 +1242,9 @@ int main() {
             {(StartText.pos.x-70)*1920/900, StartText.pos.y*1080/600 - 15}
         }}
     };
+    std::vector<int> HammerOffsets {
+        60, 60, 60, 50
+    };
     // KEYS (KEYBOARD):
     bool keyboard = true;
 
@@ -1284,25 +1307,6 @@ int main() {
     
     UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
-
-/*
-
-    Texture EscKey = LoadTexture("Assets/Sprites/Keys/esc.png"), ReturnKey = LoadTexture("Assets/Sprites/Keys/backspace.png");
-    UIText ReturnTextNormal(NES, "RETURN", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeyNormal(EscKey, {ReturnTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeyNormal(ReturnKey, {EscKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    
-    UIText ReturnTextSettings(NES, "RETURN", 15, 1, {DownKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeySettings(EscKey, {ReturnTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeySettings(ReturnKey, {EscKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-*/
-
-
-
-
-    std::vector<int> HammerOffsets {
-        60, 60, 60, 50
-    };
 
     // /*** Main Loop ***/ //
     int OPTION  = 0;
@@ -1419,7 +1423,6 @@ int main() {
                     DpadDownNormal.Draw();
                 }
 
-
                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = NEW_GAME;
@@ -1448,8 +1451,8 @@ int main() {
                         Level1.Draw();
                         Level1Text.Draw();
                     } else if (selected_level == 1) {
-                        //Level2.Draw();
-                        DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
+                        Level2.Draw();
+                        //DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
                         Level2Text.Draw();
                     } else if (selected_level == 2) {
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
@@ -1541,7 +1544,7 @@ int main() {
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             std::cout << OPTION << "\n";
                             if (OPTION == 0) {
-                                Game(nplayers, selected_level, speed_run);
+                                Game(nplayers, selected_level);
                             } else if (OPTION == 1) {
                                 speed_run = !speed_run;
                             } else if (OPTION == 2) {
@@ -2176,7 +2179,7 @@ int main() {
             UISystem::Reescale();
             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
         }
-        DrawText((std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].first) + "x" + std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].second)).c_str(), 5, 5, 30, BLACK);
+        //DrawText((std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].first) + "x" + std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].second)).c_str(), 5, 5, 30, BLACK);
 
         EndDrawing();
 
