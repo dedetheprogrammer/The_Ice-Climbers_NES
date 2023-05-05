@@ -34,30 +34,37 @@ Font NES;
 void Game(int numPlayers, int level) {
     SetExitKey(KEY_NULL);
     Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
-    float vertical_scale = (float)WINDOW_WIDTH * 2.3f / (float)mountain_sprite.height;
-    float horizontal_scale = (float)WINDOW_WIDTH / (float)mountain_sprite.width;
+    float GAME_WIDTH = WINDOW_WIDTH;
+    float GAME_HEIGHT = WINDOW_HEIGHT;
+    if(DISPLAY_MODE_OPTION == FULLSCREEN) {
+        GAME_WIDTH = GetScreenWidth();
+        GAME_HEIGHT = GetScreenHeight();
+    }
+    
+    float vertical_scale = GAME_WIDTH * 2.3f / (float)mountain_sprite.height;
+    float horizontal_scale = GAME_WIDTH / (float)mountain_sprite.width;
     Vector2 scale = {horizontal_scale, vertical_scale};
 
     std::vector<float> floor_levels = {
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*2.0f,  // 0
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*8.0f,  // 1
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*14.0f, // 2
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*20.0f, // 3
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*26.0f, // 4
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*32.0f, // 5
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*38.0f, // 6
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*44.0f, // 7
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*50.0f  // 8
+        GAME_HEIGHT - 8.0f*vertical_scale*2.0f,  // 0
+        GAME_HEIGHT - 8.0f*vertical_scale*8.0f,  // 1
+        GAME_HEIGHT - 8.0f*vertical_scale*14.0f, // 2
+        GAME_HEIGHT - 8.0f*vertical_scale*20.0f, // 3
+        GAME_HEIGHT - 8.0f*vertical_scale*26.0f, // 4
+        GAME_HEIGHT - 8.0f*vertical_scale*32.0f, // 5
+        GAME_HEIGHT - 8.0f*vertical_scale*38.0f, // 6
+        GAME_HEIGHT - 8.0f*vertical_scale*44.0f, // 7
+        GAME_HEIGHT - 8.0f*vertical_scale*50.0f  // 8
     };
 
     std::vector<float> wall_levels = {
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*56.0f, // 0
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*63.0f, // 1
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*70.0f, // 2
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*77.0f, // 3
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*84.0f, // 4
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*91.0f, // 5
-        (float)WINDOW_HEIGHT - 8.0f*vertical_scale*94.0f, // 6
+        GAME_HEIGHT - 8.0f*vertical_scale*56.0f, // 0
+        GAME_HEIGHT - 8.0f*vertical_scale*63.0f, // 1
+        GAME_HEIGHT - 8.0f*vertical_scale*70.0f, // 2
+        GAME_HEIGHT - 8.0f*vertical_scale*77.0f, // 3
+        GAME_HEIGHT - 8.0f*vertical_scale*84.0f, // 4
+        GAME_HEIGHT - 8.0f*vertical_scale*91.0f, // 5
+        GAME_HEIGHT - 8.0f*vertical_scale*94.0f, // 6
     };
 
 
@@ -72,19 +79,19 @@ void Game(int numPlayers, int level) {
         MountainPath = "Assets/Sprites/00_Mountain.png";
     else if(level == 1)
         MountainPath = "Assets/Sprites/01_Mountain.png";
-    Canvas Mountain(MountainPath.c_str(), {0.0f, (float)WINDOW_HEIGHT - (float)WINDOW_WIDTH*2.3f}, {(float)WINDOW_WIDTH, (float)WINDOW_WIDTH*2.3f});
-    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {20,20});
-    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {20,20});
-    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {20,20});
-    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {30,70}, {20,20});
-    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {60,70}, {20,20});
-    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {90,70}, {20,20});
-    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {30,100}, {20,20});
-    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {60,100}, {20,20});
-    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {90,100}, {20,20});
-    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {30,130}, {20,20});
-    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {60,130}, {20,20});
-    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {90,130}, {20,20});
+    Canvas Mountain(MountainPath.c_str(), {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f});
+    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {30,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {60,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {90,40}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {30,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {60,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {90,70}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {30,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {60,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {90,100}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {30,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {60,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {90,130}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
 
     // Rectangles = Sprites component?
     // Mountain background:
@@ -95,11 +102,11 @@ void Game(int numPlayers, int level) {
     float paused_showtime = 0.75;
     bool show = true;
     Rectangle src_0{0, 0, (float)Pause_frame.width, (float)Pause_frame.height};
-    Rectangle dst_1{(WINDOW_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (WINDOW_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
+    Rectangle dst_1{(GAME_WIDTH - Pause_frame.width*3.0f)/2.0f + 4, (GAME_HEIGHT - Pause_frame.height)/2.0f - 3, Pause_frame.width*3.0f, Pause_frame.height*3.0f};
 
     // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
-    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{WINDOW_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
+    BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{GAME_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
 
     // Bloque de hierba
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
@@ -397,19 +404,19 @@ void Game(int numPlayers, int level) {
 
     // Plataformas laterales
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*4.0f, floor_levels[1]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*4.0f, floor_levels[1]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[2]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[2]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[3]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*5.0f, floor_levels[4]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[5]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[6]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
-    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{(float)WINDOW_WIDTH - block_width*6.0f, floor_levels[7]}});
+    GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
     GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
 
@@ -437,9 +444,9 @@ void Game(int numPlayers, int level) {
         Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
 
     // Zona de muerte y Condor en la cima de la montaña
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{0, (float)WINDOW_HEIGHT - block_height * 95.0f}});
-    GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, (float)WINDOW_HEIGHT - block_height * 95.0f}});
-    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, (float)WINDOW_HEIGHT - block_height * 104.0f}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
+    GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, GAME_HEIGHT - block_height * 95.0f}});
+    GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
 
     std::vector<GameObject*> Enemies{};
     GameObject* bonusLevel = nullptr;
@@ -447,20 +454,20 @@ void Game(int numPlayers, int level) {
     if(level == 0) {
 
         std::vector<float> bonus_floor_levels = {
-            (float)WINDOW_HEIGHT - block_height * 55.0f, // 0
-            (float)WINDOW_HEIGHT - block_height * 58.0f, // 1
-            (float)WINDOW_HEIGHT - block_height * 60.0f, // 2  Cloud
-            (float)WINDOW_HEIGHT - block_height * 65.0f, // 3
-            (float)WINDOW_HEIGHT - block_height * 66.0f, // 4
-            (float)WINDOW_HEIGHT - block_height * 70.0f, // 5
-            (float)WINDOW_HEIGHT - block_height * 71.0f, // 6
-            (float)WINDOW_HEIGHT - block_height * 76.0f, // 7  Cloud
-            (float)WINDOW_HEIGHT - block_height * 81.0f, // 8
-            (float)WINDOW_HEIGHT - block_height * 82.0f, // 9
-            (float)WINDOW_HEIGHT - block_height * 85.0f, // 10
-            (float)WINDOW_HEIGHT - block_height * 87.0f, // 11
-            (float)WINDOW_HEIGHT - block_height * 90.0f, // 12
-            (float)WINDOW_HEIGHT - block_height * 95.0f  // 13
+            GAME_HEIGHT - block_height * 55.0f, // 0
+            GAME_HEIGHT - block_height * 58.0f, // 1
+            GAME_HEIGHT - block_height * 60.0f, // 2  Cloud
+            GAME_HEIGHT - block_height * 65.0f, // 3
+            GAME_HEIGHT - block_height * 66.0f, // 4
+            GAME_HEIGHT - block_height * 70.0f, // 5
+            GAME_HEIGHT - block_height * 71.0f, // 6
+            GAME_HEIGHT - block_height * 76.0f, // 7  Cloud
+            GAME_HEIGHT - block_height * 81.0f, // 8
+            GAME_HEIGHT - block_height * 82.0f, // 9
+            GAME_HEIGHT - block_height * 85.0f, // 10
+            GAME_HEIGHT - block_height * 87.0f, // 11
+            GAME_HEIGHT - block_height * 90.0f, // 12
+            GAME_HEIGHT - block_height * 95.0f  // 13
         };
 
         for (float i = 0.0f; i < 24; i++) {
@@ -537,17 +544,17 @@ void Game(int numPlayers, int level) {
     } else if(level == 1) {
 
         std::vector<float> bonus_floor_levels = {
-            (float)WINDOW_HEIGHT - block_height * 55.0f, // 0
-            (float)WINDOW_HEIGHT - block_height * 60.0f, // 1 Cloud
-            (float)WINDOW_HEIGHT - block_height * 65.0f, // 2
-            (float)WINDOW_HEIGHT - block_height * 66.0f, // 3
-            (float)WINDOW_HEIGHT - block_height * 70.0f, // 4
-            (float)WINDOW_HEIGHT - block_height * 71.0f, // 5
-            (float)WINDOW_HEIGHT - block_height * 76.0f, // 6 Cloud
-            (float)WINDOW_HEIGHT - block_height * 79.0f, // 7 Cloud
-            (float)WINDOW_HEIGHT - block_height * 85.0f, // 8
-            (float)WINDOW_HEIGHT - block_height * 90.0f, // 9
-            (float)WINDOW_HEIGHT - block_height * 95.0f  // 10
+            GAME_HEIGHT - block_height * 55.0f, // 0
+            GAME_HEIGHT - block_height * 60.0f, // 1 Cloud
+            GAME_HEIGHT - block_height * 65.0f, // 2
+            GAME_HEIGHT - block_height * 66.0f, // 3
+            GAME_HEIGHT - block_height * 70.0f, // 4
+            GAME_HEIGHT - block_height * 71.0f, // 5
+            GAME_HEIGHT - block_height * 76.0f, // 6 Cloud
+            GAME_HEIGHT - block_height * 79.0f, // 7 Cloud
+            GAME_HEIGHT - block_height * 85.0f, // 8
+            GAME_HEIGHT - block_height * 90.0f, // 9
+            GAME_HEIGHT - block_height * 95.0f  // 10
         };
 
         GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
@@ -791,7 +798,7 @@ void Game(int numPlayers, int level) {
                     paused_showtime = 0.75;
                     show = false;
                 } else {
-                    DrawTextPro(NES, "PAUSED", Vector2{WINDOW_WIDTH/2.0f-55, WINDOW_HEIGHT/2.0f}, Vector2{0,0}, 0, 30, 1.5, WHITE);
+                    DrawTextPro(NES, "PAUSED", Vector2{GAME_WIDTH/2.0f-55, GAME_HEIGHT/2.0f}, Vector2{0,0}, 0, 30, 1.5, WHITE);
                 }
             } else {
                 if (paused_showtime <= 0){
@@ -814,7 +821,7 @@ void Game(int numPlayers, int level) {
         std::string time_limit_string = seconds_to_time(time_limit);
 
         auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
-        DrawTextPro(NES, speedrun_string.c_str(), {WINDOW_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+        DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
 
         dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
         DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
