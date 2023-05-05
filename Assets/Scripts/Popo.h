@@ -163,7 +163,6 @@ public:
                     rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
                 }else{
                     if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
-                    std::cout << contact.gameObject.name << std::endl;
                     animator["Fall"];
                     rigidbody.velocity.y *= -0.7;
                 }
@@ -193,7 +192,7 @@ public:
         if (contact.gameObject.tag == "Wall") {
             rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
             if (contact.contact_normal.y != 0) {
-                if(isGrounded) {
+                if(!isGrounded && !hasBounced) {
                     hasBounced = true;
                     rigidbody.velocity.x *= -1;
                     if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
@@ -312,9 +311,10 @@ public:
 
         if (contact.gameObject.tag == "Goal") {
             if (contact.contact_normal.y > 0) {
+                rigidbody.velocity = {0,0};
+                rigidbody.acceleration = {0,0};
+                rigidbody.gravity = 0;
                 victory = true;
-                std::cout << "VICTORY!";
-                //exit(0);
             }
         }
 

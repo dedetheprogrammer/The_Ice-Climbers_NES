@@ -58,7 +58,7 @@ std::string to_string(DISPLAY_MODE_ENUM dme) {
     }
 }
 // ---- SCREEN SIZE
-const int DEFAULT_SCREEN_WIDTH     = 904;
+const int DEFAULT_SCREEN_WIDTH     = 900;
 const int DEFAULT_SCREEN_HEIGHT    = 600;
 int RESOLUTION_OPTION              = 2;
 std::vector<std::pair<int, int>> RESOLUTION_OPTIONS {

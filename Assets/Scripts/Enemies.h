@@ -37,6 +37,13 @@ public:
         return new RedCondorBehavior(gameObject);
     }
 
+    void OnCollision(Collision contact) {
+        if (contact.contact_normal.y < 0) {
+            rigidbody.velocity = {0,0};
+            rigidbody.acceleration = {0,0};
+        }
+    }
+
     void Update() {
         transform.position.x += rigidbody.velocity.x * GetFrameTime();
         if (!turning) {
@@ -215,7 +222,6 @@ public:
                 dis_x1x2_2 = (pos_x2 - pos_x1)/2,
                 pos_p2 = collider.Pos().x + collider.size.x;
             if (!hasFallen && !isRunning) {
-                std::cout << collider.Pos().x << "," << pos_x2 << "," << isRight << "\n";
                 if (((isRight && (pos_p2 <= pos_x1-1)) || (!isRight && (collider.Pos().x >= pos_x2)))) {
                     rigidbody.velocity.x *= -2;
                     if (rigidbody.velocity.x > 0 && !isRight) {
