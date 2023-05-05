@@ -6,6 +6,10 @@
 #include <iostream>
 #include "raylib.h"
 
+#define COYOTEBROWN CLITERAL(Color){ 140, 101, 45, 255 }
+#define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
+#define JELLYBEANBLUE CLITERAL(Color){ 66, 117, 133, 255 }
+
 // ----------------------------------------------------------------------------
 // Math extension
 // ----------------------------------------------------------------------------
@@ -34,10 +38,17 @@ template <typename T> void operator*=(Vector2& a, T b) { a.x *= b; a.y *= b; }
 
 float dot(Vector2 a, Vector2 b);
 float mod(Vector2 v);
+int mod(int a, int b);
 Vector2 abs(Vector2 v);
 Vector2 nor(Vector2 v, float n = 1);
 Vector2 reflect(Vector2 wi, Vector2 n);
 
 std::ostream& operator<<(std::ostream& os, Vector2 v);
+
+// ----------------------------------------------------------------------------
+// Time extension
+// ----------------------------------------------------------------------------
+std::string millis_to_time(int millis);
+std::string seconds_to_time(int seconds);
 
 #endif

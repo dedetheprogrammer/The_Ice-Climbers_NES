@@ -10,36 +10,6 @@ bool WINDOW_LIMITS_BEHAVOR (WINDOW_BEHAVOR flag) {
 */
 
 /*
-class Sprite {
-private:
-    Rectangle src; // Rectangle that selects the region of the sprite.
-    Rectangle dst; // Rectangle that shows the region with the transformations.
-public:
-
-    Texture2D sprite;
-
-    Sprite(const char *fileName) {
-        sprite = LoadTexture(fileName);
-        src = dst = {0,0,(float)sprite.width,(float)sprite.height};
-    }
-
-    Sprite(const char *fileName, float scale) {
-        sprite = LoadTexture(fileName);
-        src = {0,0,(float)sprite.width, (float)sprite.height};
-        dst = {0,0,sprite.width*scale, sprite.height*scale};
-    }
-
-    Sprite(const char* fileName, float scale, Vector2 dest) {
-        sprite = LoadTexture(fileName);
-        src = {0,0,(float)sprite.width, (float)sprite.height};
-        dst = {dest.x, dest.y, sprite.width*scale, sprite.height*scale};  
-    }
-
-    void Draw() {
-        DrawTexturePro(sprite, src, dst, Vector2{0,0}, 0, WHITE);
-    }
-};
-
 
 class Projectile {
 private:

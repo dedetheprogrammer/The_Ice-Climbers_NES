@@ -165,6 +165,30 @@ Libraries/engine/EngineECS.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineECS.cpp.s
 .PHONY : Libraries/engine/EngineECS.cpp.s
 
+Libraries/engine/EngineUI.obj: Libraries/engine/EngineUI.cpp.obj
+.PHONY : Libraries/engine/EngineUI.obj
+
+# target to build an object file
+Libraries/engine/EngineUI.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.obj
+.PHONY : Libraries/engine/EngineUI.cpp.obj
+
+Libraries/engine/EngineUI.i: Libraries/engine/EngineUI.cpp.i
+.PHONY : Libraries/engine/EngineUI.i
+
+# target to preprocess a source file
+Libraries/engine/EngineUI.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.i
+.PHONY : Libraries/engine/EngineUI.cpp.i
+
+Libraries/engine/EngineUI.s: Libraries/engine/EngineUI.cpp.s
+.PHONY : Libraries/engine/EngineUI.s
+
+# target to generate assembly for a file
+Libraries/engine/EngineUI.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\engine.dir\build.make CMakeFiles/engine.dir/Libraries/engine/EngineUI.cpp.s
+.PHONY : Libraries/engine/EngineUI.cpp.s
+
 Libraries/engine/raylibx.obj: Libraries/engine/raylibx.cpp.obj
 .PHONY : Libraries/engine/raylibx.obj
 
@@ -226,6 +250,9 @@ help:
 	@echo ... Libraries/engine/EngineECS.obj
 	@echo ... Libraries/engine/EngineECS.i
 	@echo ... Libraries/engine/EngineECS.s
+	@echo ... Libraries/engine/EngineUI.obj
+	@echo ... Libraries/engine/EngineUI.i
+	@echo ... Libraries/engine/EngineUI.s
 	@echo ... Libraries/engine/raylibx.obj
 	@echo ... Libraries/engine/raylibx.i
 	@echo ... Libraries/engine/raylibx.s

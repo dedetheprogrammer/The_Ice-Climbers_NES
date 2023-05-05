@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "EngineECS.h"
+#include "EngineUI.h"
 #include "raylib.h"
 #include "raylibx.h"
 #include "Block.h"
@@ -239,6 +240,7 @@ int sense() {
 
 int main() {
 
+    /*
     int WINDOW_WIDTH = 1024;
     int WINDOW_HEIGHT = 768;
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "COÑO");
@@ -250,6 +252,7 @@ int main() {
     A.addComponent<Sprite>("Assets/Sprites/UI_Hammer.png", 3.0f);
     A.addComponent<Script, test>();
     A.addComponent<Collider2D>(&A.getComponent<Transform2D>().position, A.getComponent<Sprite>().GetViewDimensions());
+    */
 
     //B.addComponent<Transform2D>(Vector2{300,365});
     //B.addComponent<Collider2D>(&B.getComponent<Transform2D>().position, Vector2{100,100});
@@ -275,6 +278,7 @@ int main() {
 //
 
     //Texture2D a = LoadTexture("Assets/Sprites/Grass_block_large.png");
+    /*
     GameObject& Abracadabra = GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Hola"  });
     GameSystem::Instantiate(A, {.name = "Abracadabra",   .tag = "Adios" });
     GameSystem::Instantiate(A, {.name = "Pito de burro", .tag = "Hola"  });
@@ -307,6 +311,7 @@ int main() {
     //    GameSystem::Update();
         EndDrawing();
     }
+    */
 
     /*
     InitWindow(800, 800, "COÑO");
@@ -358,4 +363,43 @@ int main() {
         EndDrawing();
     }
     */
+
+    float WINDOW_WIDTH_REF = 900, WINDOW_HEIGHT_REF = 600;
+    int i = 2;
+    std::vector<std::pair<int, int>> sizes {
+        {640, 480}, {800, 600}, {900, 600}, {1024, 768}, {1280, 720}, {1920, 1080}
+    };
+    InitWindow(sizes[i].first,sizes[i].second,"COÑO");
+    
+    UIObject PopoExistence("./Assets/Sprites/popo.png", "PopoUI", {750, 400}, 3.2f, 3.2f, UIObject::DOWN_RIGHT);
+    Texture2D Popo = LoadTexture("./Assets/Sprites/popo.png");
+    while(!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        float scaleX = (float)sizes[i].first  / WINDOW_WIDTH_REF;
+        float scaleY = (float)sizes[i].second / WINDOW_HEIGHT_REF;
+        float scale = fminf(scaleX, scaleY);
+
+        //DrawTexturePro(
+        //    Popo,
+        //    {0,0, (float)Popo.width, (float)Popo.height},
+        //    {750*sizes[i].first/WINDOW_WIDTH_REF, 400*sizes[i].second/WINDOW_HEIGHT_REF, 3.2f*Popo.width*scale, 3.2f*Popo.height*scale},
+        //    {0,0},
+        //    0,
+        //    WHITE
+        //);
+        //DrawRectangleV({(750 * sizes[i].first) / WINDOW_WIDTH_REF, (400 * sizes[i].second) / WINDOW_HEIGHT_REF}, {100*scale, 100*scale}, VIOLET);
+        DrawText((std::to_string(sizes[i].first) + "x" + std::to_string(sizes[i].second)).c_str(), 5, 5, 30, WHITE);
+        PopoExistence.Draw();
+        DrawCircleV({750,400}, 7.0f, RED);
+        if (IsKeyPressed(KEY_LEFT)) {
+            i = (i+5)%6;
+            SetWindowSize(sizes[i].first, sizes[i].second);
+        } else if (IsKeyPressed(KEY_RIGHT)) {
+            i = (i+1)%6;
+            SetWindowSize(sizes[i].first, sizes[i].second);
+        }
+        EndDrawing();
+    }
 }
