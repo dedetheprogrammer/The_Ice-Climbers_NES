@@ -31,7 +31,31 @@ public:
 
 Font NES;
 
-void Game(int numPlayers, int level) {
+void Game(int numPlayers, int level, bool speed_run) {
+
+    /*
+    
+                    DrawText("WIN", 400, 100, 100, GREEN);
+                    DrawText("Victoria 3000", 250, 200, 60, WHITE);
+                    DrawText(("Frutas x " +  std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
+                    DrawText(("Bloques rotos x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
+                    DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
+                        Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+    
+    */
+
+    UIText WinOrLoseText(NES, "WIN", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 - 40.0f}, UIObject::CENTER);
+
+    Texture IceBlockTexture = LoadTexture("Assets/Sprites/Blocks/Ice_block_large.png");
+    UIText BlocksDestroyedText(NES, "x 15", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 - 20.0f}, UIObject::CENTER);
+    UISprite IceBlockUISprite(IceBlockTexture, {BlocksDestroyedText.pos.x - 10.0f, BlocksDestroyedText.pos.y}, 1.7f, 1.7f, UIObject::CENTER);
+    
+    Texture EggplantTexture = LoadTexture("Assets/Sprites/Fruit_Eggplant.png");
+    UIText FruitsCollectedText(NES, "x 15", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 + 20.0f}, UIObject::CENTER);
+    UISprite EggplantUISprite(EggplantTexture, {FruitsCollectedText.pos.x - 10.0f, FruitsCollectedText.pos.y}, 1.7f, 1.7f, UIObject::CENTER);
+    
+    UIText FinalPointsText(NES, "x 3000", 15, 1, {GetScreenWidth()/2, GetScreenHeight()/2 + 40.0f}, UIObject::CENTER);
+
     SetExitKey(KEY_NULL);
     Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
     Texture2D arena_sprite = LoadTexture("Assets/Sprites/02_Brawl.png");
@@ -803,12 +827,28 @@ void Game(int numPlayers, int level) {
             if(acabar) {
                 if (timeToShowScores < 2.0) timeToShowScores += GetFrameTime();
                 else {
+                    /*
                     DrawText("WIN", 400, 100, 100, GREEN);
                     DrawText("Victoria 3000", 250, 200, 60, WHITE);
                     DrawText(("Frutas x " +  std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas)).c_str(), 250, 270, 60, WHITE);
                     DrawText(("Bloques rotos x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos)).c_str(), 250, 340, 60, WHITE);
                     DrawText(("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
                         Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10)).c_str(), 150, 420, 80, WHITE);
+                    */
+                    if (speed_run && time_limit == 0) WinOrLoseText.SetText("Lose");
+                    WinOrLoseText.Draw();
+
+                    BlocksDestroyedText.SetText("x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas));
+                    BlocksDestroyedText.Draw();
+                    IceBlockUISprite.Draw();
+
+                    FruitsCollectedText.SetText("x " + std::to_string(Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos));
+                    FruitsCollectedText.Draw();
+                    EggplantUISprite.Draw();
+                    
+                    FinalPointsText.SetText("Puntuación: " + std::to_string(3000 + Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas * 300 +
+                        Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos *10));
+                    FinalPointsText.Draw();
 
                     if(IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)){
                         finished = true;
@@ -816,8 +856,16 @@ void Game(int numPlayers, int level) {
                 }
             } else {
                 float delta_time = GetFrameTime();
-                speedrun_time += delta_time;
-                time_limit = (time_limit - delta_time < 0)? 0 : time_limit - delta_time;
+                chrono_time += delta_time;
+
+                if (speed_run) {
+                    time_limit = time_limit - delta_time;
+
+                    if (time_limit < 0) {
+                        time_limit = 0;
+                        acabar = true;
+                    }
+                }
             }
 
             if (!moving_camera) {
@@ -882,14 +930,15 @@ void Game(int numPlayers, int level) {
             Player_1->getComponent<Transform2D>().position = Vector2{600,70};
         }
 
-        std::string speedrun_string = seconds_to_time(speedrun_time);
-        std::string time_limit_string = seconds_to_time(time_limit);
+        if (speed_run) {
+            std::string speedrun_string = seconds_to_time(chrono_time);
+            auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
+            DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+            std::string time_limit_string = seconds_to_time(time_limit);
+            dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
+            DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
+        }
 
-        auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
-        DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
-
-        dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
-        DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
 
         EndDrawing();
     }
@@ -1486,7 +1535,7 @@ int main() {
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             std::cout << OPTION << "\n";
                             if (OPTION == 0) {
-                                Game(nplayers, selected_level);
+                                Game(nplayers, selected_level, speed_run);
                             } else if (OPTION == 1) {
                                 speed_run = !speed_run;
                             } else if (OPTION == 2) {
