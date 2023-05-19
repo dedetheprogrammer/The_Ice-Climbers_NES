@@ -318,6 +318,8 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject* Player_3 = nullptr;
     GameObject* Player_4 = nullptr;
 
+    GameObject* JosephInstance = nullptr;
+
     // Nubes
     GameObject Cloud("Cloud", "Cloud");
     Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", horizontal_scale, vertical_scale);
@@ -373,6 +375,18 @@ void Game(int numPlayers, int level, bool speed_run) {
     Vector2 topi_size = Topi.getComponent<Animator>().GetViewDimensions();
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>(Icicle);
+
+    GameObject Joseph("Joseph", "Enemy", {"Joseph"}, {"Floor", "SlidingFloor", "Hole", "Player", "Wall"});
+    Joseph.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Joseph/01_Walk.png", 16, 31, scale, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Joseph/02_Stunned.png", 16, 31, scale, 0.5, true)},
+            {"Falling", Animation("Assets/Sprites/Joseph/03_Basic.png", 16, 31, scale, 0.5, true)},
+        }
+    );
+    Joseph.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 3.0f, 0});
+    Vector2 joseph_size = Joseph.getComponent<Animator>().GetViewDimensions();
+    Joseph.addComponent<Collider2D>(&Joseph.getComponent<Transform2D>().position, Vector2{collider_width, joseph_size.y}, Vector2{joseph_size.x/2 - collider_offset, 0});
+    Joseph.addComponent<Script, JosephBehavior>();
 
     GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
     Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
@@ -457,13 +471,21 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
 
         // Players
+        auto playerTransforms = std::vector<Transform2D*>();
         Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
-        if (numPlayers > 1)
+        playerTransforms.push_back(&Player_1->getComponent<Script, PopoBehavior>().transform);
+        if (numPlayers > 1) {
             Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
-        if (numPlayers > 2)
+            playerTransforms.push_back(&Player_2->getComponent<Script, PopoBehavior>().transform);
+        }
+        if (numPlayers > 2) {
             Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,floor_levels[0] - player_size.y}});
-        if (numPlayers > 3)
+            playerTransforms.push_back(&Player_3->getComponent<Script, PopoBehavior>().transform);
+        }
+        if (numPlayers > 3) {
             Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
+            playerTransforms.push_back(&Player_4->getComponent<Script, PopoBehavior>().transform);
+        }
 
         // Zona de muerte y Condor en la cima de la montaña
         GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
@@ -572,6 +594,11 @@ void Game(int numPlayers, int level, bool speed_run) {
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
+
+            JosephInstance = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width),floor_levels[4] - (joseph_size.y + 1)}});
+            JosephInstance->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Enemies.push_back(JosephInstance);
+            
             GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
         } else if(level == 1) {
 
@@ -779,7 +806,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
     
     UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
-    std::cout << "1" << std::endl;
+    //std::cout << "1" << std::endl;
     GameSystem::Start();
     while(!finished) {
         BeginDrawing();
@@ -798,9 +825,9 @@ void Game(int numPlayers, int level, bool speed_run) {
         } else if (IsKeyPressed(KEY_BACKSPACE)){
             paused = !paused;
         }
-        std::cout << "1" << std::endl;
+        //std::cout << "1" << std::endl;
         if(acabar) {
-            std::cout << "2" << std::endl;
+            //std::cout << "2" << std::endl;
             if(current_objects_offset <= objects_offset) {
                 BackGrounds[level].Draw();
                 float shift = block_height * 6.0f * GetFrameTime();
@@ -879,7 +906,7 @@ void Game(int numPlayers, int level, bool speed_run) {
             
             BackGrounds[level].Draw();
             if (!paused) {
-                std::cout << "3" << std::endl;
+                //std::cout << "3" << std::endl;
                 float delta_time = GetFrameTime();
                 chrono_time += delta_time;
 
@@ -903,7 +930,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
                 }
-                std::cout << "4" << std::endl;
+                //std::cout << "4" << std::endl;
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
@@ -945,6 +972,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
+                if (JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
+                    JosephInstance->getComponent<Script, JosephBehavior>().shakeGround = false;
+                    moving_camera = true;
+                }
+                
                 if (!moving_camera) {
                     GameSystem::Update();
                     if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
@@ -966,8 +998,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                         GameSystem::Move({0,shift});
                         BackGrounds[level].Move({0,shift});   
                         if(!onBonus)
-                            for(auto enemy : Enemies)
-                                enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
+                            for(auto enemy : Enemies) {
+                                auto second_tags = enemy->second_tags;
+                                if (second_tags.find("Topi") != second_tags.end())
+                                    enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
+                            }
                     } else {
                         objects_offset = old_offset;
                         current_objects_offset = 0;
@@ -1040,6 +1075,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     LevelWall_1.Destroy();
     LevelWall_2.Destroy();
     Topi.Destroy();
+    Joseph.Destroy();
     Nutpicker.Destroy();
     Eggplant.Destroy();
     Lettuce.Destroy();
