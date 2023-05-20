@@ -1,11 +1,11 @@
 #pragma once
+#include <iostream>
+#include <ctime>
 #include "EngineECS.h"
 #include "Block.h"
 #include "Popo.h"
+#include "raylibx.h"
 #include "settings.h"
-#include <iostream>
-#include <ctime>
-#include "random"
 
 class RedCondorBehavior : public Script {
 private:
@@ -71,19 +71,23 @@ class IcicleBehavior : public Script {
 private:
     RigidBody2D& rigidbody;
     Transform2D& transform;
+    int k = 5;
 public:
+
+    int broken_floor;
+
     IcicleBehavior(GameObject& gameObject) : Script(gameObject),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>())
     {
-
+        broken_floor = 0;
     }
 
     IcicleBehavior(GameObject& gameObject, IcicleBehavior& behavior) : Script(gameObject),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>())
     {
-
+        broken_floor = 0;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -95,18 +99,21 @@ public:
         //    rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
         //}
         if (contact.gameObject.tag == "Hole") {
-            auto position = contact.gameObject.getComponent<Transform2D>().position;
-            GameSystem::Instantiate(*contact.gameObject.getComponent<Script, HoleBehavior>().original_block, GameObjectOptions{.position=position});
-            contact.gameObject.Destroy();
-            gameObject.Destroy();
+            double sigmoidal = 1 / (1 + std::exp(-k * broken_floor));
+            if (dis(gen) > sigmoidal) {
+                auto position = contact.gameObject.getComponent<Transform2D>().position;
+                GameSystem::Instantiate(*contact.gameObject.getComponent<Script, HoleBehavior>().original_block, GameObjectOptions{.position=position});
+                contact.gameObject.Destroy();
+                gameObject.Destroy();
+            }
         }
     }
 
     void Update() override {
         float deltaTime = GetFrameTime();
         transform.position.x += rigidbody.velocity.x * deltaTime;
-        //transform.position.y += rigidbody.velocity.y * deltaTime;
-        //rigidbody.velocity.y += rigidbody.gravity * deltaTime;
+        transform.position.y += rigidbody.velocity.y * deltaTime;
+        rigidbody.velocity.y += rigidbody.gravity * deltaTime;
     }
 
 };
@@ -138,15 +145,13 @@ private:
     }
 
 public:
-    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
-    // eficiente que acceder una y otra vez a los componentes cada vez que
-    // necesitamos hacer algo con uno de ellos.
     Animator& animator;
     Collider2D& collider;
     RigidBody2D& rigidbody;
     Transform2D& transform;
+    std::vector<GameObject*>* blocks;
 
-    TopiBehavior(GameObject& gameObject, GameObject& Icicle) : Script(gameObject),
+    TopiBehavior(GameObject& gameObject, GameObject& Icicle, std::vector<GameObject*>* blocks = {}) : Script(gameObject),
         Icicle(Icicle),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
@@ -165,7 +170,7 @@ public:
         last_sense  = 0;
         hasFallen = false;
         needIcicle = false;
-
+        this->blocks = blocks;
     }
 
     TopiBehavior(GameObject& gameObject, TopiBehavior& behavior) : Script(gameObject),
@@ -187,6 +192,7 @@ public:
         last_sense  = behavior.last_sense;
         hasFallen   = behavior.hasFallen;
         needIcicle  = behavior.needIcicle;
+        blocks      = behavior.blocks;
 
     }
 

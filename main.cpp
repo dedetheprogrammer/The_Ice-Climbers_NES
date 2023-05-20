@@ -470,6 +470,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, GAME_HEIGHT - block_height * 95.0f}});
         GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
 
+
         if(level == 0) {
 
             std::vector<float> bonus_floor_levels = {
@@ -489,8 +490,10 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GAME_HEIGHT - block_height * 95.0f  // 13
             };
 
+            std::unordered_map<std::string, GameObject*> first_floor_blocks;
             for (float i = 0.0f; i < 24; i++) {
-                GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+                auto block = &GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+                first_floor_blocks[block->name] = block;
                 if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))
                     GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
                 if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)
@@ -568,7 +571,9 @@ void Game(int numPlayers, int level, bool speed_run) {
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[3] - eggplant_height}});
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
 
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
+            auto a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().blocks = &first_floor_blocks;
+            Enemies.push_back(a_topi);
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
@@ -779,7 +784,6 @@ void Game(int numPlayers, int level, bool speed_run) {
     UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
     
     UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
-    std::cout << "1" << std::endl;
     GameSystem::Start();
     while(!finished) {
         BeginDrawing();
@@ -798,9 +802,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         } else if (IsKeyPressed(KEY_BACKSPACE)){
             paused = !paused;
         }
-        std::cout << "1" << std::endl;
         if(acabar) {
-            std::cout << "2" << std::endl;
             if(current_objects_offset <= objects_offset) {
                 BackGrounds[level].Draw();
                 float shift = block_height * 6.0f * GetFrameTime();
@@ -879,7 +881,6 @@ void Game(int numPlayers, int level, bool speed_run) {
             
             BackGrounds[level].Draw();
             if (!paused) {
-                std::cout << "3" << std::endl;
                 float delta_time = GetFrameTime();
                 chrono_time += delta_time;
 
@@ -903,7 +904,6 @@ void Game(int numPlayers, int level, bool speed_run) {
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
                 }
-                std::cout << "4" << std::endl;
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
@@ -948,8 +948,8 @@ void Game(int numPlayers, int level, bool speed_run) {
                 if (!moving_camera) {
                     GameSystem::Update();
                     if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
-                        (numPlayers == 1 || Player_2->getComponent<Script, PopoBehavior>().lifes <= 0) && !acabar) {
-                        std::cout << "GAME OVER!\n";
+                        (numPlayers == 1 || Player_2->getComponent<Script, PopoBehavior>().lifes <= 0) && !acabar)
+                    {
                         game_over = true;
                         acabar = true;
                         objects_offset = 0;
@@ -1160,7 +1160,7 @@ int main() {
     int selected_level = 0;
     UISprite Level1("Assets/Sprites/Level1_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level1Text(NES, "LEVEL 1: BASICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
-    //UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
+    UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level2Text(NES, "LEVEL 2: ADVANCED MECHANICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level3Text(NES, "LEVEL 3: TRYING TO SURVIVE", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level3WIP(NES, "NO TIME FOR THIS LEVEL :(", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, UIObject::CENTER);
@@ -1177,31 +1177,35 @@ int main() {
 
     // SETTINGS MENU:
     Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
-    UIText OldStyleText(NES, "OLD STYLE?", 33, 1, {200, GetScreenHeight()/2.0f - 180}, UIObject::CENTER_LEFT);
+    
+    UIText AdvancedAIText(NES, "ADVANCED IA", 33, 1, {200, GetScreenHeight()/2.0f - 196}, UIObject::CENTER_LEFT);
+    UISprite AdvancedAICheck(cross, {GetScreenWidth()/2.0f + 157, AdvancedAIText.pos.y - 3}, 2.0f, 2.0f);
+    
+    UIText OldStyleText(NES, "OLD STYLE?", 33, 1, {200, GetScreenHeight()/2.0f - 140}, UIObject::CENTER_LEFT);
     UISprite OldStyleCheck(cross, {GetScreenWidth()/2.0f + 157, OldStyleText.pos.y - 3}, 2.0f, 2.0f);
     
-    UIText DisplayModeText(NES, "DISPLAY MODE", 33, 1, {200, GetScreenHeight()/2.0f - 120}, UIObject::CENTER_LEFT);
+    UIText DisplayModeText(NES, "DISPLAY MODE", 33, 1, {200, GetScreenHeight()/2.0f - 84}, UIObject::CENTER_LEFT);
     UIText SelectedDisplayModeText(NES, to_string((DISPLAY_MODE_ENUM)std::get<int>(ini["Graphics"]["DisplayMode"])),
         25, 1, {GetScreenWidth()/2.0f + 170, DisplayModeText.pos.y}, UIObject::UP_CENTER);
     UISprite DisplayModeLArrow(LArrow, {GetScreenWidth()/2.0f + 60, DisplayModeText.pos.y}, 1.0f, 1.0f);
     UISprite DisplayModeRArrow(RArrow, {GetScreenWidth()/2.0f + 260, DisplayModeText.pos.y}, 1.0f, 1.0f);
     
-    UIText ResolutionText(NES, "RESOLUTION", 33, 1, {200, GetScreenHeight()/2.0f - 60}, UIObject::CENTER_LEFT);
+    UIText ResolutionText(NES, "RESOLUTION", 33, 1, {200, GetScreenHeight()/2.0f - 28}, UIObject::CENTER_LEFT);
     UISprite ResolutionLArrow(LArrow, {GetScreenWidth()/2.0f + 60, ResolutionText.pos.y}, 1.0f, 1.0f);
     UIText SelectedResolutionText(NES, std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"])), 
         25, 1, {GetScreenWidth()/2.0f + 170, ResolutionText.pos.y}, UIObject::UP_CENTER);
     UISprite ResolutionRArrow(RArrow, {GetScreenWidth()/2.0f + 260, ResolutionText.pos.y}, 1.0f, 1.0f);
     
-    UIText FPSLimitText(NES, "FPS LIMIT", 33, 1, {200, GetScreenHeight()/2.0f}, UIObject::CENTER_LEFT);
+    UIText FPSLimitText(NES, "FPS LIMIT", 33, 1, {200, GetScreenHeight()/2.0f + 28}, UIObject::CENTER_LEFT);
     UISprite FPSLimitLArrow(LArrow, {GetScreenWidth()/2.0f + 60, FPSLimitText.pos.y}, 1.0f, 1.0f);
     UIText SelectedFPSLimitText(NES, std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])), 25, 1, {GetScreenWidth()/2.0f + 170, FPSLimitText.pos.y}, UIObject::UP_CENTER);
     UISprite FPSLimitRArrow(RArrow, {GetScreenWidth()/2.0f + 260, FPSLimitText.pos.y}, 1.0f, 1.0f);
     
-    UIText VolumeText(NES, "VOLUME", 33, 1, {200, GetScreenHeight()/2.0f + 60}, UIObject::CENTER_LEFT);
+    UIText VolumeText(NES, "VOLUME", 33, 1, {200, GetScreenHeight()/2.0f + 84}, UIObject::CENTER_LEFT);
     UIText VolumePercentageText(NES, std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100)), 27, 1, {715, VolumeText.pos.y + 15}, UIObject::CENTER);
     
-    UIText ChangeKeybindingsText(NES, "CHANGE KEYBINDINGS", 33, 1, {200, GetScreenHeight()/2.0f + 120}, UIObject::CENTER_LEFT);
-    UIText SettingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 180}, UIObject::CENTER);
+    UIText ChangeKeybindingsText(NES, "CHANGE KEYBINDINGS", 33, 1, {200, GetScreenHeight()/2.0f + 140}, UIObject::CENTER_LEFT);
+    UIText SettingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 196}, UIObject::CENTER);
 
     // KEY BINDING SETTNGS:
     bool SELECTED = false, SHOW_ERROR_MESSAGE = false;
@@ -1258,14 +1262,14 @@ int main() {
             {Hammer.dst.x*1680/900, Hammer.dst.y*1050/600 - 10},
             {Hammer.dst.x*1920/900, Hammer.dst.y*1080/600 - 20}
         }}, {1, {
-            {(OldStyleText.pos.x-70)*640/900, OldStyleText.pos.y*480/600},
-            {(OldStyleText.pos.x-70)*800/900, OldStyleText.pos.y},
-            {(OldStyleText.pos.x-70), OldStyleText.pos.y}, 
-            {(OldStyleText.pos.x-70)*1024/900, OldStyleText.pos.y*768/600},
-            {(OldStyleText.pos.x-70)*1280/900, OldStyleText.pos.y*720/600 - 5},
-            {(OldStyleText.pos.x-70)*1366/900, OldStyleText.pos.y*768/600 - 5},
-            {(OldStyleText.pos.x-70)*1680/900, OldStyleText.pos.y*1050/600 - 5},
-            {(OldStyleText.pos.x-70)*1920/900, OldStyleText.pos.y*1080/600 - 15}
+            {(PlayerText.pos.x-70)*640/900, PlayerText.pos.y*480/600},
+            {(PlayerText.pos.x-70)*800/900, PlayerText.pos.y},
+            {(PlayerText.pos.x-70), PlayerText.pos.y}, 
+            {(PlayerText.pos.x-70)*1024/900, PlayerText.pos.y*768/600},
+            {(PlayerText.pos.x-70)*1280/900, PlayerText.pos.y*720/600 - 5},
+            {(PlayerText.pos.x-70)*1366/900, PlayerText.pos.y*768/600 - 5},
+            {(PlayerText.pos.x-70)*1680/900, PlayerText.pos.y*1050/600 - 5},
+            {(PlayerText.pos.x-70)*1920/900, PlayerText.pos.y*1080/600 - 15}
         }}, {2, {
             {(ContinueText.pos.x-70)*640/900, ContinueText.pos.y*480/600},
             {(ContinueText.pos.x-70)*800/900, ContinueText.pos.y},
@@ -1284,6 +1288,15 @@ int main() {
             {(StartText.pos.x-70)*1366/900, StartText.pos.y*768/600 - 5},
             {(StartText.pos.x-70)*1680/900, StartText.pos.y*1050/600 - 5},
             {(StartText.pos.x-70)*1920/900, StartText.pos.y*1080/600 - 15}
+        }}, {4, {
+            {(AdvancedAIText.pos.x-70)*640/900, (AdvancedAIText.pos.y+2)*480/600},
+            {(AdvancedAIText.pos.x-70)*800/900, (AdvancedAIText.pos.y+2)},
+            {(AdvancedAIText.pos.x-70), (AdvancedAIText.pos.y+2)}, 
+            {(AdvancedAIText.pos.x-70)*1024/900, (AdvancedAIText.pos.y+2)*768/600},
+            {(AdvancedAIText.pos.x-70)*1280/900, (AdvancedAIText.pos.y+2)*720/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1366/900, (AdvancedAIText.pos.y+2)*768/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1680/900, (AdvancedAIText.pos.y+2)*1050/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1920/900, (AdvancedAIText.pos.y+2)*1080/600 - 15}
         }}
     };
     // KEYS (KEYBOARD):
@@ -1349,23 +1362,13 @@ int main() {
     UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
 
-/*
-
-    Texture EscKey = LoadTexture("Assets/Sprites/Keys/esc.png"), ReturnKey = LoadTexture("Assets/Sprites/Keys/backspace.png");
-    UIText ReturnTextNormal(NES, "RETURN", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeyNormal(EscKey, {ReturnTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeyNormal(ReturnKey, {EscKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    
-    UIText ReturnTextSettings(NES, "RETURN", 15, 1, {DownKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeySettings(EscKey, {ReturnTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeySettings(ReturnKey, {EscKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-*/
-
-
-
-
+    // Hammer offsets:
+    // 0: MAIN MENU
+    // 1: SETTINGS
+    // 2:
+    // 3:
     std::vector<int> HammerOffsets {
-        60, 60, 60, 50
+        60, 60, 60, 50, 56
     };
 
     // /*** Main Loop ***/ //
@@ -1490,8 +1493,8 @@ int main() {
                     } else {
                         if (OPTION == 1) {
                             CURRENT_MENU = SETTINGS;
-                            OPTIONS = 7;
-                            HV = 1;
+                            OPTIONS = 8;
+                            HV = 4;
                         } else if (OPTION == 2) {
                             break;
                         }
@@ -1512,8 +1515,8 @@ int main() {
                         Level1.Draw();
                         Level1Text.Draw();
                     } else if (selected_level == 1) {
-                        //Level2.Draw();
-                        DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
+                        Level2.Draw();
+                        //DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
                         Level2Text.Draw();
                     } else if (selected_level == 2) {
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
@@ -1667,7 +1670,7 @@ int main() {
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             } else {
                                 if (OPTION == 1) {
-                                    std::cout << "NO REIMPLEMENTADO: BRAWL!\n";
+
                                 } else if (OPTION == 2) {
                                     CURRENT_MENU = MAIN_MENU;
                                 }
@@ -1833,9 +1836,14 @@ int main() {
                         } else {
                             if (OPTION == 0) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                                    ini["Graphics"]["OldFashioned"] = !std::get<bool>(ini["Graphics"]["OldFashioned"]);
+                                    ini["Game"]["AdvancedAI"] = !std::get<bool>(ini["Game"]["AdvancedAI"]);
                                 }
                             } else if (OPTION == 1) {
+                                //if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+                                //    ini["Graphics"]["OldFashioned"] = !std::get<bool>(ini["Graphics"]["OldFashioned"]);
+                                //
+                                //}
+                            } else if (OPTION == 2) {
                                 if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     DISPLAY_MODE_OPTION = (DISPLAY_MODE_OPTION+1)%3;
                                     ini["Graphics"]["DisplayMode"] = DISPLAY_MODE_OPTION;
@@ -1897,7 +1905,7 @@ int main() {
                                     UISystem::Reescale();
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                 }
-                            } else if (OPTION == 2) {
+                            } else if (OPTION == 3) {
                                 if (DISPLAY_MODE_OPTION == WINDOWED) {
                                     if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                         RESOLUTION_OPTION = (RESOLUTION_OPTION+1)%RESOLUTION_OPTIONS.size();
@@ -1919,7 +1927,7 @@ int main() {
                                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                     }
                                 }
-                            } else if (OPTION == 3) {
+                            } else if (OPTION == 4) {
                                 if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     FPS_LIMIT_OPTION = ((FPS_LIMIT_OPTION+1)%FPS_LIMIT_OPTIONS.size());
                                     ini["Graphics"]["FPSLimit"] = FPS_LIMIT_OPTIONS[FPS_LIMIT_OPTION];
@@ -1931,7 +1939,7 @@ int main() {
                                     SetTargetFPS(std::get<int>(ini["Graphics"]["FPSLimit"]));
                                     SelectedFPSLimitText.SetText(std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])));
                                 }
-                            } else if (OPTION == 4) {
+                            } else if (OPTION == 5) {
                                 if (IsKeyDown(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     if (std::get<float>(ini["Audio"]["Volume"]) < 1) {
                                         ini["Audio"]["Volume"] = std::get<float>(ini["Audio"]["Volume"]) + 0.05f;
@@ -1947,13 +1955,15 @@ int main() {
                                 }
                                 SetMasterVolume(std::get<float>(ini["Audio"]["Volume"]));
                                 VolumePercentageText.SetText(std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100)));
-                            } else if (OPTION == 5) {
+                            } else if (OPTION == 6) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = CONTROL_SETTINGS;
-                                    OPTION = 0;
+                                    OPTIONS = 7;
+                                    OPTION  = 0;
+                                    HV = 1;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                                 }
-                            } else if (OPTION == 6) {
+                            } else if (OPTION == 7) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = MAIN_MENU;
                                     OPTION = 1;
@@ -1964,9 +1974,17 @@ int main() {
                             }
                         }
 
+                        // - ADVANCED IA OPTION:
+                        AdvancedAIText.Draw();
+                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), AdvancedAIText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
+                        DrawRectangleV({ResolutionLArrow.dst.x + (102*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), AdvancedAIText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
+                        if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                            AdvancedAICheck.Draw();
+                        }
+
                         // - OLD STYLE OPTION:
-                        OldStyleText.Draw();
-                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
+                        OldStyleText.Draw(GRAY);
+                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, GRAY);
                         DrawRectangleV({ResolutionLArrow.dst.x + (102*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
                         if (std::get<bool>(ini["Graphics"]["OldFashioned"])) {
                             OldStyleCheck.Draw();
@@ -2199,8 +2217,9 @@ int main() {
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                                 } else {
                                     CURRENT_MENU = SETTINGS;
-                                    OPTION = 5;
-                                    OPTIONS = 7;
+                                    OPTION = 6;
+                                    OPTIONS = 8;
+                                    HV = 4;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                                 }
                             } else {

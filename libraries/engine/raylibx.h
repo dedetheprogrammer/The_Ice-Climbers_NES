@@ -10,10 +10,17 @@
 #define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
 #define JELLYBEANBLUE CLITERAL(Color){ 66, 117, 133, 255 }
 
+
+
 // ----------------------------------------------------------------------------
 // Math extension
 // ----------------------------------------------------------------------------
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+
+// Probability generator
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution<double> dis(0.0, 1.0);
 
 // ----------------------------------------------------------------------------
 // Vector extension

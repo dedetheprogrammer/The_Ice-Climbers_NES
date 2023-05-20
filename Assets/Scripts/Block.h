@@ -62,6 +62,7 @@ public:
 
 };
 
+
 class SlidingBlockBehavior : public Script {
 private:
     Sprite& sprite;
