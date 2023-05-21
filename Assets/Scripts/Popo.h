@@ -414,7 +414,6 @@ public:
                 rigidbody.acceleration = {0,0};
                 rigidbody.gravity = 0;
                 victory = true;
-                std::cout << "Popo 392" << std::endl;
             }
         }
 

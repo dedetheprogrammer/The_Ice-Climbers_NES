@@ -973,7 +973,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
-                if (JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
+                if (!onBonus && JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
                     JosephInstance->getComponent<Script, JosephBehavior>().shakeGround = false;
                     moving_camera = true;
                 }
@@ -991,7 +991,6 @@ void Game(int numPlayers, int level, bool speed_run) {
                         Player_2->getComponent<Script, PopoBehavior>().victory)){
                         objects_offset = 20.0f * block_height;
                         acabar = true;
-                        std::cout << "main 958" << std::endl;
                     }
                 } else {
                     float shift = block_height * 6.0f * GetFrameTime();
@@ -1522,7 +1521,6 @@ int main() {
                     DpadDownNormal.Draw();
                 }
 
-
                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = NEW_GAME;
@@ -1552,8 +1550,11 @@ int main() {
                         Level1Text.Draw();
                     } else if (selected_level == 1) {
                         //Level2.Draw();
+                        std::cout << 1553 << std::endl;
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
+                        std::cout << 1555 << std::endl;
                         Level2Text.Draw();
+                        std::cout << 1557 << std::endl;
                     } else if (selected_level == 2) {
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
                         Level3Text.Draw();
