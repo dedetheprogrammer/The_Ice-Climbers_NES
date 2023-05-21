@@ -389,7 +389,7 @@ void init_config() {
     }
 
     //-- Graphics
-    InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "The Ice Climbers");
+    InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "Ice climbers");
     int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
     int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
     //---- Screen size
