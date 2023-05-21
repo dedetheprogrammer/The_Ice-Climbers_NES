@@ -98,7 +98,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GameObject GrassBlockThin("Thin Grass Block", "Floor", {"Block"});
     GameObject GrassHole("Grass Hole", "Hole");
-    GameObject Stalactite("Stalactite", "Enemy", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall"});
+    GameObject Stalactite("Stalactite", "Enemy", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
 
     // Me llevo arriba la definición del sprite para tener a mano las variables de abajo
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);

@@ -67,7 +67,8 @@ public:
                 ||  (timeCount > 0.1
                     &&  (contact.gameObject.tag == "Floor"
                         || contact.gameObject.tag == "Wall"
-                        || contact.gameObject.tag == "SlidingFloor")
+                        || contact.gameObject.tag == "SlidingFloor"
+                        || contact.gameObject.tag == "Cloud")
                     )
                 )
             )
