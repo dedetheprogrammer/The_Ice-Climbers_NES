@@ -14,6 +14,8 @@ private:
 
     float timeCount;
 public:
+    float spawning_ratio = 0.002;
+
     Animator& animator;
     Collider2D& collider;
     RigidBody2D& rigidbody;
@@ -145,8 +147,8 @@ private:
     std::mt19937 e2;
     std::uniform_real_distribution<float> E;
 private:
-    bool spawn_stalactite() { 
-        return E(e2) < 0.002;   // probability to spawn a stalactite each frame
+    bool spawn_stalactite() {
+        return E(e2) < stalactiteTemplate->getComponent<Script, StalactiteBehavior>().spawning_ratio;   // probability to spawn a stalactite each frame
     }
 public:
     GameObject* hole;
