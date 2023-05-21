@@ -778,7 +778,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                 }
             }
 
-            int f3_current_blocks = 22, f4_current_blocks = 10;
+            int f3_current_blocks = 14, f4_current_blocks = 20;
             for (int i = 0; i < 22; i++) {
                 if(i < 5 || i > 12) {
                     auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
@@ -818,7 +818,7 @@ void Game(int numPlayers, int level, bool speed_run) {
             GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
             GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
 
-            int f6_current_blocks = 20, f8_current_blocks = 20;
+            int f6_current_blocks = 20, f8_current_blocks = 10;
             for (int i = 0; i < 20; i++) {
                 auto block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
                 block->getComponent<Script, BlockBehavior>().floor_level = 6;
@@ -914,7 +914,7 @@ void Game(int numPlayers, int level, bool speed_run) {
             if (Player_4 != nullptr) {
                 Player_4->getComponent<Script, Player>().last_level = 20;
             }
-/*
+
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - lettuce_height}});
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - lettuce_height}});
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
@@ -924,35 +924,62 @@ void Game(int numPlayers, int level, bool speed_run) {
             Enemies.push_back(a_topi);
 
             a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width), floor_levels[2] - (topi_size.y + 1)}});
-            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 16;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f3_current_blocks;
             a_topi->getComponent<Script, TopiBehavior>().floor_level    = 3;
             a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
             Enemies.push_back(a_topi);
 
             a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}});
-            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f4_current_blocks;
             a_topi->getComponent<Script, TopiBehavior>().floor_level    = 4;
             a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
             Enemies.push_back(a_topi);
 
             a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}});
-            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f6_current_blocks;
             a_topi->getComponent<Script, TopiBehavior>().floor_level    = 6;
             a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
             Enemies.push_back(a_topi);
 
             a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}});
-            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f8_current_blocks;
             a_topi->getComponent<Script, TopiBehavior>().floor_level    = 8;
             a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
             Enemies.push_back(a_topi);
             
-            GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
-            */
+            // 4th floor Nutpicker:
+            if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                //if (E(e2) > 0.7) {
+                    auto a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[3] - 120}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{GetScreenWidth()-100.0f, floor_levels[3] - 70}});
+                    a_nutpicker->getComponent<Animator>().Flip();
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().isRight = -1;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[5] - 60}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 6;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+            } else {
+                GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+            }
+
         }
     } else if (level == 2) {
         std::vector<float> levels = {
