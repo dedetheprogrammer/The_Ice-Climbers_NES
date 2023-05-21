@@ -168,13 +168,21 @@ public:
     }
 
     void Update() override {
+        /*
+        // delete itself if out of frame
+        if (transform.position.y > GetScreenHeight() + 10.0f) {
+            gameObject.Destroy();
+            return;
+        }
+        */
+
         float deltaTime = GetFrameTime();
 
         // Extra check to see if joseph is falling
         if (trackTimer > 0.2f) {
-            std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
-            if (transform.position.y > lastTrackY + 20.0f
-                && transform.position.y < lastTrackY + 60.0f) {
+            //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
+            if (transform.position.y > lastTrackY + 40.0f
+                && transform.position.y < lastTrackY + 80.0f) {
                 animator["Falling"];
                 last_sense = sgn(rigidbody.velocity.x);
                 rigidbody.velocity.x = 0;
@@ -211,22 +219,30 @@ public:
             chase_cooldown = random_range(2.0f, 8.0f);
         } else current_chase_cooldown += deltaTime;
 
-        float closest_player_x = 0.0f;
-        float closest_player_dist = 10000.0f;
-        for (auto p_trans : playerTransforms) {
-
-            wantsToFall |= p_trans->position.y + p_trans->size.y >
-                        transform.position.y + transform.size.y + 5.0f;
-
-            float player_dist = mod(p_trans->position - transform.position);
-            if (player_dist < closest_player_dist) {
-                closest_player_dist = player_dist;
-                closest_player_x = p_trans->position.x;
-            }
-        }
-
         if (isGrounded) {
-            if (chasePlayer) {
+
+            float closest_player_x = 0.0f;
+            float closest_player_dist = 10000.0f;
+            bool allplayersAbove = true;
+            for (auto p_trans : playerTransforms) {
+
+                wantsToFall |= p_trans->position.y + p_trans->size.y >
+                            transform.position.y + transform.size.y + 5.0f;
+
+                allplayersAbove &= p_trans->position.y + p_trans->size.y < transform.position.y;
+
+                float player_dist = mod(p_trans->position - transform.position);
+                if (player_dist < closest_player_dist) {
+                    closest_player_dist = player_dist;
+                    closest_player_x = p_trans->position.x;
+                }
+            }
+
+            if (allplayersAbove && transform.position.y < GetScreenHeight()) {
+                // Make it harder for the players by removing one of the levels and hoping someone falls
+                wantsToFall = true;
+            }
+            if (chasePlayer && !allplayersAbove) {
                 bool headingToPlayer = (isRight && closest_player_x > transform.position.x) ||
                                     (!isRight && closest_player_x < transform.position.x);
                 if (fabs(closest_player_x - transform.position.x) < 1.0f)
@@ -242,7 +258,7 @@ public:
                 rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
                 if ((isRight && rigidbody.velocity.x < 0.0f) ||
                     (!isRight && rigidbody.velocity.x > 0.0f)) {
-                    isRight = false;
+                    isRight = !isRight;
                     animator.Flip();
                 }
             }

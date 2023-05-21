@@ -98,11 +98,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GameObject GrassBlockThin("Thin Grass Block", "Floor", {"Block"});
     GameObject GrassHole("Grass Hole", "Hole");
+    GameObject Stalactite("Stalactite", "Enemy", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall"});
 
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
     GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlock.addComponent<Script, BlockBehavior>();
     GrassBlock.getComponent<Script, BlockBehavior>().hole = &GrassHole;
+    GrassBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
     float block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x;
     float block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
     float collider_width  = block_width-6.0f;
@@ -112,10 +114,25 @@ void Game(int numPlayers, int level, bool speed_run) {
     GrassBlockThin.addComponent<Collider2D>(&GrassBlockThin.getComponent<Transform2D>().position, GrassBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlockThin.addComponent<Script, BlockBehavior>();
     GrassBlockThin.getComponent<Script, BlockBehavior>().hole = &GrassHole;
+    GrassBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     GrassHole.addComponent<Collider2D>(&GrassHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
     GrassHole.addComponent<Script, HoleBehavior>();
     GrassHole.getComponent<Script, HoleBehavior>().original_block = &GrassBlock;
+    
+    // Estalactitas
+    Stalactite.addComponent<Animator>("NONE", std::unordered_map<std::string, Animation> {
+            {"NONE", Animation()},
+            {"SMALL", Animation("Assets/Sprites/Stalactite/01_Small.png", 6, 3, scale, 0.5, true)},
+            {"MEDIUM", Animation("Assets/Sprites/Stalactite/02_Medium.png", 6, 8, scale, 0.5, true)},
+            {"BIG", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0.5, true)},
+            {"BREAKING", Animation("Assets/Sprites/Stalactite/04_Broken.png", 8, 15, scale, 0.5, true)}
+        }
+    );
+    Stalactite.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{200.0f,200.0f}, Vector2{block_width * 3.0f, 0});
+    Vector2 stalactite_size = Stalactite.getComponent<Animator>().GetViewDimensions();
+    Stalactite.addComponent<Collider2D>(&Stalactite.getComponent<Transform2D>().position, Vector2{collider_width, stalactite_size.y}, Vector2{stalactite_size.x/2 - collider_offset, 0});
+    Stalactite.addComponent<Script, StalactiteBehavior>();
 
     // Bloque de tierra
     GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
@@ -126,11 +143,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlock.addComponent<Script, BlockBehavior>();
     DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+    DirtBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     DirtBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_thin.png", horizontal_scale, vertical_scale);
     DirtBlockThin.addComponent<Collider2D>(&DirtBlockThin.getComponent<Transform2D>().position, DirtBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlockThin.addComponent<Script, BlockBehavior>();
     DirtBlockThin.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+    DirtBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
     DirtHole.addComponent<Script, HoleBehavior>();
@@ -147,11 +166,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlock.addComponent<Script, BlockBehavior>();
     IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
+    IceBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_block_thin.png", horizontal_scale, vertical_scale);
     IceBlockThin.addComponent<Collider2D>(&IceBlockThin.getComponent<Transform2D>().position, IceBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlockThin.addComponent<Script, BlockBehavior>();
     IceBlockThin.getComponent<Script, BlockBehavior>().hole = &IceHole;
+    IceBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     IceSlidingBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_sliding_block.png", horizontal_scale, vertical_scale);
     IceSlidingBlock.addComponent<Collider2D>(&IceSlidingBlock.getComponent<Transform2D>().position, IceSlidingBlock  .getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
@@ -320,8 +341,6 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject* Player_3 = nullptr;
     GameObject* Player_4 = nullptr;
 
-    GameObject* JosephInstance = nullptr;
-
     // Nubes
     GameObject Cloud("Cloud", "Cloud");
     Cloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Long.png", horizontal_scale, vertical_scale);
@@ -401,6 +420,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
 
     std::vector<GameObject*> Enemies{};
+    std::vector<GameObject*> Josephs{};
     GameObject* bonusLevel = nullptr;
 
     // Exclusivos del modo arena
@@ -597,9 +617,15 @@ void Game(int numPlayers, int level, bool speed_run) {
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
 
-            JosephInstance = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width),floor_levels[4] - (joseph_size.y + 1)}});
-            JosephInstance->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
-            Enemies.push_back(JosephInstance);
+            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[4] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{WINDOW_WIDTH/2.0f, floor_levels[8] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[2] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
             
             GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
         } else if(level == 1) {
@@ -973,9 +999,13 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
-                if (!onBonus && JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
-                    JosephInstance->getComponent<Script, JosephBehavior>().shakeGround = false;
-                    moving_camera = true;
+                if (!onBonus) {
+                    for (auto JosephInstance : Josephs) {
+                        if (JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
+                            JosephInstance->getComponent<Script, JosephBehavior>().shakeGround = false;
+                            moving_camera = true;
+                        }
+                    }
                 }
                 
                 if (!moving_camera) {
