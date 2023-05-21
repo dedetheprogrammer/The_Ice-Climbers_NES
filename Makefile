@@ -141,6 +141,78 @@ main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/build
 .PHONY : main/fast
 
+Assets/Scripts/Cloud.obj: Assets/Scripts/Cloud.cpp.obj
+.PHONY : Assets/Scripts/Cloud.obj
+
+# target to build an object file
+Assets/Scripts/Cloud.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Cloud.cpp.obj
+.PHONY : Assets/Scripts/Cloud.cpp.obj
+
+Assets/Scripts/Cloud.i: Assets/Scripts/Cloud.cpp.i
+.PHONY : Assets/Scripts/Cloud.i
+
+# target to preprocess a source file
+Assets/Scripts/Cloud.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Cloud.cpp.i
+.PHONY : Assets/Scripts/Cloud.cpp.i
+
+Assets/Scripts/Cloud.s: Assets/Scripts/Cloud.cpp.s
+.PHONY : Assets/Scripts/Cloud.s
+
+# target to generate assembly for a file
+Assets/Scripts/Cloud.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Cloud.cpp.s
+.PHONY : Assets/Scripts/Cloud.cpp.s
+
+Assets/Scripts/Controllers.obj: Assets/Scripts/Controllers.cpp.obj
+.PHONY : Assets/Scripts/Controllers.obj
+
+# target to build an object file
+Assets/Scripts/Controllers.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Controllers.cpp.obj
+.PHONY : Assets/Scripts/Controllers.cpp.obj
+
+Assets/Scripts/Controllers.i: Assets/Scripts/Controllers.cpp.i
+.PHONY : Assets/Scripts/Controllers.i
+
+# target to preprocess a source file
+Assets/Scripts/Controllers.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Controllers.cpp.i
+.PHONY : Assets/Scripts/Controllers.cpp.i
+
+Assets/Scripts/Controllers.s: Assets/Scripts/Controllers.cpp.s
+.PHONY : Assets/Scripts/Controllers.s
+
+# target to generate assembly for a file
+Assets/Scripts/Controllers.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Controllers.cpp.s
+.PHONY : Assets/Scripts/Controllers.cpp.s
+
+Assets/Scripts/Player.obj: Assets/Scripts/Player.cpp.obj
+.PHONY : Assets/Scripts/Player.obj
+
+# target to build an object file
+Assets/Scripts/Player.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Player.cpp.obj
+.PHONY : Assets/Scripts/Player.cpp.obj
+
+Assets/Scripts/Player.i: Assets/Scripts/Player.cpp.i
+.PHONY : Assets/Scripts/Player.i
+
+# target to preprocess a source file
+Assets/Scripts/Player.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Player.cpp.i
+.PHONY : Assets/Scripts/Player.cpp.i
+
+Assets/Scripts/Player.s: Assets/Scripts/Player.cpp.s
+.PHONY : Assets/Scripts/Player.s
+
+# target to generate assembly for a file
+Assets/Scripts/Player.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\main.dir\build.make CMakeFiles/main.dir/Assets/Scripts/Player.cpp.s
+.PHONY : Assets/Scripts/Player.cpp.s
+
 Libraries/engine/EngineECS.obj: Libraries/engine/EngineECS.cpp.obj
 .PHONY : Libraries/engine/EngineECS.obj
 
@@ -247,6 +319,15 @@ help:
 	@echo ... rebuild_cache
 	@echo ... engine
 	@echo ... main
+	@echo ... Assets/Scripts/Cloud.obj
+	@echo ... Assets/Scripts/Cloud.i
+	@echo ... Assets/Scripts/Cloud.s
+	@echo ... Assets/Scripts/Controllers.obj
+	@echo ... Assets/Scripts/Controllers.i
+	@echo ... Assets/Scripts/Controllers.s
+	@echo ... Assets/Scripts/Player.obj
+	@echo ... Assets/Scripts/Player.i
+	@echo ... Assets/Scripts/Player.s
 	@echo ... Libraries/engine/EngineECS.obj
 	@echo ... Libraries/engine/EngineECS.i
 	@echo ... Libraries/engine/EngineECS.s
