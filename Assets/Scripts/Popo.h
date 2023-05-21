@@ -306,6 +306,9 @@ public:
                 rigidbody.velocity.x = 0;
                 transform.position.x -= 0.1;
             }
+            if (contact.contact_normal.y > 0) {
+                
+            }
         }
 
         if (contact.gameObject.tag == "Cloud") {

@@ -219,4 +219,15 @@ public:
     Component* Clone(GameObject& gameObject) {
         return new SlidingBlockBehavior(gameObject, *this);
     }
+
+    void OnCollision(Collision contact) override {
+        if (contact.gameObject.tag == "Player") {
+            if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
+                contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
+                contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
+                GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
+                gameObject.Destroy();
+            }
+        }
+    }
 };
