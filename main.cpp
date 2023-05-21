@@ -1593,11 +1593,8 @@ int main() {
                         Level1Text.Draw();
                     } else if (selected_level == 1) {
                         //Level2.Draw();
-                        std::cout << 1553 << std::endl;
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
-                        std::cout << 1555 << std::endl;
                         Level2Text.Draw();
-                        std::cout << 1557 << std::endl;
                     } else if (selected_level == 2) {
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
                         Level3Text.Draw();
