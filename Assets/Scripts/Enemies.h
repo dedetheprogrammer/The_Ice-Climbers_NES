@@ -164,6 +164,12 @@ public:
                     rigidbody.velocity.x *= -1;
                 }
             }
+            if (contact.gameObject.getComponent<Script, PopoBehavior>().isStunned) {
+                // Stop chasing
+                chasePlayer = false;
+                current_chase_cooldown = 0.0f;
+                chase_cooldown = random_range(6.0f, 8.0f);
+            }
         }
     }
 
@@ -181,8 +187,8 @@ public:
         // Extra check to see if joseph is falling
         if (trackTimer > 0.2f) {
             //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
-            if (transform.position.y > lastTrackY + 40.0f
-                && transform.position.y < lastTrackY + 60.0f) {
+            if (transform.position.y > lastTrackY + transform.size.y/4
+                && transform.position.y < lastTrackY + transform.size.y/2) {
                 animator["Falling"];
                 last_sense = sgn(rigidbody.velocity.x);
                 rigidbody.velocity.x = last_sense*1.0f;
@@ -252,7 +258,7 @@ public:
                 if (fabs(closest_player_x - transform.position.x) < 1.0f)
                     rigidbody.velocity.x = 0.0f;
                 else {
-                    rigidbody.velocity.x = sgn(closest_player_x - transform.position.x) * rigidbody.acceleration.x;
+                    rigidbody.velocity.x = sgn(closest_player_x - transform.position.x) * rigidbody.acceleration.x * 1.5f;
                     if (!headingToPlayer) {
                         isRight = !isRight;
                         animator.Flip();
@@ -265,6 +271,9 @@ public:
                     isRight = !isRight;
                     animator.Flip();
                 }
+            } else {
+                // Give back normal speed
+                rigidbody.velocity.x = sgn(rigidbody.velocity.x) * rigidbody.acceleration.x;
             }
         }
         
