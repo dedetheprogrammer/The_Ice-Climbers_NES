@@ -104,13 +104,13 @@ public:
     void Start() override {
         rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
         if (rigidbody.velocity.x < 0) {
-            transform.position.x = GetScreenWidth();
+            //transform.position.x = GetScreenWidth();
             if (isRight) {
                 isRight = !isRight;
                 animator.Flip();
             }
         } else {
-            transform.position.x = -(animator.GetViewDimensions().x);
+            //transform.position.x = -(animator.GetViewDimensions().x);
         }
     }
 
@@ -137,7 +137,7 @@ public:
                 if (isGoingToFall) {
                     animator["Falling"];
                     last_sense = sgn(rigidbody.velocity.x);
-                    rigidbody.velocity.x = 0;
+                    rigidbody.velocity.x = last_sense*1.0f;
                     isGrounded = false;
                     hasFallen = true;
                 } else {
@@ -182,10 +182,10 @@ public:
         if (trackTimer > 0.2f) {
             //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
             if (transform.position.y > lastTrackY + 40.0f
-                && transform.position.y < lastTrackY + 80.0f) {
+                && transform.position.y < lastTrackY + 60.0f) {
                 animator["Falling"];
                 last_sense = sgn(rigidbody.velocity.x);
-                rigidbody.velocity.x = 0;
+                rigidbody.velocity.x = last_sense*1.0f;
                 isGrounded = false;
                 hasFallen = true;
             }
@@ -241,6 +241,10 @@ public:
             if (allplayersAbove && transform.position.y < GetScreenHeight()) {
                 // Make it harder for the players by removing one of the levels and hoping someone falls
                 wantsToFall = true;
+            }
+            if (transform.position.y + transform.size.y < 0) {
+                // dont intervene unless I can see youuuu
+                wantsToFall = false;
             }
             if (chasePlayer && !allplayersAbove) {
                 bool headingToPlayer = (isRight && closest_player_x > transform.position.x) ||
