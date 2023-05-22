@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 #include <iostream>
 #include <ctime>
 #include "EngineECS.h"
@@ -23,7 +24,7 @@ private:
 
     double calcularProbabilidad(double distancia, double media, double desviacion) {
         double exponente = -pow(distancia - media, 2) / (2 * pow(desviacion, 2));
-        double coeficiente = 1 / (desviacion * sqrt(2 * M_PI));
+        double coeficiente = 1 / (desviacion * sqrt(2 * PI));
         return coeficiente * exp(exponente);
     }
 
