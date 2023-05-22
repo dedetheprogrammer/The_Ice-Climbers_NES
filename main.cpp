@@ -98,7 +98,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GameObject GrassBlockThin("Thin Grass Block", "Floor", {"Block"});
     GameObject GrassHole("Grass Hole", "Hole");
-    GameObject Stalactite("Stalactite", "Enemy", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
+    GameObject Stalactite("Stalactite", "Stalactite", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
 
     // Me llevo arriba la definición del sprite para tener a mano las variables de abajo
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
@@ -114,7 +114,9 @@ void Game(int numPlayers, int level, bool speed_run) {
             {"SMALL", Animation("Assets/Sprites/Stalactite/01_Small.png", 6, 3, scale, 0.5, true)},
             {"MEDIUM", Animation("Assets/Sprites/Stalactite/02_Medium.png", 6, 8, scale, 0.5, true)},
             {"BIG", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0.5, true)},
-            {"BREAKING", Animation("Assets/Sprites/Stalactite/04_Broken.png", 8, 15, scale, 0.5, true)}
+            {"FALLING", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0, true)},
+            {"BREAKING", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0, true)},
+            {"BROKEN", Animation("Assets/Sprites/Stalactite/04_Broken.png", 8, 15, scale, 0.5, true)}
         }
     );
     Stalactite.addComponent<RigidBody2D>(1, block_height * 50.0f, Vector2{0.0f,block_height * 70.0f}, Vector2{block_width * 3.0f, 0});
@@ -123,7 +125,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Stalactite.addComponent<Script, StalactiteBehavior>();
 
     // Cambiamos el template de las estalactitas para tener distintos ratios en función del nivel
-    //Stalactite.getComponent<Script, StalactiteBehavior>().spawning_ratio = (level+1) * 0.002;
+    Stalactite.getComponent<Script, StalactiteBehavior>().spawning_ratio = (level+1) * 0.002;
 
     GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlock.addComponent<Script, BlockBehavior>();
@@ -242,10 +244,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Amam("Amam", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Lili("Lili", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Amam("Amam", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Lili("Lili", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();

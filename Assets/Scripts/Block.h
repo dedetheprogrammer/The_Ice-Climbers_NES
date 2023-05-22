@@ -11,6 +11,7 @@ private:
     float timeToBig;
     float timeToFall;
     float timeToBreak;
+    float timeToDisappear;
 
     float timeCount;
 public:
@@ -34,7 +35,8 @@ public:
         timeToMedium    = 1.0f;
         timeToBig       = 1.0f;
         timeToFall      = 1.0f;
-        timeToBreak     = 0.5f;
+        timeToBreak     = 0.05f;
+        timeToDisappear = 0.5f;
 
         timeCount       = 0.0f;
         state           = NONE;
@@ -51,6 +53,7 @@ public:
         timeToBig       = behavior.timeToBig;
         timeToFall      = behavior.timeToFall;
         timeToBreak     = behavior.timeToBreak;
+        timeToDisappear = behavior.timeToDisappear;
 
         timeCount       = behavior.timeCount;
         state           = behavior.state;
@@ -61,8 +64,15 @@ public:
     }
 
     void OnCollision(Collision contact) override {
-        
-        if (state == FALLING
+        if ((state == SMALL || state == MEDIUM || state == BIG)
+            && contact.gameObject.tag == "Player")
+        {
+            state = BREAKING;
+            animator["BREAKING"];
+            timeCount = 0.0f;
+            rigidbody.velocity = {0.0f, 0.0f};
+        }
+        else if (state == FALLING
             &&  (contact.gameObject.tag == "Player"
                 ||  (timeCount > 0.1
                     &&  (contact.gameObject.tag == "Floor"
@@ -95,7 +105,7 @@ public:
                 if (timeCount > timeToBig) { state = BIG; animator["BIG"]; timeCount = 0.0f; }
                 break;
             case BIG:
-                if (timeCount > timeToFall) { state = FALLING; timeCount = 0.0f; }
+                if (timeCount > timeToFall) { state = FALLING; animator["FALLING"]; timeCount = 0.0f; }
                 break;
             case FALLING:
                 transform.position.y += rigidbody.velocity.y * deltaTime;
@@ -103,8 +113,10 @@ public:
                 if (rigidbody.velocity.y > rigidbody.max_velocity.y) rigidbody.velocity.y = rigidbody.max_velocity.y;
                 break;
             case BREAKING:
-                if (timeCount > timeToBreak) { state = BROKEN; animator["NONE"]; timeCount = 0.0f; gameObject.Destroy(); }
+                if (timeCount > timeToBreak) { state = BROKEN; animator["BROKEN"]; timeCount = 0.0f; }
                 break;
+            case BROKEN:
+                if (timeCount > timeToDisappear) { timeCount = 0.0f; gameObject.Destroy(); }
             default: break;
         }
     }

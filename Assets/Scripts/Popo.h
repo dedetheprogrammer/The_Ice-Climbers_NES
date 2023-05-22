@@ -346,6 +346,26 @@ public:
             onCloud = false;
         }
 
+        if (contact.gameObject.tag == "Stalactite" && !isStunned) {
+            std::cout << "He tocado una estalactita" << std::endl;
+            // Le ha impactado una estalactita cayendo
+            if (contact.gameObject.getComponent<RigidBody2D>().velocity.y > 0.0f
+                || contact.gameObject.getComponent<Animator>().InState("BREAKING"))
+            {
+                lifes--;
+                animator["Stunned"];
+                isStunned = true;
+                rigidbody.velocity.x = 0;
+                std::cout << "Me ha caido una estalactita" << std::endl;
+            // Ha roto una estalactita
+            } else if ( !contact.gameObject.getComponent<Animator>().InState("BROKEN") &&
+                        !contact.gameObject.getComponent<Animator>().InState("NONE"))
+            {
+                bloquesDestruidos++;
+                std::cout << "Me he cargado una estalactita" << std::endl;
+            }
+        }
+
         if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned"))) {
             if (!isStunned) {
                 if (!isAttacking && !(contact.gameObject.name[0] == 'N' && !isGrounded && contact.contact_normal.y)) {
@@ -438,8 +458,11 @@ public:
         if (contact.gameObject.tag == "Fruit") {
             frutasRecogidas += 1;
         }
-        last_tag = contact.gameObject.tag;
-        hasCollisioned = true;
+
+        if (contact.gameObject.tag != "Stalactite") {
+            last_tag = contact.gameObject.tag;
+            hasCollisioned = true;
+        }
     }
 
 
