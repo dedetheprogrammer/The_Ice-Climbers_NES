@@ -1694,6 +1694,7 @@ int main() {
 
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
+                                PopoBehavior::setFinal(false);
                                 Game(nplayers, selected_level, speed_run);
                             } else if (OPTION == 1) {
                                 speed_run = !speed_run;
