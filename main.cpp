@@ -790,6 +790,8 @@ void Game(int numPlayers, int level, bool speed_run) {
     bool game_over = false;
     int fruits_harvested1 = 0, blocks_destroyed1 = 0;
     int fruits_harvested2 = 0, blocks_destroyed2 = 0;
+    int pajaros_golpeados1 = 0, pajaros_golpeados2 = 0;
+    int icicle_destruidos1 = 0, icicle_destruidos2 = 0;
     bool win1 = false, win2 = false;
     BGM.Init();
     BGM2.Init();
@@ -861,9 +863,13 @@ void Game(int numPlayers, int level, bool speed_run) {
                 BackGrounds[level].Move({0,shift});
                 fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
                 blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                pajaros_golpeados1 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                icicle_destruidos1 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
                 if(numPlayers == 2){
                     fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
                     blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                    pajaros_golpeados2 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                    icicle_destruidos2 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
                     win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
                 }
                 win1 = Player_1->getComponent<Script, PopoBehavior>().victory;  
@@ -879,9 +885,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Player1Status.Draw();
                     Icicler1.Draw();
                     Icicler1Text.Draw();
+                    Icicler1N.SetText(std::to_string(icicle_destruidos1), false);
                     Icicler1N.Draw();
                     Monster1.Draw();
                     Monster1Text.Draw();
+                    Monster1N.SetText(std::to_string(pajaros_golpeados1), false);
                     Monster1N.Draw();
                     Vegetabler1.Draw();
                     Vegetabler1Text.Draw();
@@ -893,7 +901,7 @@ void Game(int numPlayers, int level, bool speed_run) {
 
                     Block1N.Draw();
                     SmallFrame1.Draw();
-                    auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 *10;
+                    auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 * 10 + pajaros_golpeados1 * 800 + icicle_destruidos1 * 400;
                     if (!game_over) {
                         pts1+=3000;
                     }
@@ -914,11 +922,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                         Vegetabler2N.SetText(std::to_string(fruits_harvested2));
                         Vegetabler2Text.Draw();
                         Block2.Draw();
-                        Block2N.SetText(std::to_string(blocks_destroyed1));
+                        Block2N.SetText(std::to_string(blocks_destroyed2));
                         Block2N.Draw();
                         Block2Text.Draw();
                         SmallFrame2.Draw();
-                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed1 *10;
+                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed2 *10;
                         if (!game_over) {
                             pts2+=3000;
                         }

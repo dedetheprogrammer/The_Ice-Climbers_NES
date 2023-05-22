@@ -30,6 +30,8 @@ public:
     bool isSliding;
     int frutasRecogidas;
     int bloquesDestruidos;
+    int nutpickerGolpeados;
+    int icicleDestruido;
     bool victory;
     bool puntuacion;
     bool bonusLevel;
@@ -84,6 +86,8 @@ public:
         puntuacion = false;
         bloquesDestruidos = 0;
         frutasRecogidas = 0;
+        nutpickerGolpeados = 0;
+        icicleDestruido = 0;
         bonusLevel = false;
         timeDead = 100;
         timeStunned = 0;
@@ -120,8 +124,10 @@ public:
         hasCollisioned      = behavior.hasCollisioned;
         victory             = behavior.victory;
         puntuacion          = false;
-        bloquesDestruidos   = 0;
-        frutasRecogidas     = 0;
+        bloquesDestruidos   = behavior.bloquesDestruidos;
+        frutasRecogidas     = behavior.frutasRecogidas;
+        nutpickerGolpeados  = behavior.nutpickerGolpeados;
+        icicleDestruido     = behavior.icicleDestruido;
         bonusLevel          = false;
         timeDead            = behavior.timeDead;
         timeStunned         = behavior.timeStunned;
@@ -307,7 +313,7 @@ public:
                 transform.position.x -= 0.1;
             }
             if (contact.contact_normal.y > 0) {
-                
+
             }
         }
 
@@ -342,7 +348,7 @@ public:
 
         if ((contact.gameObject.tag == "Enemy" && !contact.gameObject.getComponent<Animator>().InState("Stunned"))) {
             if (!isStunned) {
-                if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
+                if (!isAttacking && !(contact.gameObject.name[0] == 'N' && !isGrounded && contact.contact_normal.y)) {
                     lifes--;
                     animator["Stunned"];
                     isStunned = true;
@@ -360,6 +366,13 @@ public:
                         rigidbody.velocity.x = 0;
                     }
                 }
+            
+                
+            }
+        }
+        if (contact.gameObject.tag == "Enemy"){
+            if(contact.gameObject.name[0] == 'N' && !isStunned){
+                    nutpickerGolpeados++;
             }
         }
 
@@ -406,10 +419,12 @@ public:
                         rigidbody.velocity.x = 0;
                     } else{
                         contact.gameObject.Destroy();
+                        icicleDestruido++;
                     }
                 }
             }
         }
+        
 
         if (contact.gameObject.tag == "Goal") {
             if (contact.contact_normal.y > 0) {
