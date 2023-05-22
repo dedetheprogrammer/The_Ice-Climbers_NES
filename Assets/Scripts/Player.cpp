@@ -392,7 +392,6 @@ void Player::Update() {
     } else if(isCrouched) {
         isCrouched = false;
     }
-    std::cout << floor_level << "\n";
 
     if (!isAttacking && !isCrouched) {
         if (controller.isDown(Controller::LEFT)) move -= 1;

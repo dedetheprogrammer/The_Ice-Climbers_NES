@@ -354,7 +354,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, scale, 1.0, true)}
     });
     Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
-    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{200, 0});
     Condor.addComponent<Script, RedCondorBehavior>();
 
     // Icicle
