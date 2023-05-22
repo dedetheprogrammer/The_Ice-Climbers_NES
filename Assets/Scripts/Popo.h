@@ -347,7 +347,6 @@ public:
         }
 
         if (contact.gameObject.tag == "Stalactite" && !isStunned) {
-            std::cout << "He tocado una estalactita" << std::endl;
             // Le ha impactado una estalactita cayendo
             if (contact.gameObject.getComponent<RigidBody2D>().velocity.y > 0.0f
                 || contact.gameObject.getComponent<Animator>().InState("BREAKING"))
@@ -356,13 +355,11 @@ public:
                 animator["Stunned"];
                 isStunned = true;
                 rigidbody.velocity.x = 0;
-                std::cout << "Me ha caido una estalactita" << std::endl;
             // Ha roto una estalactita
             } else if ( !contact.gameObject.getComponent<Animator>().InState("BROKEN") &&
                         !contact.gameObject.getComponent<Animator>().InState("NONE"))
             {
                 bloquesDestruidos++;
-                std::cout << "Me he cargado una estalactita" << std::endl;
             }
         }
 
