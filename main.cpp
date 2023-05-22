@@ -115,8 +115,8 @@ void Game(int numPlayers, int level, bool speed_run) {
             {"MEDIUM", Animation("Assets/Sprites/Stalactite/02_Medium.png", 6, 8, scale, 0.5, true)},
             {"BIG", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0.5, true)},
             {"FALLING", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0, true)},
-            {"BREAKING", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0, true)},
-            {"BROKEN", Animation("Assets/Sprites/Stalactite/04_Broken.png", 8, 15, scale, 0.5, true)}
+            {"BREAKING", Animation("Assets/Sprites/Stalactite/04_Breaking.png", 8, 12, scale, 0, true)},
+            {"BROKEN", Animation("Assets/Sprites/Stalactite/05_Broken.png", 8, 15, scale, 0.5, true)}
         }
     );
     Stalactite.addComponent<RigidBody2D>(1, block_height * 50.0f, Vector2{0.0f,block_height * 70.0f}, Vector2{block_width * 3.0f, 0});
