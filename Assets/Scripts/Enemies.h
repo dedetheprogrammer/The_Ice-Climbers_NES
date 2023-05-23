@@ -919,7 +919,7 @@ public:
                     }
                 }
             }
-            Vector2 dif = nor(less_player->getComponent<Transform2D>().position - transform.position, 300 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
+            Vector2 dif = nor(less_player->getComponent<Transform2D>().position - transform.position, 100 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
             rigidbody.velocity.x = dif.x;
             if ((rigidbody.velocity.x > 0 && isRight < 0) || (rigidbody.velocity.x < 0 && isRight > 0)) {
                 isRight *= -1;

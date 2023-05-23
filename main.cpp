@@ -1090,6 +1090,8 @@ void Game(int numPlayers, int level, bool speed_run) {
         }
         if (play_music) {
             BGM.Play();
+        } else {
+            BGM2.Play();
         }
 
         if (IsGamepadAvailable(0)) {
