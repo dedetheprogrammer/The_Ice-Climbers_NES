@@ -779,7 +779,6 @@ void Game(int numPlayers, int level, bool speed_run) {
     UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
     
     UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
-    std::cout << "1" << std::endl;
     GameSystem::Start();
     while(!finished) {
         BeginDrawing();
@@ -798,9 +797,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         } else if (IsKeyPressed(KEY_BACKSPACE)){
             paused = !paused;
         }
-        std::cout << "1" << std::endl;
         if(acabar) {
-            std::cout << "2" << std::endl;
             if(current_objects_offset <= objects_offset) {
                 BackGrounds[level].Draw();
                 float shift = block_height * 6.0f * GetFrameTime();
@@ -845,7 +842,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Total1.SetText(std::to_string(pts1), false);
                     Total1.Draw();
 
-                    if(numPlayers == 2) {
+                    if(numPlayers > 1) {
                         BigFrame2.Draw();
                         Player2Text.Draw();
                         if (win2)
@@ -853,17 +850,20 @@ void Game(int numPlayers, int level, bool speed_run) {
                         Player2Status.Draw();
                         Icicler2.Draw();
                         Icicler2Text.Draw();
+                        Icicler2N.Draw();
                         Monster2.Draw();
                         Monster2Text.Draw();
+                        Monster2N.Draw();
                         Vegetabler2.Draw();
-                        Vegetabler2N.SetText(std::to_string(fruits_harvested2));
                         Vegetabler2Text.Draw();
+                        Vegetabler2N.SetText(std::to_string(fruits_harvested2));
+                        Vegetabler2N.Draw();
                         Block2.Draw();
                         Block2N.SetText(std::to_string(blocks_destroyed1));
                         Block2N.Draw();
                         Block2Text.Draw();
                         SmallFrame2.Draw();
-                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed1 *10;
+                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed2 *10;
                         if (!game_over) {
                             pts2+=3000;
                         }
@@ -879,7 +879,6 @@ void Game(int numPlayers, int level, bool speed_run) {
             
             BackGrounds[level].Draw();
             if (!paused) {
-                std::cout << "3" << std::endl;
                 float delta_time = GetFrameTime();
                 chrono_time += delta_time;
 
@@ -893,17 +892,13 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
-                if((Player_1->getComponent<Script, PopoBehavior>().bonusLevel ||
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel || 
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel ||
-                    Player_1->getComponent<Script, PopoBehavior>().bonusLevel) &&
+                if((Player_1->getComponent<Script, PopoBehavior>().bonusLevel) &&
                     !onBonus) {
                     objects_offset = ((GAME_HEIGHT - 6.0f * block_height) - bonusLevel->getComponent<Transform2D>().position.y);
                     onBonus = true;
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
                 }
-                std::cout << "4" << std::endl;
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
@@ -954,10 +949,14 @@ void Game(int numPlayers, int level, bool speed_run) {
                         acabar = true;
                         objects_offset = 0;
                         current_objects_offset = 1;
-                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory || (numPlayers == 2 &&
-                        Player_2->getComponent<Script, PopoBehavior>().victory)){
+                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory) {
                         objects_offset = 20.0f * block_height;
                         acabar = true;
+                    } else if (numPlayers > 1){
+                        if(Player_2->getComponent<Script, PopoBehavior>().victory) {
+                            objects_offset = 20.0f * block_height;
+                            acabar = true;
+                        }
                     }
                 } else {
                     float shift = block_height * 6.0f * GetFrameTime();
@@ -1367,7 +1366,6 @@ int main() {
     std::vector<int> HammerOffsets {
         60, 60, 60, 50
     };
-
     // /*** Main Loop ***/ //
     int OPTION  = 0;
     int OPTIONS = 3;
