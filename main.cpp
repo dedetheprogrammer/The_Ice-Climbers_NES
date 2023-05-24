@@ -98,20 +98,45 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GameObject GrassBlockThin("Thin Grass Block", "Floor", {"Block"});
     GameObject GrassHole("Grass Hole", "Hole");
+    GameObject Stalactite("Stalactite", "Stalactite", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
 
+    // Me llevo arriba la definición del sprite para tener a mano las variables de abajo
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
+    // es decir.... ESTAS
+    float block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x;
+    float block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
+    float collider_width  = block_width-6.0f;
+    float collider_offset = (collider_width)/2;
+
+    // Estalactitas
+    Stalactite.addComponent<Animator>("NONE", std::unordered_map<std::string, Animation> {
+            {"NONE", Animation()},
+            {"SMALL", Animation("Assets/Sprites/Stalactite/01_Small.png", 6, 3, scale, 0.5, true)},
+            {"MEDIUM", Animation("Assets/Sprites/Stalactite/02_Medium.png", 6, 8, scale, 0.5, true)},
+            {"BIG", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0.5, true)},
+            {"FALLING", Animation("Assets/Sprites/Stalactite/03_Big.png", 8, 12, scale, 0, true)},
+            {"BREAKING", Animation("Assets/Sprites/Stalactite/04_Breaking.png", 8, 12, scale, 0, true)},
+            {"BROKEN", Animation("Assets/Sprites/Stalactite/05_Broken.png", 8, 15, scale, 0.5, true)}
+        }
+    );
+    Stalactite.addComponent<RigidBody2D>(1, block_height * 50.0f, Vector2{0.0f,block_height * 70.0f}, Vector2{block_width * 3.0f, 0});
+    Vector2 stalactite_size = { 8.0f * horizontal_scale, 8.0f * vertical_scale };
+    Stalactite.addComponent<Collider2D>(&Stalactite.getComponent<Transform2D>().position, Vector2{collider_width, stalactite_size.y}, Vector2{stalactite_size.x/2 - collider_offset, 0});
+    Stalactite.addComponent<Script, StalactiteBehavior>();
+
+    // Cambiamos el template de las estalactitas para tener distintos ratios en función del nivel
+    Stalactite.getComponent<Script, StalactiteBehavior>().spawning_ratio = (level+1) * 0.002;
+
     GrassBlock.addComponent<Collider2D>(&GrassBlock.getComponent<Transform2D>().position, GrassBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlock.addComponent<Script, BlockBehavior>();
     GrassBlock.getComponent<Script, BlockBehavior>().hole = &GrassHole;
-    float block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x;
-    float block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
-    float collider_width  = block_width-5.0f;
-    float collider_offset = (collider_width)/2;
+    GrassBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     GrassBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_thin.png", horizontal_scale, vertical_scale);
     GrassBlockThin.addComponent<Collider2D>(&GrassBlockThin.getComponent<Transform2D>().position, GrassBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     GrassBlockThin.addComponent<Script, BlockBehavior>();
     GrassBlockThin.getComponent<Script, BlockBehavior>().hole = &GrassHole;
+    GrassBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     GrassHole.addComponent<Collider2D>(&GrassHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
     GrassHole.addComponent<Script, HoleBehavior>();
@@ -126,11 +151,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     DirtBlock.addComponent<Collider2D>(&DirtBlock.getComponent<Transform2D>().position, DirtBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlock.addComponent<Script, BlockBehavior>();
     DirtBlock.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+    DirtBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     DirtBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_thin.png", horizontal_scale, vertical_scale);
     DirtBlockThin.addComponent<Collider2D>(&DirtBlockThin.getComponent<Transform2D>().position, DirtBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     DirtBlockThin.addComponent<Script, BlockBehavior>();
     DirtBlockThin.getComponent<Script, BlockBehavior>().hole = &DirtHole;
+    DirtBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     DirtHole.addComponent<Collider2D>(&DirtHole.getComponent<Transform2D>().position, Vector2{block_width, block_height}, RED);
     DirtHole.addComponent<Script, HoleBehavior>();
@@ -147,11 +174,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     IceBlock.addComponent<Collider2D>(&IceBlock.getComponent<Transform2D>().position, IceBlock.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlock.addComponent<Script, BlockBehavior>();
     IceBlock.getComponent<Script, BlockBehavior>().hole = &IceHole;
+    IceBlock.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     IceBlockThin.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_block_thin.png", horizontal_scale, vertical_scale);
     IceBlockThin.addComponent<Collider2D>(&IceBlockThin.getComponent<Transform2D>().position, IceBlockThin.getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
     IceBlockThin.addComponent<Script, BlockBehavior>();
     IceBlockThin.getComponent<Script, BlockBehavior>().hole = &IceHole;
+    IceBlockThin.getComponent<Script, BlockBehavior>().stalactiteTemplate = &Stalactite;
 
     IceSlidingBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Ice_sliding_block.png", horizontal_scale, vertical_scale);
     IceSlidingBlock.addComponent<Collider2D>(&IceSlidingBlock.getComponent<Transform2D>().position, IceSlidingBlock  .getComponent<Sprite>().GetViewDimensions(), Color{20,200,20,255});
@@ -181,6 +210,7 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     // Suelos y muros de la zona bonus
     GameObject LevelFloor_0("Level Floor 0", "Floor");
+    GameObject LevelFloor_0_Ice("Level Floor 0 Ice", "Floor");
     GameObject LevelFloor_1("Level Floor 1", "Floor");
     GameObject LevelFloor_2("Level Floor 2", "Floor");
     GameObject LevelFloor_3("Level Floor 3", "Floor");
@@ -194,6 +224,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
         LevelFloor_4_width = block_width * 7.0f;
     LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width, block_height}, PINK);
+    LevelFloor_0_Ice.addComponent<Collider2D>(&LevelFloor_0_Ice.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width, block_height}, PINK);
     LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width, block_height}, PINK);
     LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
     LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width, block_height}, PINK);
@@ -213,10 +244,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     //  - El GameObject no tiene ningún componente nada más crearlo.
     //  - El GameObject solo puede tener un elemento de cada tipo. Si le vuelves
     //    a meter otro, perderá el primero.
-    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Amam("Amam", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
-    GameObject Lili("Lili", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor"});
+    GameObject Popo("Popo", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Nana("Nana", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Amam("Amam", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
+    GameObject Lili("Lili", "Player", {}, {"Floor", "Wall", "Cloud", "Enemy", "Goal", "Hole", "Fruit", "SlidingFloor", "Stalactite"});
     // 2.a Añadimos el componente Transform. Es muy importante este componente ya que es el que indica las propiedades
     //  del objeto, como posicion, tamaño o rotación. De momento solo usamos tamaño.
     Popo.addComponent<Transform2D>();
@@ -293,11 +324,11 @@ void Game(int numPlayers, int level, bool speed_run) {
     Lili.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
-    // 4. Añadimos el Rigidbody:
-    Popo.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Nana.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Amam.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Lili.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
+    // 4. Añadimos el Rigidbody: 13
+    Popo.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Nana.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Amam.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Lili.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
@@ -374,6 +405,18 @@ void Game(int numPlayers, int level, bool speed_run) {
     Topi.addComponent<Collider2D>(&Topi.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Topi.addComponent<Script, TopiBehavior>(Icicle);
 
+    GameObject Joseph("Joseph", "Enemy", {"Joseph"}, {"Floor", "SlidingFloor", "Hole", "Player", "Wall"});
+    Joseph.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
+            {"Walk", Animation("Assets/Sprites/Joseph/01_Walk.png", 16, 31, scale, 0.3, true)},
+            {"Stunned", Animation("Assets/Sprites/Joseph/02_Stunned.png", 16, 31, scale, 0.5, true)},
+            {"Falling", Animation("Assets/Sprites/Joseph/03_Basic.png", 16, 31, scale, 0.5, true)},
+        }
+    );
+    Joseph.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 3.0f, 0});
+    Vector2 joseph_size = Joseph.getComponent<Animator>().GetViewDimensions();
+    Joseph.addComponent<Collider2D>(&Joseph.getComponent<Transform2D>().position, Vector2{collider_width, joseph_size.y}, Vector2{joseph_size.x/2 - collider_offset, 0});
+    Joseph.addComponent<Script, JosephBehavior>();
+
     GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
     Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, scale, 0.3, true)},
@@ -385,6 +428,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
 
     std::vector<GameObject*> Enemies{};
+    std::vector<GameObject*> Josephs{};
     GameObject* bonusLevel = nullptr;
 
     // Exclusivos del modo arena
@@ -433,12 +477,12 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
         GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
         GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
+        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
         GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
         GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
 
@@ -457,13 +501,21 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelWall_1, GameObjectOptions{.position{block_width * 24.0f, wall_levels[5]}});
 
         // Players
+        auto playerTransforms = std::vector<Transform2D*>();
         Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
-        if (numPlayers > 1)
+        playerTransforms.push_back(&Player_1->getComponent<Script, PopoBehavior>().transform);
+        if (numPlayers > 1) {
             Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
-        if (numPlayers > 2)
+            playerTransforms.push_back(&Player_2->getComponent<Script, PopoBehavior>().transform);
+        }
+        if (numPlayers > 2) {
             Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,floor_levels[0] - player_size.y}});
-        if (numPlayers > 3)
+            playerTransforms.push_back(&Player_3->getComponent<Script, PopoBehavior>().transform);
+        }
+        if (numPlayers > 3) {
             Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
+            playerTransforms.push_back(&Player_4->getComponent<Script, PopoBehavior>().transform);
+        }
 
         // Zona de muerte y Condor en la cima de la montaña
         GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
@@ -572,6 +624,17 @@ void Game(int numPlayers, int level, bool speed_run) {
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
+
+            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[2] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[4] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{WINDOW_WIDTH/2.0f, floor_levels[8] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            
             GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
         } else if(level == 1) {
 
@@ -683,6 +746,13 @@ void Game(int numPlayers, int level, bool speed_run) {
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}}));
             Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}}));
             GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+
+            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[4] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[6] - (joseph_size.y + 1)}});
+            jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
+            Josephs.push_back(jose);
         }
     } else if (level == 2) {
         std::vector<float> levels = {
@@ -735,6 +805,8 @@ void Game(int numPlayers, int level, bool speed_run) {
     bool game_over = false;
     int fruits_harvested1 = 0, blocks_destroyed1 = 0;
     int fruits_harvested2 = 0, blocks_destroyed2 = 0;
+    int pajaros_golpeados1 = 0, pajaros_golpeados2 = 0;
+    int icicle_destruidos1 = 0, icicle_destruidos2 = 0;
     bool win1 = false, win2 = false;
     BGM.Init();
     BGM2.Init();
@@ -806,10 +878,17 @@ void Game(int numPlayers, int level, bool speed_run) {
                 BackGrounds[level].Move({0,shift});
                 fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
                 blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                win1 = Player_1->getComponent<Script, PopoBehavior>().victory;
-                win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
+                pajaros_golpeados1 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                icicle_destruidos1 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
+                if(numPlayers == 2){
+                    fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
+                    blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                    pajaros_golpeados2 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                    icicle_destruidos2 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
+                    win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
+                }
+                win1 = Player_1->getComponent<Script, PopoBehavior>().victory;  
+                
             } else {
                 if (timeToShowScores < 3.0) timeToShowScores += GetFrameTime();
                 else {
@@ -821,9 +900,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Player1Status.Draw();
                     Icicler1.Draw();
                     Icicler1Text.Draw();
+                    Icicler1N.SetText(std::to_string(icicle_destruidos1), false);
                     Icicler1N.Draw();
                     Monster1.Draw();
                     Monster1Text.Draw();
+                    Monster1N.SetText(std::to_string(pajaros_golpeados1), false);
                     Monster1N.Draw();
                     Vegetabler1.Draw();
                     Vegetabler1Text.Draw();
@@ -835,7 +916,7 @@ void Game(int numPlayers, int level, bool speed_run) {
 
                     Block1N.Draw();
                     SmallFrame1.Draw();
-                    auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 *10;
+                    auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 * 10 + pajaros_golpeados1 * 800 + icicle_destruidos1 * 400;
                     if (!game_over) {
                         pts1+=3000;
                     }
@@ -859,7 +940,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                         Vegetabler2N.SetText(std::to_string(fruits_harvested2));
                         Vegetabler2N.Draw();
                         Block2.Draw();
-                        Block2N.SetText(std::to_string(blocks_destroyed1));
+                        Block2N.SetText(std::to_string(blocks_destroyed2));
                         Block2N.Draw();
                         Block2Text.Draw();
                         SmallFrame2.Draw();
@@ -898,6 +979,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     onBonus = true;
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
+                    PopoBehavior::setFinal(true);
                 }
                 if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
                     LifePopo1.Draw();
@@ -940,6 +1022,15 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
+                if (!onBonus) {
+                    for (auto JosephInstance : Josephs) {
+                        if (JosephInstance->getComponent<Script, JosephBehavior>().shakeGround) {
+                            JosephInstance->getComponent<Script, JosephBehavior>().shakeGround = false;
+                            moving_camera = true;
+                        }
+                    }
+                }
+                
                 if (!moving_camera) {
                     GameSystem::Update();
                     if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
@@ -965,8 +1056,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                         GameSystem::Move({0,shift});
                         BackGrounds[level].Move({0,shift});   
                         if(!onBonus)
-                            for(auto enemy : Enemies)
-                                enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
+                            for(auto enemy : Enemies) {
+                                auto second_tags = enemy->second_tags;
+                                if (second_tags.find("Topi") != second_tags.end())
+                                    enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
+                            }
                     } else {
                         objects_offset = old_offset;
                         current_objects_offset = 0;
@@ -1018,6 +1112,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Amam.Destroy();
     Lili.Destroy();
     LevelFloor_0.Destroy();
+    LevelFloor_0_Ice.Destroy();
     LevelFloor_1.Destroy();
     LevelFloor_2.Destroy();
     LevelFloor_3.Destroy();
@@ -1039,6 +1134,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     LevelWall_1.Destroy();
     LevelWall_2.Destroy();
     Topi.Destroy();
+    Joseph.Destroy();
     Nutpicker.Destroy();
     Eggplant.Destroy();
     Lettuce.Destroy();
@@ -1481,7 +1577,6 @@ int main() {
                     DpadDownNormal.Draw();
                 }
 
-
                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = NEW_GAME;
@@ -1602,6 +1697,7 @@ int main() {
 
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
+                                PopoBehavior::setFinal(false);
                                 Game(nplayers, selected_level, speed_run);
                             } else if (OPTION == 1) {
                                 speed_run = !speed_run;

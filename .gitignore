@@ -4,3 +4,4 @@
 *.exe
 *CMakeFiles*
 *CmakeCache*
+Libraries/engine/libengine.a
