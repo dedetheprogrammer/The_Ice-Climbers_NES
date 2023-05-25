@@ -6,6 +6,8 @@
 #include "raylib.h"
 #include "raylibx.h"
 
+bool static final;
+
 class Player;
 class HoleBehavior : public Script {
 private:
@@ -17,19 +19,56 @@ public:
     Component* Clone(GameObject& gameObject);
 };
 
+class StalactiteBehavior : public Script {
+private:
+    float timeToSmall;
+    float timeToMedium;
+    float timeToBig;
+    float timeToFall;
+    float timeToBreak;
+    float timeToDisappear;
+
+    float timeCount;
+public:
+    float spawning_ratio = 0.002;
+
+    Animator& animator;
+    Collider2D& collider;
+    RigidBody2D& rigidbody;
+    Transform2D& transform;
+
+    enum StalactiteStates {NONE = 0, SMALL = 1, MEDIUM = 2, BIG = 3, FALLING = 4, BREAKING = 5, BROKEN = 6};
+    StalactiteStates state;
+    StalactiteBehavior(GameObject& gameObject);
+    StalactiteBehavior(GameObject& gameObject, StalactiteBehavior& behavior);
+    Component* Clone(GameObject& gameObject);
+    void OnCollision(Collision contact) override;
+    void Update() override;
+};
+
 class BlockBehavior : public Script {
 private:
     Sprite& sprite;
     Transform2D& transform;
+    float spawning_cooldown;
+    float spawning_timer;
+    std::random_device rd;
+    std::mt19937 e2;
+    std::uniform_real_distribution<float> E;
+    bool spawn_stalactite() {
+        return E(e2) < stalactiteTemplate->getComponent<Script, StalactiteBehavior>().spawning_ratio;   // probability to spawn a stalactite each frame
+    }
 public:
     int *current_blocks = nullptr;
     int floor_level;
     GameObject* hole;
+    GameObject* stalactiteTemplate;
 
     BlockBehavior(GameObject& gameObject);
     BlockBehavior(GameObject& gameObject, BlockBehavior& behavior);
     Component* Clone(GameObject& gameObject);
     void OnCollision(Collision contact) override;
+    void Update() override;
 };
 
 class SlidingBlockBehavior : public Script {
@@ -44,6 +83,7 @@ public:
     SlidingBlockBehavior(GameObject& gameObject);
     SlidingBlockBehavior(GameObject& gameObject, SlidingBlockBehavior& behavior);
     Component* Clone(GameObject& gameObject);
+    void OnCollision(Collision contact) override;
 };
 
 // ============================================================================
@@ -66,16 +106,26 @@ public:
     bool isCrouched;
     bool isRight;     // Telling us if the object is facing to the right.
     bool isStunned;
+    bool isSliding;
     int frutasRecogidas;
     int bloquesDestruidos;
+    int nutpickerGolpeados;
+    int icicleDestruido;
     bool victory;
     bool puntuacion;
     bool bonusLevel;
     int floor_level;
     int last_level;
+    int timeDead;
+    int timeStunned;
+    int lastMove;
+    int lastVelocity;
+    int iceVelocity;
     Vector2 collider_size;
     Vector2 collider_offset;
     Vector2 last_collider_pos;
+
+    static void setFinal(bool b);
     // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
     // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.
