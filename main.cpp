@@ -3,10 +3,10 @@
 #include "settings.h"
 #include "raylibx.h"
 
-#include "Block.h"
 #include "Cloud.h"
 #include "Enemies.h"
-#include "Popo.h"
+#include "FloorBehavior.h"
+#include "Player.h"
 #include "Fruit.h"
 
 class Flicker {
@@ -79,10 +79,6 @@ void Game(int numPlayers, int level, bool speed_run) {
     Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {16.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
     Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {24.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
 
-    // Rectangles = Sprites component?
-    // Mountain background:
-    //Rectangle Mountain_src{0, Mountain_sprite.height - Mountain_view_height - 10, (float)Mountain_sprite.width, Mountain_view_height};
-    //Rectangle Mountain_dst{0, 0, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT};
     // PAUSE frame:
     Texture2D Pause_frame = LoadTexture("Assets/Sprites/Small_frame.png");
     float paused_showtime = 0.75;
@@ -93,6 +89,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
     BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{GAME_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
+    BaseFloor.addComponent<Script, FloorBehavior>();
 
     // Bloque de hierba
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
@@ -221,16 +218,33 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameObject LevelWall_1("Level Wall 1", "Wall");
     GameObject LevelWall_2("Level Wall 2", "Wall");
 
-    float LevelFloor_0_width = block_width * 9.0f, LevelFloor_1_width = block_width * 6.0f, LevelFloor_2_width = block_width * 4.0f, LevelFloor_3_width = block_width * 3.0f,
+    float LevelFloor_0_width = block_width * 9.0f,
+        LevelFloor_1_width = block_width * 6.0f,
+        LevelFloor_2_width = block_width * 4.0f,
+        LevelFloor_3_width = block_width * 3.0f,
         LevelFloor_4_width = block_width * 7.0f;
+
     LevelFloor_0.addComponent<Collider2D>(&LevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width, block_height}, PINK);
-    LevelFloor_0_Ice.addComponent<Collider2D>(&LevelFloor_0_Ice.getComponent<Transform2D>().position, Vector2{LevelFloor_0_width, block_height}, PINK);
+    LevelFloor_0.addComponent<Script, FloorBehavior>();
+
     LevelFloor_1.addComponent<Collider2D>(&LevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width, block_height}, PINK);
+    LevelFloor_1.addComponent<Script, FloorBehavior>();
+
     LevelFloor_2.addComponent<Collider2D>(&LevelFloor_2.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
+    LevelFloor_2.addComponent<Script, FloorBehavior>();
+
     LevelFloor_3.addComponent<Collider2D>(&LevelFloor_3.getComponent<Transform2D>().position, Vector2{LevelFloor_3_width, block_height}, PINK);
+    LevelFloor_3.addComponent<Script, FloorBehavior>();
+
     LevelFloor_4.addComponent<Collider2D>(&LevelFloor_4.getComponent<Transform2D>().position, Vector2{LevelFloor_4_width, block_height}, PINK);
+    LevelFloor_4.addComponent<Script, FloorBehavior>();
+
     BonusLevelFloor_0.addComponent<Collider2D>(&BonusLevelFloor_0.getComponent<Transform2D>().position, Vector2{LevelFloor_2_width, block_height}, PINK);
+    BonusLevelFloor_0.addComponent<Script, FloorBehavior>();
+
     BonusLevelFloor_1.addComponent<Collider2D>(&BonusLevelFloor_1.getComponent<Transform2D>().position, Vector2{LevelFloor_1_width, block_height}, PINK);
+    BonusLevelFloor_1.addComponent<Script, FloorBehavior>();
+
     LevelWall_0.addComponent<Collider2D>(&LevelWall_0.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 6.0f}, YELLOW);
     LevelWall_1.addComponent<Collider2D>(&LevelWall_1.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 7.0f}, YELLOW);
     LevelWall_2.addComponent<Collider2D>(&LevelWall_2.getComponent<Transform2D>().position, Vector2{block_width * 3.0f, block_height * 3.0f}, YELLOW);
@@ -268,6 +282,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, scale, 0.3, false)},
         {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 16, 24, scale, 0.75, true)},
     });
+
     auto PopoBonusAnimator = std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Popo/00_Idle_Bonus.png", 16, 24, scale, 0.75, true)},
         {"Walk", Animation("Assets/Sprites/Popo/02_Walk_Bonus.png", 16, 24, scale, 0.135, true)},
@@ -339,10 +354,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     Nana.addComponent<Collider2D>(&Nana.getComponent<Transform2D>().position, Vector2{collider_width, player_size.y}, Vector2{player_size.x/2 - collider_offset, 0});
     Amam.addComponent<Collider2D>(&Amam.getComponent<Transform2D>().position, Vector2{collider_width, player_size.y}, Vector2{player_size.x/2 - collider_offset, 0});
     Lili.addComponent<Collider2D>(&Lili.getComponent<Transform2D>().position, Vector2{collider_width, player_size.y}, Vector2{player_size.x/2 - collider_offset, 0});
-    Popo.addComponent<Script, PopoBehavior>(Controller_0);
-    Nana.addComponent<Script, PopoBehavior>(Controller_1);
-    Amam.addComponent<Script, PopoBehavior>(Controller_2);
-    Lili.addComponent<Script, PopoBehavior>(Controller_3);
+    Popo.addComponent<Script, Player>(Controller_0);
+    Nana.addComponent<Script, Player>(Controller_1);
+    Amam.addComponent<Script, Player>(Controller_2);
+    Lili.addComponent<Script, Player>(Controller_3);
 
     GameObject* Player_1 = nullptr;
     GameObject* Player_2 = nullptr;
@@ -355,6 +370,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Cloud.addComponent<Collider2D>(&Cloud.getComponent<Transform2D>().position, Cloud.getComponent<Sprite>().GetViewDimensions());
     Cloud.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{block_width * 4.0f, 0});
     Cloud.addComponent<Script, CloudBehavior>();
+    
 
     GameObject SmallCloud("Small Cloud", "Cloud");
     SmallCloud.addComponent<Sprite>("Assets/Sprites/Cloud_Slow_Short.png", horizontal_scale, vertical_scale);
@@ -363,12 +379,12 @@ void Game(int numPlayers, int level, bool speed_run) {
     SmallCloud.addComponent<Script, CloudBehavior>();
 
     // Condor
-    GameObject Condor("Red Condor", "Goal");
+    GameObject Condor("Red Condor", "Goal", {}, {"Player"});
     Condor.addComponent<Animator>("Fly", std::unordered_map<std::string, Animation> {
-        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, scale, 0.75, true)}
+        {"Fly", Animation("Assets/Sprites/Red_condor_fly.png", 32, 16, scale, 1.0, true)}
     });
     Condor.addComponent<Collider2D>(&Condor.getComponent<Transform2D>().position, Condor.getComponent<Animator>().GetViewDimensions(), ORANGE);
-    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
+    Condor.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{200, 0});
     Condor.addComponent<Script, RedCondorBehavior>();
 
     // Icicle
@@ -417,10 +433,11 @@ void Game(int numPlayers, int level, bool speed_run) {
     Joseph.addComponent<Collider2D>(&Joseph.getComponent<Transform2D>().position, Vector2{collider_width, joseph_size.y}, Vector2{joseph_size.x/2 - collider_offset, 0});
     Joseph.addComponent<Script, JosephBehavior>();
 
-    GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player"});
+    GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player", "Floor", "Wall"});
     Nutpicker.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, scale, 0.3, true)},
             {"Stunned", Animation("Assets/Sprites/Nutpicker - Spritesheet 02 - Stunned.png", 16, 16, scale, 0.5, true)},
+            {"Idle", Animation("Assets/Sprites/Nutpicker_Idle.png", 16, 16, scale, 0.5, true)}
         }
     );
     Nutpicker.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 6.0f,0});
@@ -465,26 +482,57 @@ void Game(int numPlayers, int level, bool speed_run) {
         };
 
         /***** Elementos comunes a las montañas *****/
-        // Suelo base
-        GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,floor_levels[0]}});
+        // Piso 1 (Suelo base):
+        auto floor = &GameSystem::Instantiate(BaseFloor, GameObjectOptions{.position{-100,floor_levels[0]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 1;
 
-        // Plataformas laterales
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*4.0f, floor_levels[1]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[2]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
-        GameSystem::Instantiate(LevelFloor_0_Ice, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
-        GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
+        // Piso 2:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 4.0f - LevelFloor_0_width, floor_levels[1]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 2;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*4.0f, floor_levels[1]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 2;
+
+        // Piso 3:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[2]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 3;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[2]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 3;
+
+        // Piso 4:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[3]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 4;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[3]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 4;
+
+        // Piso 5:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 5.0f - LevelFloor_0_width, floor_levels[4]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 5;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*5.0f, floor_levels[4]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 5;
+
+        // Piso 6:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[5]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 6;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[5]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 6;
+
+        // Piso 7:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[6]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 7;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[6]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 7;
+
+        // Piso 8:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 6.0f - LevelFloor_0_width, floor_levels[7]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 8;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{GAME_WIDTH - block_width*6.0f, floor_levels[7]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 8;
+
+        // Piso 9:
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 25.0f, floor_levels[8]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 9;
+        floor = &GameSystem::Instantiate(LevelFloor_0, GameObjectOptions{.position{block_width * 7.0f - LevelFloor_0_width, floor_levels[8]}});
+        floor->getComponent<Script, FloorBehavior>().floor_level = 9;
 
         // Muros de la fase bonus
         GameSystem::Instantiate(LevelWall_0, GameObjectOptions{.position{0, wall_levels[0]}});
@@ -503,24 +551,29 @@ void Game(int numPlayers, int level, bool speed_run) {
         // Players
         auto playerTransforms = std::vector<Transform2D*>();
         Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, floor_levels[0] - player_size.y}});
-        playerTransforms.push_back(&Player_1->getComponent<Script, PopoBehavior>().transform);
+        playerTransforms.push_back(&Player_1->getComponent<Script, Player>().transform);
         if (numPlayers > 1) {
             Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, floor_levels[0] - player_size.y}});
-            playerTransforms.push_back(&Player_2->getComponent<Script, PopoBehavior>().transform);
+            playerTransforms.push_back(&Player_2->getComponent<Script, Player>().transform);
         }
         if (numPlayers > 2) {
             Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,floor_levels[0] - player_size.y}});
-            playerTransforms.push_back(&Player_3->getComponent<Script, PopoBehavior>().transform);
+            playerTransforms.push_back(&Player_3->getComponent<Script, Player>().transform);
         }
         if (numPlayers > 3) {
             Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,floor_levels[0] - player_size.y}});
-            playerTransforms.push_back(&Player_4->getComponent<Script, PopoBehavior>().transform);
+            playerTransforms.push_back(&Player_4->getComponent<Script, Player>().transform);
         }
 
         // Zona de muerte y Condor en la cima de la montaña
         GameSystem::Instantiate(Death, GameObjectOptions{.position{0, GAME_HEIGHT - block_height * 95.0f}});
         GameSystem::Instantiate(Death, GameObjectOptions{.position{block_width * 26.0f, GAME_HEIGHT - block_height * 95.0f}});
-        GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
+        auto a_condor = &GameSystem::Instantiate(Condor, GameObjectOptions{.position={400, GAME_HEIGHT - block_height * 104.0f}});
+        a_condor->getComponent<Script, RedCondorBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+
+        std::random_device rd;
+        std::mt19937 e2(rd());
+        std::uniform_real_distribution<> E(0, 1);
 
         if(level == 0) {
 
@@ -542,88 +595,159 @@ void Game(int numPlayers, int level, bool speed_run) {
             };
 
             for (float i = 0.0f; i < 24; i++) {
-                GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21))
-                    GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
-                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21)
-                    GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
+                auto block = &GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+                block->getComponent<Script, BlockBehavior>().floor_level    = 2;
+                if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21)) {
+                    block = &GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level    = 2;
+                }
+                if(i == 2 || i == 4 || i == 7 || i == 11 || i == 21) {
+                    block = &GameSystem::Instantiate(GrassBlockThin, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level    = 2;
+                }
             }
 
+            int f3_current_blocks = 22, f5_current_blocks = 22;
             for (int i = 0; i < 22; i++) {
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-                if(i < 6 || (i > 8 && i < 12) || i > 18)            
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-                if(i == 6 || i == 8 || i == 12 || i == 18)            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
-                if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19))            
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-                if(i == 1 || i == 3 || i == 7 || i == 9 || i == 13 || i == 15 || i == 19 )            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-                GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
-                if(i < 12 || i == 15 || i > 18)            
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-                if(i == 12 || i == 14 || i == 16 || i == 18)            
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
-                
+                auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                block->getComponent<Script, BlockBehavior>().current_blocks = &f3_current_blocks;
+                block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                if(i < 6 || (i > 8 && i < 12) || i > 18) {           
+                    block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                }
+                if(i == 6 || i == 8 || i == 12 || i == 18) {          
+                    block = &GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                }
+                block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+                block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                if(i == 0 || (i > 3 && i < 7) || (i > 9 && i < 13) || (i > 15 && i < 19)) {            
+                    block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                }
+                if(i == 1 || i == 3 || i == 7 || i == 9 || i == 13 || i == 15 || i == 19 ) {          
+                    block = &GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                }
+                block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4]}});
+                block->getComponent<Script, BlockBehavior>().floor_level = 5;
+                block->getComponent<Script, BlockBehavior>().current_blocks = &f5_current_blocks;
+                if(i < 12 || i == 15 || i > 18) {          
+                    block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 5;
+                }
+                if(i == 12 || i == 14 || i == 16 || i == 18) {        
+                    block = &GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[4] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 5;
+                }
             }   
 
+            int f7_current_blocks = 20;
             for (int i = 0; i < 20; i++) {
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
-                if(i == 0 || (i > 2 && i < 9) || i > 15)            
-                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
-                if(i == 1 || i == 2 || i == 9 || i == 15)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
-                if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19))            
-                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
-                if(i == 5 || i == 9 || i == 13 || i == 15 || i == 19)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
-                if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16))            
-                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
-                if(i == 2 || i == 5 || i == 7 || i == 11 || i == 13 || i == 16)            
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
+                auto block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+                block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                if(i == 0 || (i > 2 && i < 9) || i > 15) {           
+                    block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                }
+                if(i == 1 || i == 2 || i == 9 || i == 15) {        
+                    block = &GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                }
+
+                block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
+                block->getComponent<Script, BlockBehavior>().current_blocks = &f7_current_blocks;
+                block->getComponent<Script, BlockBehavior>().floor_level = 7;
+                if(i < 5 || (i > 9 && i < 13) || (i > 15 && i < 19)) {
+                    block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 7;
+                }
+                if(i == 5 || i == 9 || i == 13 || i == 15 || i == 19) {
+                    block = &GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 7;
+                }
+
+                block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+                block->getComponent<Script, BlockBehavior>().floor_level = 8;
+                if((i > 2 && i < 5) || (i > 7 && i < 11) || (i > 13 && i < 16)) {
+                    block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 8;
+                }
+                if(i == 2 || i == 5 || i == 7 || i == 11 || i == 13 || i == 16) {
+                    block = &GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 8;
+                }
             } 
 
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+            auto a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 9;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 9;
 
             bonusLevel = &GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
-            GameSystem::Instantiate(BonusLevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
-            GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+            bonusLevel->getComponent<Script, FloorBehavior>().floor_level = 10;
+            a_floor = &GameSystem::Instantiate(BonusLevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 10;
+            a_floor = &GameSystem::Instantiate(BonusLevelFloor_0, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 10;
 
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[2]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[2]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 11;
 
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
-            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[4]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[3]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 12;
 
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[5]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[6]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[4]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 13;
 
-            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[5]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 14;
 
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 16.0f, bonus_floor_levels[8]}});
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 8.0f, bonus_floor_levels[9]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[6]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 15;
 
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 19.0f, bonus_floor_levels[10]}});
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[11]}});
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[12]}});
+            a_floor = &GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 16;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 16.0f, bonus_floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 17;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 8.0f, bonus_floor_levels[9]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 18;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 19.0f, bonus_floor_levels[10]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 19;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[11]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 20;
+
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[12]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 21;
 
             GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
             GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
-            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[13]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[13]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[13]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 22;
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[13]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 22;
+
+            Player_1->getComponent<Script, Player>().last_level = 22;
+            if (Player_2 != nullptr) {
+                Player_2->getComponent<Script, Player>().last_level = 22;
+            }
+            if (Player_3 != nullptr) {
+                Player_3->getComponent<Script, Player>().last_level = 22;
+            }
+            if (Player_4 != nullptr) {
+                Player_4->getComponent<Script, Player>().last_level = 22;
+            }
 
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - eggplant_height}});
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - eggplant_height}});
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[3] - eggplant_height}});
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
-
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}}));
 
             auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[2] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
@@ -634,8 +758,59 @@ void Game(int numPlayers, int level, bool speed_run) {
             jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{WINDOW_WIDTH/2.0f, floor_levels[8] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
-            
-            GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+            // 1st floor topi:
+            //Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y - 1)}}));
+            // 3rd floor topi:
+            auto a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f3_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 3;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+            // 5th floor topi:
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[4] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f5_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 5;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+            // 7th floor topi:
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[6] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f7_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 7;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+            // 4th floor Nutpicker:
+            if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                //if (E(e2) > 0.7) {
+                    auto a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[3] - 120}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{GetScreenWidth()-100.0f, floor_levels[3] - 70}});
+                    a_nutpicker->getComponent<Animator>().Flip();
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().isRight = -1;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[5] - 60}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 6;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+            } else {
+                GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+            }
+
+
         } else if(level == 1) {
 
             std::vector<float> bonus_floor_levels = {
@@ -652,53 +827,90 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GAME_HEIGHT - block_height * 95.0f  // 10
             };
 
-            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
+            auto a_floor = &GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[1]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 2;
 
             GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
             GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
-            for (int i = 0; i < 24; i++)
-                if(i != 7)
+            for (int i = 0; i < 24; i++) {
+                if(i != 7) {
                     GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-            for (int i = 0; i < 22; i++) {
-                if(i < 5 || i > 12)
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-                else if(i == 5 || i == 10) 
-                    GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-                else if(i == 8 || i == 9)
-                    GameSystem::Instantiate(DirtHole, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
-                if((i > 2 && i < 7) || i == 11 || (i > 14 && i < 18))
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-                if(i == 0 || i == 2 || i == 12 || i == 14 || i == 18)
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
-                if(i != 6 && i != 11)
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
-                if(i < 4 || (i > 7 && i < 10) || (i > 14 && i < 18))
-                    GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
-                if(i == 5 || i == 10 || i == 14 || i == 18)
-                    GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                }
             }
-            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
+
+            int f3_current_blocks = 14, f4_current_blocks = 20;
+            for (int i = 0; i < 22; i++) {
+                if(i < 5 || i > 12) {
+                    auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                }
+                else if(i == 5 || i == 10) {
+                    auto block = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                    block->getComponent<Script, FloorBehavior>().floor_level = 3;
+                }
+                else if(i == 8 || i == 9) {
+                    GameSystem::Instantiate(DirtHole, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
+                }
+                if((i > 2 && i < 7) || i == 11 || (i > 14 && i < 18)) {
+                    auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                }
+                if(i == 0 || i == 2 || i == 12 || i == 14 || i == 18) {
+                    auto block = &GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                }
+                if(i != 6 && i != 11) {
+                    auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                }
+                if(i < 4 || (i > 7 && i < 10) || (i > 14 && i < 18)) {
+                    auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                }
+                if(i == 5 || i == 10 || i == 14 || i == 18) {
+                    auto block = &GameSystem::Instantiate(DirtBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                }
+            }
+            a_floor = &GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[4]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 5;
 
             GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{0, floor_levels[5] + block_height}});
             GameSystem::Instantiate(DirtWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 5.0f, floor_levels[5] + block_height}});
 
+            int f6_current_blocks = 20, f8_current_blocks = 10;
             for (int i = 0; i < 20; i++) {
-                GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
-                if(i == 0 || (i > 9 && i < 17))
-                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
-                if(i == 1 || i == 9 || i == 17)
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
+                auto block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
+                block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                
+                if(i == 0 || (i > 9 && i < 17)) {
+                    block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                }
+                if(i == 1 || i == 9 || i == 17) {
+                    block = &GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                }
+
                 GameSystem::Instantiate(IceHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[6]}});
-                if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17))
-                    GameSystem::Instantiate(IceSlidingBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
-                else
-                    GameSystem::Instantiate(IceSlidingHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});          
-                if((i > 2 && i < 5) || (i > 9 && i < 14 ))
-                    GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
-                if(i == 2 || i == 5)
-                    GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
+                if((i > 1 && i < 6 ) || (i > 9 && i < 14 ) || (i > 17)) {
+                    block = &GameSystem::Instantiate(IceSlidingBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+                    block->getComponent<Script, SlidingBlockBehavior>().floor_level = 8;
+                } else {
+                    GameSystem::Instantiate(IceSlidingHole, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[7]}});
+                }       
+                if((i > 2 && i < 5) || (i > 9 && i < 14 )) {
+                    block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 8;
+                }
+                if(i == 2 || i == 5) {
+                    block = &GameSystem::Instantiate(IceBlockThin, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[7] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().floor_level = 8;
+                }
             }
-            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[6]}});
+
+            a_floor = &GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, floor_levels[6]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 7;
 
             GameSystem::Instantiate(IceWall, GameObjectOptions{.position{0, floor_levels[7] + block_height}});
             GameSystem::Instantiate(IceWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 6.0f, floor_levels[7] + block_height}});
@@ -707,45 +919,66 @@ void Game(int numPlayers, int level, bool speed_run) {
             GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 11.0f, floor_levels[3]}});
             GameSystem::Instantiate(Wall, GameObjectOptions{.position{block_width * 16.0f, floor_levels[3]}});
 
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 9.0f, floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 9;
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 17.0f, floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 9;
 
             // Fase bonus
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[0]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 10;
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 13.0f, bonus_floor_levels[0]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 10;
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 22.0f, bonus_floor_levels[0]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 10;
 
-            GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[1]}});
+            a_floor = &GameSystem::Instantiate(Cloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[1]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 11;
 
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[2]}});
-            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[3]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 18.0f, bonus_floor_levels[2]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 12;
+            a_floor = &GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 5.0f, bonus_floor_levels[3]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 13;
 
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[4]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[5]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 21.0f, bonus_floor_levels[4]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 14;
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 12.0f, bonus_floor_levels[5]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 15;
 
-            GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[6]}});
-            GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+            a_floor = &GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[6]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 16;
+            a_floor = &GameSystem::Instantiate(SmallCloud, GameObjectOptions{.position{GetScreenWidth() + 10.0f, bonus_floor_levels[7]}});
+            a_floor->getComponent<Script, CloudBehavior>().floor_level = 17;
 
-            GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[8]}});
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 17.0f, bonus_floor_levels[8]}});
-            GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[9]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * 10.0f, bonus_floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 18;
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 17.0f, bonus_floor_levels[8]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 18;
+            a_floor = &GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, bonus_floor_levels[9]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 19;
 
             GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 6.0f, wall_levels[6]}});
             GameSystem::Instantiate(LevelWall_2, GameObjectOptions{.position{block_width * 23.0f, wall_levels[6]}});
-            GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[10]}});
-            GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[10]}});
+            a_floor = &GameSystem::Instantiate(LevelFloor_4, GameObjectOptions{.position{block_width * 6.0f, bonus_floor_levels[10]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 20;
+            a_floor = &GameSystem::Instantiate(LevelFloor_1, GameObjectOptions{.position{block_width * 20.0f, bonus_floor_levels[10]}});
+            a_floor->getComponent<Script, FloorBehavior>().floor_level = 20;
+
+            Player_1->getComponent<Script, Player>().last_level = 20;
+            if (Player_2 != nullptr) {
+                Player_2->getComponent<Script, Player>().last_level = 20;
+            }
+            if (Player_3 != nullptr) {
+                Player_3->getComponent<Script, Player>().last_level = 20;
+            }
+            if (Player_4 != nullptr) {
+                Player_4->getComponent<Script, Player>().last_level = 20;
+            }
 
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 6.0f, bonus_floor_levels[0] - lettuce_height}});
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 24.0f, bonus_floor_levels[0] - lettuce_height}});
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 20.0f, bonus_floor_levels[2] - lettuce_height}});
             GameSystem::Instantiate(Lettuce, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[5] - lettuce_height}});
-
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}}));
-            Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}}));
-            GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
 
             auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[4] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
@@ -753,6 +986,67 @@ void Game(int numPlayers, int level, bool speed_run) {
             jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[6] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
+
+            auto a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width), floor_levels[0] - (topi_size.y + 1)}});
+            Enemies.push_back(a_topi);
+
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width), floor_levels[2] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 16;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f3_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 3;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f4_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 4;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f6_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 6;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[7] - (topi_size.y + 1)}});
+            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
+            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f8_current_blocks;
+            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 8;
+            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+            Enemies.push_back(a_topi);
+            
+            // 4th floor Nutpicker:
+            if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                //if (E(e2) > 0.7) {
+                    auto a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[3] - 120}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{GetScreenWidth()-100.0f, floor_levels[3] - 70}});
+                    a_nutpicker->getComponent<Animator>().Flip();
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().isRight = -1;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 4;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+                //if (E(e2) > 0.7) {
+                    a_nutpicker = &GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{10, floor_levels[5] - 60}});
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_level = 6;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().vertical_scale = vertical_scale;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().floor_levels = floor_levels;
+                    a_nutpicker->getComponent<Script, NutpickerBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
+                //}
+            } else {
+                GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
+            }
+
         }
     } else if (level == 2) {
         std::vector<float> levels = {
@@ -768,12 +1062,15 @@ void Game(int numPlayers, int level, bool speed_run) {
 
         // Players
         Player_1 = &GameSystem::Instantiate(Popo, GameObjectOptions{.position = {block_width * 8.0f, levels[0] - player_size.y}});
-        if (numPlayers > 1)
+        if (numPlayers > 1) {
             Player_2 = &GameSystem::Instantiate(Nana, GameObjectOptions{.position = {block_width * 13.0f, levels[0] - player_size.y}});
-        if (numPlayers > 2)
+        }
+        if (numPlayers > 2) {
             Player_3 = &GameSystem::Instantiate(Amam, GameObjectOptions{.position = {block_width * 18.0f,levels[0] - player_size.y}});
-        if (numPlayers > 3)
+        }
+        if (numPlayers > 3) {
             Player_4 = &GameSystem::Instantiate(Lili, GameObjectOptions{.position = {block_width * 23.0f,levels[0] - player_size.y}});
+        }
 
         GameSystem::Instantiate(ArenaGrassWall, GameObjectOptions{.position{0, levels[1]}});
         GameSystem::Instantiate(ArenaGrassWall, GameObjectOptions{.position{GAME_WIDTH - 4.0f * block_width, levels[1]}});
@@ -783,6 +1080,8 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(IceWallSuperThin, GameObjectOptions{.position{GAME_WIDTH - block_width, levels[4]}});
 
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 9.0f, levels[1]}});
+        
+
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 19.0f, levels[1]}});
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 4.0f, levels[2]}});
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 14.0f, levels[2]}});
@@ -863,6 +1162,8 @@ void Game(int numPlayers, int level, bool speed_run) {
         }
         if (play_music) {
             BGM.Play();
+        } else {
+            BGM2.Play();
         }
 
         if (IsGamepadAvailable(0)) {
@@ -883,17 +1184,17 @@ void Game(int numPlayers, int level, bool speed_run) {
                 if (timeToShowScores < 3.0) timeToShowScores += GetFrameTime();
                 else {
                     if(get_stats) {
-                        fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                        blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                        pajaros_golpeados1 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
-                        icicle_destruidos1 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
-                        win1 = Player_1->getComponent<Script, PopoBehavior>().victory;
+                        fruits_harvested1 = Player_1->getComponent<Script, Player>().frutasRecogidas;
+                        blocks_destroyed1 = Player_1->getComponent<Script, Player>().bloquesDestruidos;
+                        pajaros_golpeados1 = Player_1->getComponent<Script, Player>().nutpickerGolpeados;
+                        icicle_destruidos1 = Player_1->getComponent<Script,Player>().icicleDestruido;
+                        win1 = Player_1->getComponent<Script, Player>().victory;
                         if(numPlayers > 1){
-                            fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                            blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                            pajaros_golpeados2 = Player_2->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
-                            icicle_destruidos2 = Player_2->getComponent<Script,PopoBehavior>().icicleDestruido;
-                            win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
+                            fruits_harvested2 = Player_2->getComponent<Script, Player>().frutasRecogidas;
+                            blocks_destroyed2 = Player_2->getComponent<Script, Player>().bloquesDestruidos;
+                            pajaros_golpeados2 = Player_2->getComponent<Script, Player>().nutpickerGolpeados;
+                            icicle_destruidos2 = Player_2->getComponent<Script,Player>().icicleDestruido;
+                            win2 = Player_2->getComponent<Script, Player>().victory;
                         }
                         get_stats = false;
                     }
@@ -982,45 +1283,54 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
                 }
 
-                if((Player_1->getComponent<Script, PopoBehavior>().bonusLevel) &&
+                if((Player_1->getComponent<Script, Player>().bonusLevel) &&
                     !onBonus) {
                     objects_offset = ((GAME_HEIGHT - 6.0f * block_height) - bonusLevel->getComponent<Transform2D>().position.y);
                     onBonus = true;
                     moving_camera = true;
                     GameSystem::DestroyByTag("Enemy");
-                    PopoBehavior::setFinal(true);
+                    Player::setFinal(true);
+                } else if (numPlayers > 1) {
+                    if((Player_2->getComponent<Script, Player>().bonusLevel) &&
+                        !onBonus) {
+                        objects_offset = ((GAME_HEIGHT - 6.0f * block_height) - bonusLevel->getComponent<Transform2D>().position.y);
+                        onBonus = true;
+                        moving_camera = true;
+                        GameSystem::DestroyByTag("Enemy");
+                        Player::setFinal(true);
+                    }
                 }
-                if(Player_1->getComponent<Script, PopoBehavior>().lifes > 0)
+                if(Player_1->getComponent<Script, Player>().lifes > 0)
                     LifePopo1.Draw();
-                if(Player_1->getComponent<Script, PopoBehavior>().lifes > 1)
+                if(Player_1->getComponent<Script, Player>().lifes > 1)
                     LifePopo2.Draw();
-                if(Player_1->getComponent<Script, PopoBehavior>().lifes > 2)
+                if(Player_1->getComponent<Script, Player>().lifes > 2)
                     LifePopo3.Draw();
                 if(numPlayers > 1) {
-                    if(Player_2->getComponent<Script, PopoBehavior>().lifes > 0)
+                    if(Player_2->getComponent<Script, Player>().lifes > 0)
                         LifeNana1.Draw();
-                    if(Player_2->getComponent<Script, PopoBehavior>().lifes > 1)
+                    if(Player_2->getComponent<Script, Player>().lifes > 1)
                         LifeNana2.Draw();
-                    if(Player_2->getComponent<Script, PopoBehavior>().lifes > 2)
+                    if(Player_2->getComponent<Script, Player>().lifes > 2)
                         LifeNana3.Draw();
                 }
                 if(numPlayers > 2) {
-                    if(Player_3->getComponent<Script, PopoBehavior>().lifes > 0)
+                    if(Player_3->getComponent<Script, Player>().lifes > 0)
                         LifeAmam1.Draw();
-                    if(Player_3->getComponent<Script, PopoBehavior>().lifes > 1)
+                    if(Player_3->getComponent<Script, Player>().lifes > 1)
                         LifeAmam2.Draw();
-                    if(Player_3->getComponent<Script, PopoBehavior>().lifes > 2)
+                    if(Player_3->getComponent<Script, Player>().lifes > 2)
                         LifeAmam3.Draw();
                 }
                 if(numPlayers > 3) {
-                    if(Player_4->getComponent<Script, PopoBehavior>().lifes > 0)
+                    if(Player_4->getComponent<Script, Player>().lifes > 0)
                         LifeLili1.Draw();
-                    if(Player_4->getComponent<Script, PopoBehavior>().lifes > 1)
+                    if(Player_4->getComponent<Script, Player>().lifes > 1)
                         LifeLili2.Draw();
-                    if(Player_4->getComponent<Script, PopoBehavior>().lifes > 2)
+                    if(Player_4->getComponent<Script, Player>().lifes > 2)
                         LifeLili3.Draw();
                 }
-                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && (
+                if (!moving_camera && Player_1->getComponent<Script, Player>().isGrounded && (
                     Player_1->getComponent<Transform2D>().position.y < (4.0f * block_height) || (numPlayers == 2 &&
                     Player_2->getComponent<Transform2D>().position.y < (4.0f * block_height))) && level < 2) {
                     moving_camera = true;
@@ -1042,23 +1352,23 @@ void Game(int numPlayers, int level, bool speed_run) {
                 
                 if (!moving_camera) {
                     GameSystem::Update();
-                    if (!game_over1 && Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
+                    if (!game_over1 && Player_1->getComponent<Script, Player>().lifes <= 0 && 
                         !acabar) {
                         game_over1 = true;
                         num_game_overs++;
                     }
                     if (numPlayers > 1) {
-                        if(!game_over2 && Player_2->getComponent<Script, PopoBehavior>().lifes <= 0 && 
+                        if(!game_over2 && Player_2->getComponent<Script, Player>().lifes <= 0 && 
                         !acabar) {
                             game_over2 = true;
                             num_game_overs++;
                         }
                     }
-                    if(Player_1->getComponent<Script, PopoBehavior>().victory) {
+                    if(Player_1->getComponent<Script, Player>().victory) {
                         objects_offset = 13.0f * block_height;
                         acabar = true;
                     } else if (numPlayers > 1){
-                        if(Player_2->getComponent<Script, PopoBehavior>().victory) {
+                        if(Player_2->getComponent<Script, Player>().victory) {
                             objects_offset = 13.0f * block_height;
                             acabar = true;
                         }
@@ -1234,7 +1544,7 @@ int main() {
     bool psshow = true;
     float pscurrent_time = 0;
     float pschange_time = 1;
-    UIText PressStartText(NES, "Press <ENTER> to start", 30, 1, {GetScreenWidth()/2.0f, GetScreenHeight()-60.0f}, UIObject::DOWN_CENTER);
+    UIText PressStartText(NES, "Press <ANY KEY> to start", 30, 1, {GetScreenWidth()/2.0f, GetScreenHeight()-60.0f}, UIObject::DOWN_CENTER);
 
     // MAIN MENU:
     UIText NewGameText(NES, "NEW GAME", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 45.0f}, UIObject::DOWN_CENTER);
@@ -1275,7 +1585,7 @@ int main() {
     int selected_level = 0;
     UISprite Level1("Assets/Sprites/Level1_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level1Text(NES, "LEVEL 1: BASICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
-    //UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
+    UISprite Level2("Assets/Sprites/Level2_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level2Text(NES, "LEVEL 2: ADVANCED MECHANICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level3Text(NES, "LEVEL 3: TRYING TO SURVIVE", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level3WIP(NES, "NO TIME FOR THIS LEVEL :(", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, UIObject::CENTER);
@@ -1292,31 +1602,35 @@ int main() {
 
     // SETTINGS MENU:
     Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
-    UIText OldStyleText(NES, "OLD STYLE?", 33, 1, {200, GetScreenHeight()/2.0f - 180}, UIObject::CENTER_LEFT);
+    
+    UIText AdvancedAIText(NES, "ADVANCED AI", 33, 1, {200, GetScreenHeight()/2.0f - 196}, UIObject::CENTER_LEFT);
+    UISprite AdvancedAICheck(cross, {GetScreenWidth()/2.0f + 157, AdvancedAIText.pos.y - 3}, 2.0f, 2.0f);
+    
+    UIText OldStyleText(NES, "OLD STYLE?", 33, 1, {200, GetScreenHeight()/2.0f - 140}, UIObject::CENTER_LEFT);
     UISprite OldStyleCheck(cross, {GetScreenWidth()/2.0f + 157, OldStyleText.pos.y - 3}, 2.0f, 2.0f);
     
-    UIText DisplayModeText(NES, "DISPLAY MODE", 33, 1, {200, GetScreenHeight()/2.0f - 120}, UIObject::CENTER_LEFT);
+    UIText DisplayModeText(NES, "DISPLAY MODE", 33, 1, {200, GetScreenHeight()/2.0f - 84}, UIObject::CENTER_LEFT);
     UIText SelectedDisplayModeText(NES, to_string((DISPLAY_MODE_ENUM)std::get<int>(ini["Graphics"]["DisplayMode"])),
         25, 1, {GetScreenWidth()/2.0f + 170, DisplayModeText.pos.y}, UIObject::UP_CENTER);
     UISprite DisplayModeLArrow(LArrow, {GetScreenWidth()/2.0f + 60, DisplayModeText.pos.y}, 1.0f, 1.0f);
     UISprite DisplayModeRArrow(RArrow, {GetScreenWidth()/2.0f + 260, DisplayModeText.pos.y}, 1.0f, 1.0f);
     
-    UIText ResolutionText(NES, "RESOLUTION", 33, 1, {200, GetScreenHeight()/2.0f - 60}, UIObject::CENTER_LEFT);
+    UIText ResolutionText(NES, "RESOLUTION", 33, 1, {200, GetScreenHeight()/2.0f - 28}, UIObject::CENTER_LEFT);
     UISprite ResolutionLArrow(LArrow, {GetScreenWidth()/2.0f + 60, ResolutionText.pos.y}, 1.0f, 1.0f);
     UIText SelectedResolutionText(NES, std::to_string(std::get<int>(ini["Graphics"]["ScreenWidth"])) + "x" + std::to_string(std::get<int>(ini["Graphics"]["ScreenHeight"])), 
         25, 1, {GetScreenWidth()/2.0f + 170, ResolutionText.pos.y}, UIObject::UP_CENTER);
     UISprite ResolutionRArrow(RArrow, {GetScreenWidth()/2.0f + 260, ResolutionText.pos.y}, 1.0f, 1.0f);
     
-    UIText FPSLimitText(NES, "FPS LIMIT", 33, 1, {200, GetScreenHeight()/2.0f}, UIObject::CENTER_LEFT);
+    UIText FPSLimitText(NES, "FPS LIMIT", 33, 1, {200, GetScreenHeight()/2.0f + 28}, UIObject::CENTER_LEFT);
     UISprite FPSLimitLArrow(LArrow, {GetScreenWidth()/2.0f + 60, FPSLimitText.pos.y}, 1.0f, 1.0f);
     UIText SelectedFPSLimitText(NES, std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])), 25, 1, {GetScreenWidth()/2.0f + 170, FPSLimitText.pos.y}, UIObject::UP_CENTER);
     UISprite FPSLimitRArrow(RArrow, {GetScreenWidth()/2.0f + 260, FPSLimitText.pos.y}, 1.0f, 1.0f);
     
-    UIText VolumeText(NES, "VOLUME", 33, 1, {200, GetScreenHeight()/2.0f + 60}, UIObject::CENTER_LEFT);
+    UIText VolumeText(NES, "VOLUME", 33, 1, {200, GetScreenHeight()/2.0f + 84}, UIObject::CENTER_LEFT);
     UIText VolumePercentageText(NES, std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100)), 27, 1, {715, VolumeText.pos.y + 15}, UIObject::CENTER);
     
-    UIText ChangeKeybindingsText(NES, "CHANGE KEYBINDINGS", 33, 1, {200, GetScreenHeight()/2.0f + 120}, UIObject::CENTER_LEFT);
-    UIText SettingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 180}, UIObject::CENTER);
+    UIText ChangeKeybindingsText(NES, "CHANGE KEYBINDINGS", 33, 1, {200, GetScreenHeight()/2.0f + 140}, UIObject::CENTER_LEFT);
+    UIText SettingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 196}, UIObject::CENTER);
 
     // KEY BINDING SETTNGS:
     bool SELECTED = false, SHOW_ERROR_MESSAGE = false;
@@ -1373,14 +1687,14 @@ int main() {
             {Hammer.dst.x*1680/900, Hammer.dst.y*1050/600 - 10},
             {Hammer.dst.x*1920/900, Hammer.dst.y*1080/600 - 20}
         }}, {1, {
-            {(OldStyleText.pos.x-70)*640/900, OldStyleText.pos.y*480/600},
-            {(OldStyleText.pos.x-70)*800/900, OldStyleText.pos.y},
-            {(OldStyleText.pos.x-70), OldStyleText.pos.y}, 
-            {(OldStyleText.pos.x-70)*1024/900, OldStyleText.pos.y*768/600},
-            {(OldStyleText.pos.x-70)*1280/900, OldStyleText.pos.y*720/600 - 5},
-            {(OldStyleText.pos.x-70)*1366/900, OldStyleText.pos.y*768/600 - 5},
-            {(OldStyleText.pos.x-70)*1680/900, OldStyleText.pos.y*1050/600 - 5},
-            {(OldStyleText.pos.x-70)*1920/900, OldStyleText.pos.y*1080/600 - 15}
+            {(PlayerText.pos.x-70)*640/900, PlayerText.pos.y*480/600},
+            {(PlayerText.pos.x-70)*800/900, PlayerText.pos.y},
+            {(PlayerText.pos.x-70), PlayerText.pos.y}, 
+            {(PlayerText.pos.x-70)*1024/900, PlayerText.pos.y*768/600},
+            {(PlayerText.pos.x-70)*1280/900, PlayerText.pos.y*720/600 - 5},
+            {(PlayerText.pos.x-70)*1366/900, PlayerText.pos.y*768/600 - 5},
+            {(PlayerText.pos.x-70)*1680/900, PlayerText.pos.y*1050/600 - 5},
+            {(PlayerText.pos.x-70)*1920/900, PlayerText.pos.y*1080/600 - 15}
         }}, {2, {
             {(ContinueText.pos.x-70)*640/900, ContinueText.pos.y*480/600},
             {(ContinueText.pos.x-70)*800/900, ContinueText.pos.y},
@@ -1399,6 +1713,15 @@ int main() {
             {(StartText.pos.x-70)*1366/900, StartText.pos.y*768/600 - 5},
             {(StartText.pos.x-70)*1680/900, StartText.pos.y*1050/600 - 5},
             {(StartText.pos.x-70)*1920/900, StartText.pos.y*1080/600 - 15}
+        }}, {4, {
+            {(AdvancedAIText.pos.x-70)*640/900, (AdvancedAIText.pos.y+2)*480/600},
+            {(AdvancedAIText.pos.x-70)*800/900, (AdvancedAIText.pos.y+2)},
+            {(AdvancedAIText.pos.x-70), (AdvancedAIText.pos.y+2)}, 
+            {(AdvancedAIText.pos.x-70)*1024/900, (AdvancedAIText.pos.y+2)*768/600},
+            {(AdvancedAIText.pos.x-70)*1280/900, (AdvancedAIText.pos.y+2)*720/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1366/900, (AdvancedAIText.pos.y+2)*768/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1680/900, (AdvancedAIText.pos.y+2)*1050/600 - 5},
+            {(AdvancedAIText.pos.x-70)*1920/900, (AdvancedAIText.pos.y+2)*1080/600 - 15}
         }}
     };
     // KEYS (KEYBOARD):
@@ -1464,23 +1787,13 @@ int main() {
     UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
 
-/*
-
-    Texture EscKey = LoadTexture("Assets/Sprites/Keys/esc.png"), ReturnKey = LoadTexture("Assets/Sprites/Keys/backspace.png");
-    UIText ReturnTextNormal(NES, "RETURN", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeyNormal(EscKey, {ReturnTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeyNormal(ReturnKey, {EscKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    
-    UIText ReturnTextSettings(NES, "RETURN", 15, 1, {DownKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
-    UISprite EscKeySettings(EscKey, {ReturnTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite ReturnKeySettings(ReturnKey, {EscKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-*/
-
-
-
-
+    // Hammer offsets:
+    // 0: MAIN MENU
+    // 1: SETTINGS
+    // 2:
+    // 3:
     std::vector<int> HammerOffsets {
-        60, 60, 60, 50
+        60, 60, 60, 50, 56
     };
     // /*** Main Loop ***/ //
     int OPTION  = 0;
@@ -1564,7 +1877,7 @@ int main() {
                     PressStartText.Draw(COYOTEBROWN);
                 }
             }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+            if (KeyboardDetected() || GamepadDetected(0)/*IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)*/) {
                 if (intro_state++ == 2) {
                     CURRENT_MENU = MAIN_MENU;
                     PlayMusicStream(MainTitleOST);
@@ -1603,8 +1916,8 @@ int main() {
                     } else {
                         if (OPTION == 1) {
                             CURRENT_MENU = SETTINGS;
-                            OPTIONS = 7;
-                            HV = 1;
+                            OPTIONS = 8;
+                            HV = 4;
                         } else if (OPTION == 2) {
                             break;
                         }
@@ -1625,8 +1938,8 @@ int main() {
                         Level1.Draw();
                         Level1Text.Draw();
                     } else if (selected_level == 1) {
-                        //Level2.Draw();
-                        DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
+                        Level2.Draw();
+                        //DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
                         Level2Text.Draw();
                     } else if (selected_level == 2) {
                         DrawRectangleV({Level1.dst.x, Level1.dst.y}, {Level1.dst.width, Level1.dst.height}, GRAY);
@@ -1717,7 +2030,7 @@ int main() {
 
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
-                                PopoBehavior::setFinal(false);
+                                Player::setFinal(false);
                                 Game(nplayers, selected_level, speed_run);
                             } else if (OPTION == 1) {
                                 speed_run = !speed_run;
@@ -1781,7 +2094,7 @@ int main() {
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             } else {
                                 if (OPTION == 1) {
-                                    std::cout << "NO REIMPLEMENTADO: BRAWL!\n";
+
                                 } else if (OPTION == 2) {
                                     CURRENT_MENU = MAIN_MENU;
                                 }
@@ -1947,9 +2260,14 @@ int main() {
                         } else {
                             if (OPTION == 0) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                                    ini["Graphics"]["OldFashioned"] = !std::get<bool>(ini["Graphics"]["OldFashioned"]);
+                                    ini["Game"]["AdvancedAI"] = !std::get<bool>(ini["Game"]["AdvancedAI"]);
                                 }
                             } else if (OPTION == 1) {
+                                //if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+                                //    ini["Graphics"]["OldFashioned"] = !std::get<bool>(ini["Graphics"]["OldFashioned"]);
+                                //
+                                //}
+                            } else if (OPTION == 2) {
                                 if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     DISPLAY_MODE_OPTION = (DISPLAY_MODE_OPTION+1)%3;
                                     ini["Graphics"]["DisplayMode"] = DISPLAY_MODE_OPTION;
@@ -2011,7 +2329,7 @@ int main() {
                                     UISystem::Reescale();
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                 }
-                            } else if (OPTION == 2) {
+                            } else if (OPTION == 3) {
                                 if (DISPLAY_MODE_OPTION == WINDOWED) {
                                     if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                         RESOLUTION_OPTION = (RESOLUTION_OPTION+1)%RESOLUTION_OPTIONS.size();
@@ -2033,7 +2351,7 @@ int main() {
                                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                     }
                                 }
-                            } else if (OPTION == 3) {
+                            } else if (OPTION == 4) {
                                 if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     FPS_LIMIT_OPTION = ((FPS_LIMIT_OPTION+1)%FPS_LIMIT_OPTIONS.size());
                                     ini["Graphics"]["FPSLimit"] = FPS_LIMIT_OPTIONS[FPS_LIMIT_OPTION];
@@ -2045,7 +2363,7 @@ int main() {
                                     SetTargetFPS(std::get<int>(ini["Graphics"]["FPSLimit"]));
                                     SelectedFPSLimitText.SetText(std::to_string(std::get<int>(ini["Graphics"]["FPSLimit"])));
                                 }
-                            } else if (OPTION == 4) {
+                            } else if (OPTION == 5) {
                                 if (IsKeyDown(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                     if (std::get<float>(ini["Audio"]["Volume"]) < 1) {
                                         ini["Audio"]["Volume"] = std::get<float>(ini["Audio"]["Volume"]) + 0.05f;
@@ -2061,13 +2379,15 @@ int main() {
                                 }
                                 SetMasterVolume(std::get<float>(ini["Audio"]["Volume"]));
                                 VolumePercentageText.SetText(std::to_string((int)(std::get<float>(ini["Audio"]["Volume"]) * 100)));
-                            } else if (OPTION == 5) {
+                            } else if (OPTION == 6) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = CONTROL_SETTINGS;
-                                    OPTION = 0;
+                                    OPTIONS = 7;
+                                    OPTION  = 0;
+                                    HV = 1;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                                 }
-                            } else if (OPTION == 6) {
+                            } else if (OPTION == 7) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                                     CURRENT_MENU = MAIN_MENU;
                                     OPTION = 1;
@@ -2078,9 +2398,17 @@ int main() {
                             }
                         }
 
+                        // - ADVANCED AI OPTION:
+                        AdvancedAIText.Draw();
+                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), AdvancedAIText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
+                        DrawRectangleV({ResolutionLArrow.dst.x + (102*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), AdvancedAIText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
+                        if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                            AdvancedAICheck.Draw();
+                        }
+
                         // - OLD STYLE OPTION:
-                        OldStyleText.Draw();
-                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
+                        OldStyleText.Draw(GRAY);
+                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, GRAY);
                         DrawRectangleV({ResolutionLArrow.dst.x + (102*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
                         if (std::get<bool>(ini["Graphics"]["OldFashioned"])) {
                             OldStyleCheck.Draw();
@@ -2313,8 +2641,9 @@ int main() {
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                                 } else {
                                     CURRENT_MENU = SETTINGS;
-                                    OPTION = 5;
-                                    OPTIONS = 7;
+                                    OPTION = 6;
+                                    OPTIONS = 8;
+                                    HV = 4;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                                 }
                             } else {
@@ -2340,7 +2669,7 @@ int main() {
                 }
             }
         }
-
+        /*
         if (IsKeyPressed(KEY_TWO)) {
             RESOLUTION_OPTION = (RESOLUTION_OPTION+1)%RESOLUTION_OPTIONS.size();
             SetWindowSize(RESOLUTION_OPTIONS[RESOLUTION_OPTION].first, RESOLUTION_OPTIONS[RESOLUTION_OPTION].second);
@@ -2354,7 +2683,7 @@ int main() {
             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
         }
         DrawText((std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].first) + "x" + std::to_string(RESOLUTION_OPTIONS[RESOLUTION_OPTION].second)).c_str(), 5, 5, 30, BLACK);
-
+        */
         EndDrawing();
 
     }
