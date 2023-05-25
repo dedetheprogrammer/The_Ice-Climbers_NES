@@ -443,6 +443,7 @@ void Game(int numPlayers, int level, bool speed_run) {
     Nutpicker.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{0,0}, Vector2{block_width * 6.0f,0});
     Nutpicker.addComponent<Collider2D>(&Nutpicker.getComponent<Transform2D>().position, Vector2{collider_width, topi_size.y}, Vector2{topi_size.x/2 - collider_offset, 0});
     Nutpicker.addComponent<Script, NutpickerBehavior>(Icicle);
+
     std::vector<GameObject*> Enemies{};
     std::vector<GameObject*> Josephs{};
     GameObject* bonusLevel = nullptr;
@@ -1088,7 +1089,6 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 9.0f, levels[3]}});
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 19.0f, levels[3]}});
     }
-    std::cout << "1" << std::endl;
 
     //GameSystem::Printout();
     float timeToShowScores = 0.0f;

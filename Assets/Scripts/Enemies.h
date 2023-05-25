@@ -153,19 +153,19 @@ public:
             }
         }
         if (contact.gameObject.tag == "Player") {
-            if (!isStunned && contact.gameObject.getComponent<Script, Player>().isAttacking) {
-                if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, Player>().isRight) {
+            if (!isStunned && contact.gameObject.getComponent<Script, PopoBehavior>().isAttacking) {
+                if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x *= -1;
                 }
-                if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, Player>().isRight) {
+                if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, PopoBehavior>().isRight) {
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x *= -1;
                 }
             }
-            if (contact.gameObject.getComponent<Script, Player>().isStunned) {
+            if (contact.gameObject.getComponent<Script, PopoBehavior>().isStunned) {
                 // Stop chasing
                 chasePlayer = false;
                 current_chase_cooldown = 0.0f;
