@@ -51,12 +51,6 @@ if(BUILD_GAME)
         winmm
     )
 
-    target_sources(main PRIVATE
-        Assets/Scripts/Player.cpp
-        Assets/Scripts/Controllers.cpp
-        Assets/Scripts/Cloud.cpp
-    )
-
     # Configurar opciones de compilación
     target_compile_options(main PRIVATE
         -Wall

@@ -4,28 +4,16 @@
 
 #include <cmath>
 #include <iostream>
-#include <random>
 #include "raylib.h"
 
-#define COYOTEBROWN CLITERAL(Color){ 186, 143, 80, 255 }
+#define COYOTEBROWN CLITERAL(Color){ 140, 101, 45, 255 }
 #define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
 #define JELLYBEANBLUE CLITERAL(Color){ 66, 117, 133, 255 }
-
-
 
 // ----------------------------------------------------------------------------
 // Math extension
 // ----------------------------------------------------------------------------
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
-template <typename T> int sign(T val) {
-    if (val < 0) {
-        return -1;
-    } else if (val > 0) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
 
 // ----------------------------------------------------------------------------
 // Vector extension
