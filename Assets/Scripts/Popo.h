@@ -152,7 +152,7 @@ public:
                 if (contact.contact_normal.y < 0) {
 
                     if (isJumping || isBraking) {
-                        if(contact.gameObject.name.find("Bonus"))
+                        if(contact.gameObject.name.find("Bonus") != std::string::npos)
                             bonusLevel = true;
                         isBraking = true;
                         if (rigidbody.velocity.x > 0) {

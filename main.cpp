@@ -1020,14 +1020,22 @@ void Game(int numPlayers, int level, bool speed_run) {
                     if(Player_4->getComponent<Script, PopoBehavior>().lifes > 2)
                         LifeLili3.Draw();
                 }
-                if (!moving_camera && Player_1->getComponent<Script, PopoBehavior>().isGrounded && (
-                    Player_1->getComponent<Transform2D>().position.y < (4.0f * block_height) || (numPlayers == 2 &&
-                    Player_2->getComponent<Transform2D>().position.y < (4.0f * block_height))) && level < 2) {
+                if ((!moving_camera) && (Player_1->getComponent<Script, PopoBehavior>().isGrounded) && (
+                    Player_1->getComponent<Transform2D>().position.y < (5.0f * block_height))) {
                     moving_camera = true;
                     switch (level_phase) {
                     case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
                         level_phase++;
                         break;
+                    }
+                } else if ((!moving_camera) && (numPlayers == 2)) {
+                    if((Player_2->getComponent<Transform2D>().position.y < (5.0f * block_height)) && (level < 2)) {
+                        moving_camera = true;
+                        switch (level_phase) {
+                        case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+                            level_phase++;
+                            break;
+                        }
                     }
                 }
 
@@ -1057,10 +1065,12 @@ void Game(int numPlayers, int level, bool speed_run) {
                     if(Player_1->getComponent<Script, PopoBehavior>().victory) {
                         objects_offset = 13.0f * block_height;
                         acabar = true;
+                        timeToShowScores = 3.0;
                     } else if (numPlayers > 1){
                         if(Player_2->getComponent<Script, PopoBehavior>().victory) {
                             objects_offset = 13.0f * block_height;
                             acabar = true;
+                            timeToShowScores = 3.0;
                         }
                     }
                     if(num_game_overs == numPlayers) {
