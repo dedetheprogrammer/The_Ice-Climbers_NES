@@ -802,12 +802,15 @@ void Game(int numPlayers, int level, bool speed_run) {
     float chrono_time = 0.0f;
     float time_limit = 120.0f;
     bool onBonus = false;
-    bool game_over = false;
+    bool game_over1 = false;
+    bool game_over2 = false;
+    int num_game_overs = 0;
     int fruits_harvested1 = 0, blocks_destroyed1 = 0;
     int fruits_harvested2 = 0, blocks_destroyed2 = 0;
     int pajaros_golpeados1 = 0, pajaros_golpeados2 = 0;
     int icicle_destruidos1 = 0, icicle_destruidos2 = 0;
     bool win1 = false, win2 = false;
+    bool get_stats = true;
     BGM.Init();
     BGM2.Init();
 
@@ -876,22 +879,24 @@ void Game(int numPlayers, int level, bool speed_run) {
                 current_objects_offset  += shift;
                 GameSystem::Move({0,shift});
                 BackGrounds[level].Move({0,shift});
-                fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                pajaros_golpeados1 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
-                icicle_destruidos1 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
-                if(numPlayers == 2){
-                    fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
-                    blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
-                    pajaros_golpeados2 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
-                    icicle_destruidos2 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
-                    win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
-                }
-                win1 = Player_1->getComponent<Script, PopoBehavior>().victory;  
-                
             } else {
                 if (timeToShowScores < 3.0) timeToShowScores += GetFrameTime();
                 else {
+                    if(get_stats) {
+                        fruits_harvested1 = Player_1->getComponent<Script, PopoBehavior>().frutasRecogidas;
+                        blocks_destroyed1 = Player_1->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                        pajaros_golpeados1 = Player_1->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                        icicle_destruidos1 = Player_1->getComponent<Script,PopoBehavior>().icicleDestruido;
+                        win1 = Player_1->getComponent<Script, PopoBehavior>().victory;
+                        if(numPlayers > 1){
+                            fruits_harvested2 = Player_2->getComponent<Script, PopoBehavior>().frutasRecogidas;
+                            blocks_destroyed2 = Player_2->getComponent<Script, PopoBehavior>().bloquesDestruidos;
+                            pajaros_golpeados2 = Player_2->getComponent<Script, PopoBehavior>().nutpickerGolpeados;
+                            icicle_destruidos2 = Player_2->getComponent<Script,PopoBehavior>().icicleDestruido;
+                            win2 = Player_2->getComponent<Script, PopoBehavior>().victory;
+                        }
+                        get_stats = false;
+                    }
                     GameSystem::DestroyAll();
                     BigFrame1.Draw();
                     Player1Text.Draw();
@@ -917,7 +922,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Block1N.Draw();
                     SmallFrame1.Draw();
                     auto pts1 = fruits_harvested1 * 300 + blocks_destroyed1 * 10 + pajaros_golpeados1 * 800 + icicle_destruidos1 * 400;
-                    if (!game_over) {
+                    if (!game_over1) {
                         pts1+=3000;
                     }
                     Total1.SetText(std::to_string(pts1), false);
@@ -931,21 +936,23 @@ void Game(int numPlayers, int level, bool speed_run) {
                         Player2Status.Draw();
                         Icicler2.Draw();
                         Icicler2Text.Draw();
+                        Icicler2N.SetText(std::to_string(icicle_destruidos2), false);
                         Icicler2N.Draw();
                         Monster2.Draw();
                         Monster2Text.Draw();
+                        Monster2N.SetText(std::to_string(pajaros_golpeados2), false);
                         Monster2N.Draw();
                         Vegetabler2.Draw();
                         Vegetabler2Text.Draw();
-                        Vegetabler2N.SetText(std::to_string(fruits_harvested2));
+                        Vegetabler2N.SetText(std::to_string(fruits_harvested2), false);
                         Vegetabler2N.Draw();
                         Block2.Draw();
-                        Block2N.SetText(std::to_string(blocks_destroyed2));
+                        Block2N.SetText(std::to_string(blocks_destroyed2), false);
                         Block2N.Draw();
                         Block2Text.Draw();
                         SmallFrame2.Draw();
-                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed2 *10;
-                        if (!game_over) {
+                        auto pts2 = fruits_harvested2 * 300 + blocks_destroyed2 * 10 + pajaros_golpeados2 * 800 + icicle_destruidos2 * 400;
+                        if (!game_over2) {
                             pts2+=3000;
                         }
                         Total2.SetText(std::to_string(pts2), false);
@@ -968,7 +975,9 @@ void Game(int numPlayers, int level, bool speed_run) {
 
                     if (time_limit < 0) {
                         time_limit = 0;
-                        game_over = true;
+                        game_over1 = true;
+                        game_over2 = true;
+                        num_game_overs = numPlayers;
                         acabar = true;
                     }
                 }
@@ -1033,21 +1042,31 @@ void Game(int numPlayers, int level, bool speed_run) {
                 
                 if (!moving_camera) {
                     GameSystem::Update();
-                    if (Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
-                        (numPlayers == 1 || Player_2->getComponent<Script, PopoBehavior>().lifes <= 0) && !acabar) {
-                        std::cout << "GAME OVER!\n";
-                        game_over = true;
-                        acabar = true;
-                        objects_offset = 0;
-                        current_objects_offset = 1;
-                    } else if(Player_1->getComponent<Script, PopoBehavior>().victory) {
-                        objects_offset = 20.0f * block_height;
+                    if (!game_over1 && Player_1->getComponent<Script, PopoBehavior>().lifes <= 0 && 
+                        !acabar) {
+                        game_over1 = true;
+                        num_game_overs++;
+                    }
+                    if (numPlayers > 1) {
+                        if(!game_over2 && Player_2->getComponent<Script, PopoBehavior>().lifes <= 0 && 
+                        !acabar) {
+                            game_over2 = true;
+                            num_game_overs++;
+                        }
+                    }
+                    if(Player_1->getComponent<Script, PopoBehavior>().victory) {
+                        objects_offset = 13.0f * block_height;
                         acabar = true;
                     } else if (numPlayers > 1){
                         if(Player_2->getComponent<Script, PopoBehavior>().victory) {
-                            objects_offset = 20.0f * block_height;
+                            objects_offset = 13.0f * block_height;
                             acabar = true;
                         }
+                    }
+                    if(num_game_overs == numPlayers) {
+                        acabar = true;
+                        objects_offset = 0;
+                        current_objects_offset = 1;
                     }
                 } else {
                     float shift = block_height * 6.0f * GetFrameTime();
@@ -1055,12 +1074,13 @@ void Game(int numPlayers, int level, bool speed_run) {
                     if (current_objects_offset <= objects_offset) {
                         GameSystem::Move({0,shift});
                         BackGrounds[level].Move({0,shift});   
-                        if(!onBonus)
+                        if(!onBonus) {
                             for(auto enemy : Enemies) {
                                 auto second_tags = enemy->second_tags;
                                 if (second_tags.find("Topi") != second_tags.end())
                                     enemy->getComponent<Script, TopiBehavior>().Move({0,shift});
                             }
+                        }
                     } else {
                         objects_offset = old_offset;
                         current_objects_offset = 0;

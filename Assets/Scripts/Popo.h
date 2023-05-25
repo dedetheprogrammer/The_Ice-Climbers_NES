@@ -65,7 +65,6 @@ public:
         controller(c)
     {
         lifes = 3;
-        //final = false;
         isGrounded  = false;
         isJumping   = false;
         isRight     = true;
@@ -142,7 +141,6 @@ public:
 
     void OnCollision(Collision contact) {
         float deltaTime = GetFrameTime();
-        //int move = GetAxis("Horizontal");
         int move = 0;
         if(!isSliding){
             if (controller.isDown(Controller::LEFT)) move -= 1;
@@ -154,7 +152,7 @@ public:
                 if (contact.contact_normal.y < 0) {
 
                     if (isJumping || isBraking) {
-                        if(contact.gameObject.name == "Bonus 0" || contact.gameObject.name == "Bonus 1")
+                        if(contact.gameObject.name.find("Bonus"))
                             bonusLevel = true;
                         isBraking = true;
                         if (rigidbody.velocity.x > 0) {
@@ -204,7 +202,6 @@ public:
                             lastMove = move;
                             if(iceVelocity < 100) iceVelocity += 1;
                         }
-                        //std::cout << move << std::endl;
                         if(move == 0 && ((lastVelocity > 25 && lastMove == 1) || (lastVelocity < -25 && lastMove == -1))){
                             int sub;
                             isSliding = true;
@@ -221,19 +218,17 @@ public:
                             if((lastVelocity < 25 && lastMove == 1) || (lastVelocity > -25 && lastMove == -1)){
                                 iceVelocity = 0;
                                 isSliding = false;
-
                             }
                         }else{ isSliding = false;}
                     }
                 }else{
                     if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
+                    std::cout << "Bloques: " << bloquesDestruidos << std::endl;
                     animator["Fall"];
-                    //std::cout << "218" << std::endl;
                     rigidbody.velocity.y *= -0.7;
                 }
             }
-            if (contact.contact_normal.x != 0/* && ((transform.position.y + animator.GetViewDimensions().y) > contact.gameObject.getComponent<Transform2D>().position.y) &&
-                (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y))*/)
+            if (contact.contact_normal.x != 0)
             {
                 rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.02;
                 if (!isGrounded) {
@@ -250,7 +245,6 @@ public:
         if (contact.gameObject.tag == "Hole") {
             if (contact.contact_normal.y < 0 && !isGrounded) {
                 animator["Fall"];
-                //std::cout << "240" << std::endl;
                 isGrounded = false;
             }
         }
@@ -270,17 +264,11 @@ public:
                 }
             }
             if(contact.contact_normal.x != 0){
-                    rigidbody.velocity.x *= -1;
-                }
-           /* if(contact.contact_normal.y == 1){
-                rigidbody.velocity.y *= -1;
-            }else if(contact.contact_normal.y == 0){
-                rigidbody.velocity += contact.contact_normal * abs(rigidbody.velocity) * (1 - contact.contact_time) * 1.05;
-            }*/
+                rigidbody.velocity.x *= -1;
+            }
         }
 
         if (contact.gameObject.tag == "SlidingFloor") {
-            //std::cout << "sliding" << std::endl;
             if(!isAttacking){
                 if (contact.contact_normal.y < 0) {
                     isGrounded = true;
@@ -300,7 +288,7 @@ public:
                     rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().max_velocity.x);
                 }
                 if (contact.contact_normal.x != 0) {
-                    rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().max_velocity.x);
+                    rigidbody.velocity.x = (contact.gameObject.getComponent<RigidBody2D>().max_velocity.x);
                     if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
                         isRight = !isRight;
                         animator.Flip();
@@ -335,7 +323,7 @@ public:
                 rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().velocity.x);
             }
             if (contact.contact_normal.x != 0) {
-                rigidbody.velocity.x = (/*move * rigidbody.acceleration.x +*/ contact.gameObject.getComponent<RigidBody2D>().velocity.x);
+                rigidbody.velocity.x = (contact.gameObject.getComponent<RigidBody2D>().velocity.x);
                 if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
                     isRight = !isRight;
                     animator.Flip();
@@ -441,7 +429,6 @@ public:
                 }
             }
         }
-        
 
         if (contact.gameObject.tag == "Goal") {
             if (contact.contact_normal.y > 0) {
@@ -462,18 +449,15 @@ public:
         }
     }
 
-
     void Update() override {
-        //std::cout << rigidbody.max_velocity << std::endl;
         // Auxiliar variables:
         int move = 0;                     // Horizontal move sense.
         float deltaTime = GetFrameTime(); // Delta time
-        //std::cout << timeStunned << std::endl;
         if(isStunned && timeStunned < timeDead){
             timeStunned += 1;
             
         }else{
-            
+            if(lifes <= 0) gameObject.draw = false;
             if (controller.isDown(Controller::DOWN)) {
                 if(!isCrouched && isGrounded)
                     isCrouched = true;
@@ -572,27 +556,22 @@ public:
                 transform.position = last_save_position;
                 transform.position.y -= 150;
                 animator["Fall"];
-                //std::cout << "512" << std::endl;
             }
 
             if (hasCollisioned) {
                 hasCollisioned = false;
             } else {
-                //if (last_tag == "Floor" || last_tag == "Hole" || last_tag == "Cloud") {
-                    //::cout << "519" << std::endl;
-                    if (isGrounded) {
-                        isGrounded = false;
-                        animator["Fall"];
-                        //std::cout << "522" << std::endl;
-                        rigidbody.velocity.x = momentum;
-                        if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
-                            rigidbody.velocity.x = rigidbody.max_velocity.x;
-                        } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
-                            rigidbody.velocity.x = -rigidbody.max_velocity.x;
-                        }
-                        isJumping = true;
+                if (isGrounded) {
+                    isGrounded = false;
+                    animator["Fall"];
+                    rigidbody.velocity.x = momentum;
+                    if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = rigidbody.max_velocity.x;
+                    } else if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
+                        rigidbody.velocity.x = -rigidbody.max_velocity.x;
                     }
-                //}
+                    isJumping = true;
+                }
             }
         }
     }

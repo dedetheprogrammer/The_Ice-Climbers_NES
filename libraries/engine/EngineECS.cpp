@@ -32,6 +32,7 @@ GameObject::GameObject(std::string name, std::string tag, std::unordered_set<std
     this->second_tags  = second_tags;
     this->related_tags = related_tags;
     this->addComponent<Transform2D>();
+    draw = true;
 }
 
 GameObject::GameObject(GameObject& gameObject) {
@@ -39,6 +40,7 @@ GameObject::GameObject(GameObject& gameObject) {
     tag  = gameObject.tag;
     related_tags = gameObject.related_tags;
     prefab = nullptr;
+    draw = gameObject.draw;
     Clone(gameObject);
 }
 
@@ -48,6 +50,7 @@ GameObject::GameObject(GameObject& gameObject, const GameObjectOptions& options)
     this->second_tags  = options.second_tags;
     this->related_tags = options.related_tags;
     this->prefab       = &gameObject;
+    draw = true;
     Clone(gameObject);
     //this->getComponent<Collider2D>().color = options.collider_color;
     this->getComponent<Transform2D>().position = options.position;
@@ -669,7 +672,7 @@ void GameSystem::Render() {
     for (auto& [_, instances] : GameObjects) {
         for (auto& [_, gameObject] : instances) {
             if (gameObject->hasComponent<Animator>()) {
-                gameObject->getComponent<Animator>().Play();
+                if(gameObject->draw) gameObject->getComponent<Animator>().Play();
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }
@@ -700,7 +703,7 @@ void GameSystem::Update() {
             gameObject->Update();
             Collisions(*gameObject);
             if (gameObject->hasComponent<Animator>()) {
-                gameObject->getComponent<Animator>().Play();
+                if(gameObject->draw) gameObject->getComponent<Animator>().Play();
             } else if (gameObject->hasComponent<Sprite>()) {
                 gameObject->getComponent<Sprite>().Draw();
             }

@@ -25,8 +25,6 @@ struct GameObjectOptions {
     std::unordered_set<std::string> related_tags = {};
     // Posición en la que queremos que se instancie la nueva instancia.
     Vector2 position      = {-1,-1};
-    // Color del colider para cuando se dibuje (de momento sin implementar).
-    // Color collider_color  = {-1,-1,-1,-1};
 };
 
 class Component;
@@ -70,6 +68,8 @@ public:
     std::unordered_map<std::type_index, Component*> components;
     // Puede haber varios Scripts en un GameObject.
     std::unordered_map<std::type_index, Script*> scripts;
+
+    bool draw;
     // Se puede discutir si permitir que haya varios componentes por gameObject.
 
     GameObject(std::string name = "GameObject", std::string tag = "",
