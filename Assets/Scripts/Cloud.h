@@ -1,3 +1,4 @@
+#pragma once
 #include "EngineECS.h"
 #include <iostream>
 #include <random>
@@ -21,6 +22,7 @@ private:
     }
 
 public:
+    int floor_level;
     CloudBehavior(GameObject& gameObject) : Script(gameObject),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         sprite(gameObject.getComponent<Sprite>()),
@@ -62,17 +64,17 @@ public:
         } else {
             transform.position.x += rigidbody.velocity.x * GetFrameTime();
             if (!spawned){
-                if (transform.position.x < (GetScreenWidth()+10) && rigidbody.velocity.x < 0) {
+                if ((transform.position.x < (GetScreenWidth()+10)) && (rigidbody.velocity.x < 0)) {
                     spawned = true;
                 }
-                if ((transform.position.x + sprite.GetViewDimensions().x) > 10 && rigidbody.velocity.x > 0) {
+                if (((transform.position.x + sprite.GetViewDimensions().x) > 10) && (rigidbody.velocity.x > 0)) {
                     spawned = true;
                 }
             } else {
-                if (transform.position.x > GetScreenWidth() && rigidbody.velocity.x > 0) {
+                if ((transform.position.x > GetScreenWidth()) && (rigidbody.velocity.x > 0)) {
                     started = spawned = false;
                 }
-                if (transform.position.x + sprite.GetViewDimensions().x <= 0 && rigidbody.velocity.x < 0) {
+                if ((transform.position.x + sprite.GetViewDimensions().x <= 0) && (rigidbody.velocity.x < 0)) {
                     started = spawned = false;
                 }
             }

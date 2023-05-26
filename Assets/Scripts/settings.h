@@ -19,6 +19,7 @@
 using Config = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<int, float, bool>>>;
 Config ini;
 std::unordered_map<std::string, std::string> types {
+    {"AdvancedAI", "bool"},
     {"OldFashioned", "bool"},
     {"ScreenWidth", "int"},
     {"ScreenHeight", "int"},
@@ -40,6 +41,8 @@ std::unordered_map<std::string, std::string> types {
     {"KB_Jump", "int"},
     {"KB_Attack", "int"},
 };
+// -- GAMEPLAY
+const bool DEFAULT_ADVANCED_AI     = false;
 // -- GRAPHICS
 const bool DEFAULT_OLD_STYLE       = false;
 // ---- DISPLAY MODE
@@ -126,6 +129,8 @@ void controller_default_config(int controller) {
 }
 
 void default_config() {
+    // Game settings:
+    ini["Game"]["AdvancedAI"]       = DEFAULT_ADVANCED_AI;
     // Graphics settings:
     ini["Graphics"]["OldFashioned"] = DEFAULT_OLD_STYLE;
     ini["Graphics"]["ScreenWidth"]  = DEFAULT_SCREEN_WIDTH;
@@ -133,7 +138,7 @@ void default_config() {
     ini["Graphics"]["DisplayMode"]  = DEFAULT_DISPLAY_MODE;
     ini["Graphics"]["FPSLimit"]     = DEFAULT_FPS_LIMIT;
     // Audio settings:
-    ini["Audio"]["Volume"]     = DEFAULT_MUSIC_VOLUME;
+    ini["Audio"]["Volume"]          = DEFAULT_MUSIC_VOLUME;
     // Controller settings:
     controller_default_config(0);
     controller_default_config(1);
@@ -326,6 +331,8 @@ void controller_save_config(int controller, std::ofstream& os) {
 void save_config() {
     std::ofstream os("settings.ini");
     os << "; Probando probando...\n";
+    os << "[Game]"
+        << "\nAdvancedAI="    << std::get<bool>(ini["Game"]["AdvancedAI"]) << std::endl;
     os << "[Graphics]"
         << "\nOldFashioned="  << std::get<bool>(ini["Graphics"]["OldFashioned"])
         << "\nScreenWidth="   << std::get<int>(ini["Graphics"]["ScreenWidth"])
@@ -387,9 +394,8 @@ void init_config() {
             }
         }
     }
-
     //-- Graphics
-    InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "Ice climbers");
+    InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "(THE) ICE CLIMBER(S)");
     int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
     int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
     //---- Screen size

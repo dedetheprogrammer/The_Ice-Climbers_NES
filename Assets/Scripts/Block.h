@@ -1,9 +1,14 @@
 #pragma once
 #include "EngineECS.h"
-#include "Popo.h"
+#include "Controllers.h"
+//#include "Popo.h"
+#include "Cloud.h"
 #include <iostream>
 #include "random"
+#include "raylib.h"
+#include "raylibx.h"
 
+class PopoBehavior;
 class StalactiteBehavior : public Script {
 private:
     float timeToSmall;
@@ -25,101 +30,15 @@ public:
     enum StalactiteStates {NONE = 0, SMALL = 1, MEDIUM = 2, BIG = 3, FALLING = 4, BREAKING = 5, BROKEN = 6};
     StalactiteStates state;
 
-    StalactiteBehavior(GameObject& gameObject) : Script(gameObject),
-        animator(gameObject.getComponent<Animator>()),
-        collider(gameObject.getComponent<Collider2D>()),
-        rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
-    {
-        timeToSmall     = 1.0f;
-        timeToMedium    = 1.0f;
-        timeToBig       = 1.0f;
-        timeToFall      = 1.0f;
-        timeToBreak     = 0.05f;
-        timeToDisappear = 0.5f;
+    StalactiteBehavior(GameObject& gameObject);
 
-        timeCount       = 0.0f;
-        state           = NONE;
-    }
-
-    StalactiteBehavior(GameObject& gameObject, StalactiteBehavior& behavior) : Script(gameObject),
-        animator(gameObject.getComponent<Animator>()),
-        collider(gameObject.getComponent<Collider2D>()),
-        rigidbody(gameObject.getComponent<RigidBody2D>()),
-        transform(gameObject.getComponent<Transform2D>())
-    {
-        timeToSmall     = behavior.timeToSmall;
-        timeToMedium    = behavior.timeToMedium;
-        timeToBig       = behavior.timeToBig;
-        timeToFall      = behavior.timeToFall;
-        timeToBreak     = behavior.timeToBreak;
-        timeToDisappear = behavior.timeToDisappear;
-
-        timeCount       = behavior.timeCount;
-        state           = behavior.state;
-    }
+    StalactiteBehavior(GameObject& gameObject, StalactiteBehavior& behavior);
     
-    Component* Clone(GameObject& gameObject) override {
-        return new StalactiteBehavior(gameObject, *this);
-    }
+    Component* Clone(GameObject& gameObject);
 
-    void OnCollision(Collision contact) override {
-        if ((state == SMALL || state == MEDIUM || state == BIG)
-            && contact.gameObject.tag == "Player")
-        {
-            state = BREAKING;
-            animator["BREAKING"];
-            timeCount = 0.0f;
-            rigidbody.velocity = {0.0f, 0.0f};
-        }
-        else if (state == FALLING
-            &&  (contact.gameObject.tag == "Player"
-                ||  (timeCount > 0.1
-                    &&  (contact.gameObject.tag == "Floor"
-                        || contact.gameObject.tag == "Wall"
-                        || contact.gameObject.tag == "SlidingFloor"
-                        || contact.gameObject.tag == "Cloud")
-                    )
-                )
-            )
-        {
-            state = BREAKING;
-            animator["BREAKING"];
-            timeCount = 0.0f;
-            rigidbody.velocity = {0.0f, 0.0f};
-        }
-    }
+    void OnCollision(Collision contact);
 
-    void Update() override {
-        float deltaTime = GetFrameTime();
-        timeCount += deltaTime;
-
-        switch (state) {
-            case NONE:
-                if (timeCount > timeToSmall) { state = SMALL; animator["SMALL"]; timeCount = 0.0f; }
-                break;
-            case SMALL:
-                if (timeCount > timeToMedium) { state = MEDIUM; animator["MEDIUM"]; timeCount = 0.0f; }
-                break;
-            case MEDIUM:
-                if (timeCount > timeToBig) { state = BIG; animator["BIG"]; timeCount = 0.0f; }
-                break;
-            case BIG:
-                if (timeCount > timeToFall) { state = FALLING; animator["FALLING"]; timeCount = 0.0f; }
-                break;
-            case FALLING:
-                transform.position.y += rigidbody.velocity.y * deltaTime;
-                rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
-                if (rigidbody.velocity.y > rigidbody.max_velocity.y) rigidbody.velocity.y = rigidbody.max_velocity.y;
-                break;
-            case BREAKING:
-                if (timeCount > timeToBreak) { state = BROKEN; animator["BROKEN"]; timeCount = 0.0f; }
-                break;
-            case BROKEN:
-                if (timeCount > timeToDisappear) { timeCount = 0.0f; gameObject.Destroy(); }
-            default: break;
-        }
-    }
+    void Update();
 
 };
 
@@ -129,25 +48,14 @@ private:
 public:
     GameObject* original_block;
 
-    HoleBehavior(GameObject& gameObject) : Script(gameObject),
-        transform(gameObject.getComponent<Transform2D>()) {}
+    HoleBehavior(GameObject& gameObject);
 
-    HoleBehavior(GameObject& gameObject, HoleBehavior& behavior) : Script(gameObject),
-        transform(gameObject.getComponent<Transform2D>()),
-        original_block(behavior.original_block) {}
+    HoleBehavior(GameObject& gameObject, HoleBehavior& behavior);
 
 
-    Component* Clone(GameObject& gameObject) {
-        return new HoleBehavior(gameObject, *this);
-    }
+    Component* Clone(GameObject& gameObject);
 
-    void OnCollision(Collision contact) override {
-       //if (contact.gameObject.tag == "Icicle") {
-       //    GameSystem::Instantiate(original_block, GameObjectOptions{.position=transform.position});
-       //    //gameObject.Destroy();
-       //    //contact.gameObject.Destroy();
-       //}
-    }
+    void OnCollision(Collision contact) override;
 };
 
 class BlockBehavior : public Script {
@@ -159,57 +67,23 @@ private:
     std::random_device rd;
     std::mt19937 e2;
     std::uniform_real_distribution<float> E;
-private:
-    bool spawn_stalactite() {
-        return E(e2) < stalactiteTemplate->getComponent<Script, StalactiteBehavior>().spawning_ratio;   // probability to spawn a stalactite each frame
-    }
+
+    bool spawn_stalactite();
 public:
+    int *current_blocks = nullptr;
+    int floor_level;
     GameObject* hole;
     GameObject* stalactiteTemplate;
 
-    BlockBehavior(GameObject& gameObject) : Script(gameObject),
-        sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>()),
-        spawning_cooldown(8.0f),
-        spawning_timer(7.0f),
-        e2(rd()),
-        E(0,100) {}
+    BlockBehavior(GameObject& gameObject);
 
-    BlockBehavior(GameObject& gameObject, BlockBehavior& behavior) : Script(gameObject),
-        sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>()),
-        spawning_cooldown(8.0f),
-        spawning_timer(7.0f),
-        e2(rd()),
-        E(0,100),
-        hole(behavior.hole),
-        stalactiteTemplate(behavior.stalactiteTemplate) {}
+    BlockBehavior(GameObject& gameObject, BlockBehavior& behavior);
 
-    Component* Clone(GameObject& gameObject) {
-        return new BlockBehavior(gameObject, *this);
-    }
+    Component* Clone(GameObject& gameObject);
 
-    void OnCollision(Collision contact) override {
-        if (contact.gameObject.tag == "Player") {
-            if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
-                contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
-                contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
-                GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
-                gameObject.Destroy();
-            }
-        }
-    }
+    void OnCollision(Collision contact) override;
 
-    void Update() override {
-        float deltaTime = GetFrameTime();
-        spawning_timer += deltaTime;
-        
-        if (spawning_timer > spawning_cooldown && spawn_stalactite()) {
-            Vector2 spawnPosition = transform.position + Vector2{0.0f, transform.size.y};
-            GameSystem::Instantiate(*stalactiteTemplate, GameObjectOptions{.position = spawnPosition});
-            spawning_timer = 0.0f;
-        }
-    }
+    void Update() override;
 
 };
 
@@ -220,29 +94,90 @@ private:
     RigidBody2D& rigidbody;
 public:
     GameObject* hole;
-    SlidingBlockBehavior(GameObject& gameObject) : Script(gameObject),
-        sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>()),
-        rigidbody(gameObject.getComponent<RigidBody2D>()) {}
+    int *current_blocks = nullptr;
+    int floor_level;
+    SlidingBlockBehavior(GameObject& gameObject);
 
-    SlidingBlockBehavior(GameObject& gameObject, SlidingBlockBehavior& behavior) : Script(gameObject),
-        sprite(gameObject.getComponent<Sprite>()),
-        transform(gameObject.getComponent<Transform2D>()),
-        rigidbody(gameObject.getComponent<RigidBody2D>()),
-        hole(behavior.hole) {}
+    SlidingBlockBehavior(GameObject& gameObject, SlidingBlockBehavior& behavior);
 
-    Component* Clone(GameObject& gameObject) {
-        return new SlidingBlockBehavior(gameObject, *this);
-    }
+    Component* Clone(GameObject& gameObject);
 
-    void OnCollision(Collision contact) override {
-        if (contact.gameObject.tag == "Player") {
-            if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock) {
-                contact.gameObject.getComponent<Script, PopoBehavior>().brokeBlock = true;
-                contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
-                GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
-                gameObject.Destroy();
-            }
-        }
-    }
+    void OnCollision(Collision contact) override;
+};
+
+class FloorBehavior : public Script {
+private:
+    //...
+public:
+    Transform2D& transform;
+    int floor_level;
+    FloorBehavior(GameObject& gameObject);
+
+    FloorBehavior(GameObject& gameObject, FloorBehavior& behavior);
+
+    Component* Clone(GameObject& gameObject) override;
+};
+
+bool static final;
+
+class PopoBehavior : public Script {
+private:
+
+    // Variables para Popo:
+    bool hasBounced;
+    bool isJumping;
+    bool onCloud;
+    Vector2 last_save_position;
+    float momentum;
+    std::string last_tag;
+    bool hasCollisioned;
+public:
+    //bool static final; 
+    bool isBraking;
+    int lifes;
+    bool brokeBlock;
+    bool isAttacking; // Telling us if the object is attacking.
+    bool isCrouched;
+    bool isRight;     // Telling us if the object is facing to the right.
+    bool isStunned;
+    bool isSliding;
+    int frutasRecogidas;
+    int bloquesDestruidos;
+    int nutpickerGolpeados;
+    int icicleDestruido;
+    bool victory;
+    bool puntuacion;
+    bool bonusLevel;
+    int timeDead;
+    int timeStunned;
+    int lastMove;
+    int lastVelocity;
+    int iceVelocity;
+    int floor_level;
+    int last_level;
+    Vector2 collider_size;
+    Vector2 collider_offset;
+    Vector2 last_collider_pos;
+
+    static void setFinal(bool b);
+    // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
+    // eficiente que acceder una y otra vez a los componentes cada vez que
+    // necesitamos hacer algo con uno de ellos.
+    Animator& animator;
+    AudioPlayer& audioplayer;
+    Collider2D& collider;
+    RigidBody2D& rigidbody;
+    bool isGrounded;  // Telling us if the object is on the ground.
+    Transform2D& transform;
+    Controller& controller; // Pointer to the controller instance.
+
+    PopoBehavior(GameObject& gameObject, Controller& c);
+
+    PopoBehavior(GameObject& gameObject, PopoBehavior& behavior);
+
+    Component* Clone(GameObject& gameObject) override;
+
+    void OnCollision(Collision contact);
+
+    void Update() override;
 };
