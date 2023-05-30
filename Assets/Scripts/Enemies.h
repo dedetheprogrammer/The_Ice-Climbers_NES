@@ -37,6 +37,7 @@ private:
     float lastTrackY;
     float trackTimer;
     bool firstTimeAirborn;
+    float startTime;
 public:
     Animator& animator;
     Collider2D& collider;
@@ -68,6 +69,7 @@ public:
         lastTrackY  = transform.position.y;
         trackTimer  = 0.0f;
         firstTimeAirborn = true;
+        startTime  = 0.0f;
     }
 
     JosephBehavior(GameObject& gameObject, JosephBehavior& behavior) : Script(gameObject),
@@ -93,6 +95,7 @@ public:
         lastTrackY  = behavior.transform.position.y;
         trackTimer  = behavior.trackTimer;
         firstTimeAirborn = true;
+        startTime  = behavior.startTime;
     }
     
     Component* Clone(GameObject& gameObject) override {
@@ -118,7 +121,7 @@ public:
             rigidbody.velocity.y += contact.contact_normal.y * std::abs(rigidbody.velocity.y) * (1 - contact.contact_time) * 1.05;
             isGrounded = true;
             firstTimeAirborn = false;
-            if (hasFallen) {
+            if (hasFallen && transform.position.y < GetScreenHeight()) {
                 rigidbody.velocity.x = last_sense * rigidbody.acceleration.x;
                 hasFallen = false;
                 shakeGround = true;
@@ -183,107 +186,111 @@ public:
 
         float deltaTime = GetFrameTime();
 
-        // Extra check to see if joseph is falling
-        if (trackTimer > 0.2f) {
-            //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
-            if (transform.position.y > lastTrackY + transform.size.y/4
-                && transform.position.y < lastTrackY + transform.size.y/2) {
-                animator["Falling"];
-                last_sense = sgn(rigidbody.velocity.x);
-                rigidbody.velocity.x = last_sense*1.0f;
-                isGrounded = false;
-                hasFallen = true;
-            }
-            lastTrackY = transform.position.y;
-            trackTimer = 0.0f;
-        } else if (!firstTimeAirborn) {
-            trackTimer += deltaTime;
-        }
-
-        if (isStunned) {
-            rigidbody.velocity.x = 0.0f;
-            if (current_cooldown > cooldown && isGrounded) {
-                isStunned = false;
-                animator["Walk"];
-                current_cooldown = 0.0f;
-                rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
-
-                if (isRight && rigidbody.velocity.x < 0.0f) {
-                    animator.Flip();
-                    isRight = false;
-                } else if (!isRight && rigidbody.velocity.x > 0.0f) {
-                    animator.Flip();
-                    isRight = true;
+        if(startTime < 2.0) {
+            startTime += deltaTime;
+        } else {
+            // Extra check to see if joseph is falling
+            if (trackTimer > 0.2f) {
+                //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
+                if (transform.position.y > lastTrackY + transform.size.y/4
+                    && transform.position.y < lastTrackY + transform.size.y/2) {
+                    animator["Falling"];
+                    last_sense = sgn(rigidbody.velocity.x);
+                    rigidbody.velocity.x = last_sense*1.0f;
+                    isGrounded = false;
+                    hasFallen = true;
                 }
-            } else current_cooldown += deltaTime;
-        }
-        
-        if (current_chase_cooldown > chase_cooldown) {
-            chasePlayer = !chasePlayer;
-            current_chase_cooldown = 0.0f;
-            chase_cooldown = random_range(2.0f, 8.0f);
-        } else current_chase_cooldown += deltaTime;
+                lastTrackY = transform.position.y;
+                trackTimer = 0.0f;
+            } else if (!firstTimeAirborn) {
+                trackTimer += deltaTime;
+            }
 
-        if (isGrounded) {
+            if (isStunned) {
+                rigidbody.velocity.x = 0.0f;
+                if (current_cooldown > cooldown && isGrounded) {
+                    isStunned = false;
+                    animator["Walk"];
+                    current_cooldown = 0.0f;
+                    rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
 
-            float closest_player_x = 0.0f;
-            float closest_player_dist = 10000.0f;
-            bool allplayersAbove = true;
-            for (auto p_trans : playerTransforms) {
+                    if (isRight && rigidbody.velocity.x < 0.0f) {
+                        animator.Flip();
+                        isRight = false;
+                    } else if (!isRight && rigidbody.velocity.x > 0.0f) {
+                        animator.Flip();
+                        isRight = true;
+                    }
+                } else current_cooldown += deltaTime;
+            }
+            
+            if (current_chase_cooldown > chase_cooldown) {
+                chasePlayer = !chasePlayer;
+                current_chase_cooldown = 0.0f;
+                chase_cooldown = random_range(2.0f, 8.0f);
+            } else current_chase_cooldown += deltaTime;
 
-                wantsToFall |= p_trans->position.y + p_trans->size.y >
-                            transform.position.y + transform.size.y + 5.0f;
+            if (isGrounded) {
 
-                allplayersAbove &= p_trans->position.y + p_trans->size.y < transform.position.y;
+                float closest_player_x = 0.0f;
+                float closest_player_dist = 10000.0f;
+                bool allplayersAbove = true;
+                for (auto p_trans : playerTransforms) {
 
-                float player_dist = mod(p_trans->position - transform.position);
-                if (player_dist < closest_player_dist) {
-                    closest_player_dist = player_dist;
-                    closest_player_x = p_trans->position.x;
+                    wantsToFall |= p_trans->position.y + p_trans->size.y >
+                                transform.position.y + transform.size.y + 5.0f;
+
+                    allplayersAbove &= p_trans->position.y + p_trans->size.y < transform.position.y;
+
+                    float player_dist = mod(p_trans->position - transform.position);
+                    if (player_dist < closest_player_dist) {
+                        closest_player_dist = player_dist;
+                        closest_player_x = p_trans->position.x;
+                    }
                 }
-            }
 
-            if (allplayersAbove && transform.position.y < GetScreenHeight()) {
-                // Make it harder for the players by removing one of the levels and hoping someone falls
-                wantsToFall = true;
-            }
-            if (transform.position.y + transform.size.y < 0) {
-                // dont intervene unless I can see youuuu
-                wantsToFall = false;
-            }
-            if (chasePlayer && !allplayersAbove) {
-                bool headingToPlayer = (isRight && closest_player_x > transform.position.x) ||
-                                    (!isRight && closest_player_x < transform.position.x);
-                if (fabs(closest_player_x - transform.position.x) < 1.0f)
-                    rigidbody.velocity.x = 0.0f;
-                else {
-                    rigidbody.velocity.x = sgn(closest_player_x - transform.position.x) * rigidbody.acceleration.x * 1.5f;
-                    if (!headingToPlayer) {
+                if (allplayersAbove && transform.position.y < GetScreenHeight()) {
+                    // Make it harder for the players by removing one of the levels and hoping someone falls
+                    wantsToFall = true;
+                }
+                if (transform.position.y + transform.size.y < 0) {
+                    // dont intervene unless I can see youuuu
+                    wantsToFall = false;
+                }
+                if (chasePlayer && !allplayersAbove) {
+                    bool headingToPlayer = (isRight && closest_player_x > transform.position.x) ||
+                                        (!isRight && closest_player_x < transform.position.x);
+                    if (fabs(closest_player_x - transform.position.x) < 1.0f)
+                        rigidbody.velocity.x = 0.0f;
+                    else {
+                        rigidbody.velocity.x = sgn(closest_player_x - transform.position.x) * rigidbody.acceleration.x * 1.5f;
+                        if (!headingToPlayer) {
+                            isRight = !isRight;
+                            animator.Flip();
+                        }
+                    }
+                } else if (rigidbody.velocity.x == 0.0f) {
+                    rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
+                    if ((isRight && rigidbody.velocity.x < 0.0f) ||
+                        (!isRight && rigidbody.velocity.x > 0.0f)) {
                         isRight = !isRight;
                         animator.Flip();
                     }
+                } else {
+                    // Give back normal speed
+                    rigidbody.velocity.x = sgn(rigidbody.velocity.x) * rigidbody.acceleration.x;
                 }
-            } else if (rigidbody.velocity.x == 0.0f) {
-                rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
-                if ((isRight && rigidbody.velocity.x < 0.0f) ||
-                    (!isRight && rigidbody.velocity.x > 0.0f)) {
-                    isRight = !isRight;
-                    animator.Flip();
-                }
-            } else {
-                // Give back normal speed
-                rigidbody.velocity.x = sgn(rigidbody.velocity.x) * rigidbody.acceleration.x;
             }
-        }
-        
-        transform.position.x += rigidbody.velocity.x * deltaTime;
-        if (!isRight && (transform.position.x + transform.size.x + 1.0f < 0.0f))
-            transform.position.x = GetScreenWidth();
-        if (isRight && (transform.position.x + 1.0f > GetScreenWidth()))
-            transform.position.x = -transform.size.x;
+            
+            transform.position.x += rigidbody.velocity.x * deltaTime;
+            if (!isRight && (transform.position.x + transform.size.x + 1.0f < 0.0f))
+                transform.position.x = GetScreenWidth();
+            if (isRight && (transform.position.x + 1.0f > GetScreenWidth()))
+                transform.position.x = -transform.size.x;
 
-        transform.position.y += rigidbody.velocity.y * deltaTime;
-        rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
+            transform.position.y += rigidbody.velocity.y * deltaTime;
+            rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
+        }
     }
 };
 
@@ -647,6 +654,7 @@ private:
     int last_sense;
     bool hasFallen;
     bool needIcicle;
+    float startTime;
 
     GameObject& Icicle;
 
@@ -691,8 +699,9 @@ public:
         isStunned   = false;
         ignoreFloor = false;
         last_sense  = 0;
-        hasFallen = false;
-        needIcicle = false;
+        hasFallen   = false;
+        needIcicle  = false;
+        startTime   = 0.0f;
     }
 
     TopiBehavior(GameObject& gameObject, TopiBehavior& behavior) : Script(gameObject),
@@ -714,6 +723,7 @@ public:
         last_sense  = behavior.last_sense;
         hasFallen   = behavior.hasFallen;
         needIcicle  = behavior.needIcicle;
+        startTime   = behavior.startTime;
     }
 
     Component* Clone(GameObject& gameObject) override {
@@ -829,92 +839,32 @@ public:
 
     void Update() override {
         float deltaTime = GetFrameTime();
-        if (!started) {
-            if ((current_cooldown >= cooldown) || needIcicle) {
-                needIcicle = false;
-                current_cooldown = 0.0f;
-                started = true;
-                isStunned = false;
-                hasFallen = false;
-                animator["Walk"];
-                auto icicle_size = Icicle.getComponent<Sprite>().GetViewDimensions();
-                if (isRunning) {
-                    isRunning = false;
-                    rigidbody.velocity.x = -last_sense * rigidbody.acceleration.x;
-                    if (last_sense > 0) {
-                        transform.position.x = GetScreenWidth() + (70 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
-                        if (isRight) {
-                            isRight = !isRight;
-                            animator.Flip();
-                        }
-
-                        // IF IA WAS ACTIVE
-                        auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - (40 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
-                        an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
-                        if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
-                            an_icicle->getComponent<Script, IcicleBehavior>().players = players;
-                            if (checkPlayers()) {
-                                //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
-
-                                an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
-                                if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
-                                    an_icicle->getComponent<RigidBody2D>().velocity.x = -350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
-                                    an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = true;
-                                    rigidbody.velocity.x *= -1;
-                                    if ((rigidbody.velocity.x < 0 && isRight) || (rigidbody.velocity.x > 0 && !isRight)) {
-                                        isRight = !isRight;
-                                        animator.Flip();
-                                    }
-                                } else {
-                                    an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = false;
-                                }
+        if(startTime < 2.0) {
+            startTime += deltaTime;
+        } else {
+            if (!started) {
+                if ((current_cooldown >= cooldown) || needIcicle) {
+                    needIcicle = false;
+                    current_cooldown = 0.0f;
+                    started = true;
+                    isStunned = false;
+                    hasFallen = false;
+                    animator["Walk"];
+                    auto icicle_size = Icicle.getComponent<Sprite>().GetViewDimensions();
+                    if (isRunning) {
+                        isRunning = false;
+                        rigidbody.velocity.x = -last_sense * rigidbody.acceleration.x;
+                        if (last_sense > 0) {
+                            transform.position.x = GetScreenWidth() + (70 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
+                            if (isRight) {
+                                isRight = !isRight;
+                                animator.Flip();
                             }
-                        }
 
-                    } else {
-                        transform.position.x = -(animator.GetViewDimensions().x + (90 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)));
-                        if (!isRight) {
-                            isRight = !isRight;
-                            animator.Flip();
-                        }
-
-                        // IF IA WAS ACTIVE
-                        auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + (50 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
-                        an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
-                        std::cout << transform.position << ", " << an_icicle->getComponent<Transform2D>().position << "\n";
-                        if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
-                            an_icicle->getComponent<Script, IcicleBehavior>().players = players;
-                            if (checkPlayers()) {
-                                an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
-                                if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
-                                    an_icicle->getComponent<RigidBody2D>().velocity.x = 350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
-                                    an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = true;
-                                    rigidbody.velocity.x *= -1;
-                                    if ((rigidbody.velocity.x < 0 && isRight) || (rigidbody.velocity.x > 0 && !isRight)) {
-                                        isRight = !isRight;
-                                        animator.Flip();
-                                    }
-                                } else {
-                                    an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = false;
-                                }
-                            }
-                        }
-                    }
-
-                } else {
-                    rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
-                    if (rigidbody.velocity.x < 0) {
-                        transform.position.x = GetScreenWidth() + (70 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
-                        if (isRight) {
-                            isRight = !isRight;
-                            animator.Flip();
-                        }
-
-                        // IF IA WAS ACTIVE
-                        if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
-                            if (random_val() > 0.45) {                                
-                                auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + (40 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
-                                an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                            // IF IA WAS ACTIVE
+                            auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - (40 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
+                            an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
                                 an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                 if (checkPlayers()) {
                                     //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
@@ -933,24 +883,21 @@ public:
                                     }
                                 }
                             }
-                        }
-                    } else {
-                        
-                        transform.position.x = -(animator.GetViewDimensions().x + (90 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)));
-                        if (!isRight) {
-                            isRight = !isRight;
-                            animator.Flip();
-                        }
 
-                        // IF IA WAS ACTIVE
-                        if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
-                            if (random_val() > 0.45) {
-                                auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - (50 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
-                                an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                        } else {
+                            transform.position.x = -(animator.GetViewDimensions().x + (90 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)));
+                            if (!isRight) {
+                                isRight = !isRight;
+                                animator.Flip();
+                            }
+
+                            // IF IA WAS ACTIVE
+                            auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + (50 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
+                            an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                            std::cout << transform.position << ", " << an_icicle->getComponent<Transform2D>().position << "\n";
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
                                 an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                 if (checkPlayers()) {
-                                    //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
-
                                     an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
                                     if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
                                         an_icicle->getComponent<RigidBody2D>().velocity.x = 350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -966,37 +913,104 @@ public:
                                 }
                             }
                         }
+
+                    } else {
+                        rigidbody.velocity.x = random_sense() * rigidbody.acceleration.x;
+                        if (rigidbody.velocity.x < 0) {
+                            transform.position.x = GetScreenWidth() + (70 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF));
+                            if (isRight) {
+                                isRight = !isRight;
+                                animator.Flip();
+                            }
+
+                            // IF IA WAS ACTIVE
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
+                                if (random_val() > 0.45) {                                
+                                    auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + (40 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
+                                    an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                                    an_icicle->getComponent<Script, IcicleBehavior>().players = players;
+                                    if (checkPlayers()) {
+                                        //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
+
+                                        an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
+                                        if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
+                                            an_icicle->getComponent<RigidBody2D>().velocity.x = -350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
+                                            an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = true;
+                                            rigidbody.velocity.x *= -1;
+                                            if ((rigidbody.velocity.x < 0 && isRight) || (rigidbody.velocity.x > 0 && !isRight)) {
+                                                isRight = !isRight;
+                                                animator.Flip();
+                                            }
+                                        } else {
+                                            an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = false;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            
+                            transform.position.x = -(animator.GetViewDimensions().x + (90 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)));
+                            if (!isRight) {
+                                isRight = !isRight;
+                                animator.Flip();
+                            }
+
+                            // IF IA WAS ACTIVE
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
+                                if (random_val() > 0.45) {
+                                    auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x - (50 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
+                                    an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
+                                    an_icicle->getComponent<Script, IcicleBehavior>().players = players;
+                                    if (checkPlayers()) {
+                                        //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
+
+                                        an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
+                                        if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
+                                            an_icicle->getComponent<RigidBody2D>().velocity.x = 350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
+                                            an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = true;
+                                            rigidbody.velocity.x *= -1;
+                                            if ((rigidbody.velocity.x < 0 && isRight) || (rigidbody.velocity.x > 0 && !isRight)) {
+                                                isRight = !isRight;
+                                                animator.Flip();
+                                            }
+                                        } else {
+                                            an_icicle->getComponent<Script, IcicleBehavior>().ignore_hole = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    transform.position.y = original_level;
+                } else {
+                    current_cooldown += GetFrameTime();
+                }
+            } else {
+                if(rigidbody.velocity.x == 0)
+                    rigidbody.velocity.x = last_sense * rigidbody.acceleration.x;
+                transform.position.x += rigidbody.velocity.x * deltaTime;
+                if (!spawned){
+                    if (transform.position.x < (GetScreenWidth()+10) && rigidbody.velocity.x < 0) {
+                        spawned = true;
+                    }
+                    if ((transform.position.x + animator.GetViewDimensions().x) > 10 && rigidbody.velocity.x > 0) {
+                        spawned = true;
+                    }
+                } else {
+                    if (transform.position.x > GetScreenWidth() && rigidbody.velocity.x > 0) {
+                        started = spawned = false;
+                    }
+                    if (transform.position.x + animator.GetViewDimensions().x <= 0 && rigidbody.velocity.x < 0) {
+                        started = spawned = false;
                     }
                 }
-
-                transform.position.y = original_level;
-            } else {
-                current_cooldown += GetFrameTime();
             }
-        } else {
-            if(rigidbody.velocity.x == 0)
-                rigidbody.velocity.x = last_sense * rigidbody.acceleration.x;
-            transform.position.x += rigidbody.velocity.x * deltaTime;
-            if (!spawned){
-                if (transform.position.x < (GetScreenWidth()+10) && rigidbody.velocity.x < 0) {
-                    spawned = true;
-                }
-                if ((transform.position.x + animator.GetViewDimensions().x) > 10 && rigidbody.velocity.x > 0) {
-                    spawned = true;
-                }
-            } else {
-                if (transform.position.x > GetScreenWidth() && rigidbody.velocity.x > 0) {
-                    started = spawned = false;
-                }
-                if (transform.position.x + animator.GetViewDimensions().x <= 0 && rigidbody.velocity.x < 0) {
-                    started = spawned = false;
-                }
+            transform.position.y += rigidbody.velocity.y * deltaTime;
+            rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
+            if (ignoreFloor) {
+                ignoreFloor = !ignoreFloor;
             }
-        }
-        transform.position.y += rigidbody.velocity.y * deltaTime;
-        rigidbody.velocity.y += rigidbody.gravity    * deltaTime;
-        if (ignoreFloor) {
-            ignoreFloor = !ignoreFloor;
         }
     }
 

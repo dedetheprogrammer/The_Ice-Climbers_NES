@@ -593,9 +593,10 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GAME_HEIGHT - block_height * 90.0f, // 12
                 GAME_HEIGHT - block_height * 95.0f  // 13
             };
-
+            int f2_current_blocks = 24;
             for (float i = 0.0f; i < 24; i++) {
                 auto block = &GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+                block->getComponent<Script, BlockBehavior>().current_blocks = &f2_current_blocks;
                 block->getComponent<Script, BlockBehavior>().floor_level    = 2;
                 if(i == 0 || i == 1 || i == 5 || i == 6 || (i > 11 && i < 21)) {
                     block = &GameSystem::Instantiate(GrassBlock, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1] + block_height}});
@@ -649,6 +650,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                 block->getComponent<Script, BlockBehavior>().floor_level = 6;
                 if(i == 0 || (i > 2 && i < 9) || i > 15) {           
                     block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5] + block_height}});
+                    block->getComponent<Script, BlockBehavior>().current_blocks = &f7_current_blocks;
                     block->getComponent<Script, BlockBehavior>().floor_level = 6;
                 }
                 if(i == 1 || i == 2 || i == 9 || i == 15) {        
@@ -750,9 +752,11 @@ void Game(int numPlayers, int level, bool speed_run) {
             GameSystem::Instantiate(Eggplant, GameObjectOptions{.position={block_width * 12.0f, bonus_floor_levels[6] - eggplant_height}});
 
             // 1st floor topi:
+            auto a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y + 1)}});
+            Enemies.push_back(a_topi);
             //Enemies.push_back(&GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[0] - (topi_size.y - 1)}}));
             // 3rd floor topi:
-            auto a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}});
+            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[2] - (topi_size.y + 1)}});
             a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 22;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f3_current_blocks;
             a_topi->getComponent<Script, TopiBehavior>().floor_level    = 3;
@@ -801,13 +805,13 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
             }
 
-            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[2] - (joseph_size.y + 1)}});
+            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[1] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
-            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[4] - (joseph_size.y + 1)}});
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[3] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
-            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{WINDOW_WIDTH/2.0f, floor_levels[8] - (joseph_size.y + 1)}});
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{WINDOW_WIDTH/2.0f, floor_levels[5] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
             
@@ -832,15 +836,18 @@ void Game(int numPlayers, int level, bool speed_run) {
 
             GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{0, floor_levels[2] + block_height}});
             GameSystem::Instantiate(GrassWall, GameObjectOptions{.position{GetScreenWidth() - block_width * 4.0f, floor_levels[2] + block_height}});
+            
+            int f1_current_blocks = 24;
             for (int i = 0; i < 24; i++)
                 if(i != 7)
-                    GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
-            
+                    auto block = &GameSystem::Instantiate(GrassHole, GameObjectOptions{.position{block_width * (4.0f + i), floor_levels[1]}});
+
             int f3_current_blocks = 14, f4_current_blocks = 20;
             for (int i = 0; i < 22; i++) {
                 if(i < 5 || i > 12) {
                     auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
                     block->getComponent<Script, BlockBehavior>().floor_level = 3;
+                    block->getComponent<Script, BlockBehavior>().current_blocks = &f3_current_blocks;
                 }
                 else if(i == 5 || i == 10) {
                     auto block = &GameSystem::Instantiate(LevelFloor_3, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[2]}});
@@ -860,6 +867,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                 if(i != 6 && i != 11) {
                     auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3]}});
                     block->getComponent<Script, BlockBehavior>().floor_level = 4;
+                    block->getComponent<Script, BlockBehavior>().current_blocks = &f4_current_blocks;
                 }
                 if(i < 4 || (i > 7 && i < 10) || (i > 14 && i < 18)) {
                     auto block = &GameSystem::Instantiate(DirtBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[3] + block_height}});
@@ -880,6 +888,7 @@ void Game(int numPlayers, int level, bool speed_run) {
             for (int i = 0; i < 20; i++) {
                 auto block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (6.0f + i), floor_levels[5]}});
                 block->getComponent<Script, BlockBehavior>().floor_level = 6;
+                block->getComponent<Script, BlockBehavior>().current_blocks = &f6_current_blocks;
                 
                 if(i == 0 || (i > 9 && i < 17)) {
                     block = &GameSystem::Instantiate(IceBlock, GameObjectOptions{.position{block_width * (5.0f + i), floor_levels[5] + block_height}});
@@ -988,13 +997,6 @@ void Game(int numPlayers, int level, bool speed_run) {
             a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
             Enemies.push_back(a_topi);
 
-            a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[3] - (topi_size.y + 1)}});
-            a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
-            a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f4_current_blocks;
-            a_topi->getComponent<Script, TopiBehavior>().floor_level    = 4;
-            a_topi->getComponent<Script, TopiBehavior>().players = {Player_1, Player_2, Player_3, Player_4};
-            Enemies.push_back(a_topi);
-
             a_topi = &GameSystem::Instantiate(Topi, GameObjectOptions{.position{-(topi_size.x + block_width),floor_levels[5] - (topi_size.y + 1)}});
             a_topi->getComponent<Script, TopiBehavior>().total_blocks   = 20;
             a_topi->getComponent<Script, TopiBehavior>().current_blocks = &f6_current_blocks;
@@ -1038,10 +1040,10 @@ void Game(int numPlayers, int level, bool speed_run) {
                 GameSystem::Instantiate(Nutpicker, GameObjectOptions{.position{100000,90000}});
             }
 
-            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[4] - (joseph_size.y + 1)}});
+            auto jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{(float)WINDOW_WIDTH, floor_levels[3] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
-            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[6] - (joseph_size.y + 1)}});
+            jose = &GameSystem::Instantiate(Joseph, GameObjectOptions{.position{-(joseph_size.x + block_width), floor_levels[5] - (joseph_size.y + 1)}});
             jose->getComponent<Script, JosephBehavior>().playerTransforms = playerTransforms;
             Josephs.push_back(jose);
         }
