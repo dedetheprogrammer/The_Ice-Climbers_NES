@@ -125,7 +125,7 @@ Para poder jugar el juego, sigue los siguientes pasos:
 git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
 ```
 
-2. El código fuente ya contiene las librerias de Raylib y Dengine compiladas, por lo que no son necesario descargarlas. Descarga el entorno de ejecución [MinGW-w64]([https://www.mingw-w64.org](https://github.com/skeeto/w64devkit)), necesario para compilar el juego en Windows:
+2. El código fuente ya contiene las librerias de Raylib y Dengine compiladas, por lo que no son necesario descargarlas. Descarga el entorno de ejecución [MinGW-w64](https://github.com/skeeto/w64devkit), necesario para compilar el juego en Windows:
 
 ```bash
 wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.19.0.zip
