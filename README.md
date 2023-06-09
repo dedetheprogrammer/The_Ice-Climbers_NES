@@ -135,21 +135,20 @@ wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.1
     
     2. Dale al botón "Variables de entorno":
 
-    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/a29db177-3064-45ef-bbea-b9f7e7642464"/>
-
+    <img style="margin: 10px 0px 10px 0px" width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/a29db177-3064-45ef-bbea-b9f7e7642464"/>
 
     3. Doble click a la entrada "Path":
 
-    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/9239904c-2318-4e58-9856-087b24211b90"/>
+    <img style="margin: 10px 0px 10px 0px" width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/9239904c-2318-4e58-9856-087b24211b90"/>
 
     4. Dale al botón "Nuevo":
 
-    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/69531a00-ec4c-488a-a173-0b0c7fcc50f9"/>
+    <img style="margin: 10px 0px 10px 0px" width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/69531a00-ec4c-488a-a173-0b0c7fcc50f9"/>
 
 
     5. Pega la ruta completa de la carpeta de `w64devkit/bin` y dale al botón "Aceptar":
 
-    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/ce243c3c-e684-4fb3-9eb4-ec90f37c6a7b"/>
+    <img style="margin: 10px 0px 10px 0px" width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/ce243c3c-e684-4fb3-9eb4-ec90f37c6a7b"/>
 
     6. Ya podemos pasar a la terminal.
 
