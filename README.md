@@ -7,8 +7,6 @@ El objetivo de la asignatura es recrear e incluso mejorar aspectos de un videoju
 
 https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/2d1dffcc-1f24-4489-86a6-c82eb7176307
 
-
-
 ## 1. La selección del juego
 El primer paso para recrear el juego es elegirlo, y de todos los juegos del mundo, siete fueron los que se pusieron sobre la mesa para recrear (detallados posteriormente) y a su vez, de estos, fue el ***Ice Climber*** la elección por consenso entre los miembros del equipo.
 
@@ -118,21 +116,40 @@ El objetivo de este motor era el de poder separar la lógica del juego y que se 
 No se describirá en detalle la implementación, ya que ya existe el [Game Document Design]() que lo desglosa y detalla en profundidad.
 
 Para poder jugar el juego, sigue los siguientes pasos:
-A. A la vieja usanza, compilandolo por ti mismo:
-  1. Clona el repositorio en tu almancenamiento local:
-  ```bash
-  git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
-  ```
-  2. Descarga 
-  3. Compilalo, mediante dos posibles métodos:
-    a. Con el archivo auto.sh, sin usar Cmake:
-    ```bash
-    sh .\auto.sh
-    ```
-    b. Con el archivo build.sh, usando Cmake:
-    ```bash
-    sh .\build.sh
-    ```
-  4. Juega!
+
+### Compilar el código fuente
+1. Clona el repositorio en tu almacenamiento local:
+```bash
+git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
+```
+
+2. El código fuente ya contiene las librerias de Raylib y Dengine compiladas, por lo que no son necesario descargarlas. Descarga el entorno de ejecución [MinGW-w64](https://www.mingw-w64.org), necesario para compilar el juego en Windows:
+```bash
+wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.19.0.zip
+```
+
+3. Descomprime el fichero recién descargado, guardalo en la carpeta que más rabia te de y añade el entorno al PATH de Windows:
+    
+    1. En la barra de búsqueda de Windows, busca "*Editar las variables de entorno del sistema*":
+    
+    2. Dale al botón "Variables de entorno":
+
+    3. Doble click a la entrada "Path":
+
+    4. Dale al botón "Nuevo":
+
+    5. Pega la ruta completa de la carpeta de `w64devkit/bin` y dale al botón "Aceptar":
+
+    6. Ya podemos pasar a la terminal.
+
+4. Abre la terminal, es hora de compilarlo. En la carpeta raíz del repositorio clonado, puedes compilar el juego de dos maneras:
+
+    1. Con el archivo auto.sh, sin usar Cmake: `sh .\auto.sh`
+
+    2. Con el archivo build.sh, usando Cmake: `sh .\build.sh`
+    
+5. Espera a que termine la compilación y dale al `.exe` generado.
+
+6. Juega!
 
 \****Nota imporante***: El juego solo es jugable en Windows.
