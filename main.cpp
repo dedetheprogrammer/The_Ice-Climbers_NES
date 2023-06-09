@@ -47,7 +47,6 @@ void Game(int numPlayers, int level, bool speed_run) {
     Vector2 scale = {horizontal_scale, vertical_scale};
 
     int level_phase = 0;
-    bool acabar = false;
 
     MusicSource BGM("Assets/Sounds/03-Play-BGM.mp3",true);
     MusicSource BGM2("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
@@ -329,14 +328,10 @@ void Game(int numPlayers, int level, bool speed_run) {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
     });
     // 4. Añadimos el Rigidbody:
-    //Popo.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
-    //Nana.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
-    //Amam.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
-    //Lili.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
-    Popo.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Nana.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Amam.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
-    Lili.addComponent<RigidBody2D>(1, block_height * 23.0f, Vector2{block_height * 3.0f,0}, Vector2{block_height * 8.0f, block_height * 17.0f});
+    Popo.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Nana.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Amam.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
+    Lili.addComponent<RigidBody2D>(1, block_height * 21.2f, Vector2{block_height * 6.0f,0}, Vector2{block_height * 13.0f, block_height * 17.0f});
     // 5. Añadimos el Collider. Este es el componente más jodido, necesitas:
     //  - El Transform2D que tiene la posición del objeto.
     //  - El Animator que tiene el tamaño del sprite según en que animación esté, en este
@@ -1281,7 +1276,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     }
 
                     if (Player_1->getComponent<Script, Player>().bonusLevel ||
-                        Player_2 != nullptr && Player_2->getComponent<Script, Player>().bonusLevel)
+                        (Player_2 != nullptr && Player_2->getComponent<Script, Player>().bonusLevel))
                     {
                         objects_offset = ((GAME_HEIGHT - 6.0f * block_height) - bonusLevel->getComponent<Transform2D>().position.y);
                         onBonus = true;

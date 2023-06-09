@@ -381,7 +381,9 @@ void Player::OnCollision(Collision contact) {
                     }
                 }
             } else {
-                if(contact.gameObject.name[0] != 'L') bloquesDestruidos += 1;
+                if(contact.gameObject.name[0] != 'L') {
+                    bloquesDestruidos += 1;
+                }
                 animator["Fall"];
                 rigidbody.velocity.y *= -0.7;
             }
@@ -390,14 +392,14 @@ void Player::OnCollision(Collision contact) {
             (transform.position.y < (contact.gameObject.getComponent<Transform2D>().position.y + contact.gameObject.getComponent<Collider2D>().size.y))*/)
         {
             rigidbody.velocity.x += contact.contact_normal.x * std::abs(rigidbody.velocity.x) * (1 - contact.contact_time) * 1.02;
-            if (!isGrounded) {
-                hasBounced = true;
-                rigidbody.velocity.x *= -1;
-                if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
-                    isRight = !isRight;
-                    animator.Flip();
-                }
-            }
+            //if (!isGrounded) {
+            //    hasBounced = true;
+            //    rigidbody.velocity.x *= -1;
+            //    if ((rigidbody.velocity.x > 0 && !isRight) || (rigidbody.velocity.x < 0 && isRight)) {
+            //        isRight = !isRight;
+            //        animator.Flip();
+            //    }
+            //}
         }
     }
 
@@ -468,11 +470,12 @@ void Player::OnCollision(Collision contact) {
             isGrounded = true;
             brokeBlock = false;
             isJumping  = false;
-            onCloud = false;//true;
+            onCloud = false;
             if (!move) {
                 animator["Idle"];
                 collider.size = collider_size;
                 collider.offset = collider_offset;
+                rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
             } else {
                 animator["Walk"];
                 if ((move > 0 && !isRight) || (move < 0 && isRight)) {
@@ -480,7 +483,6 @@ void Player::OnCollision(Collision contact) {
                     animator.Flip();
                 }
             }
-            rigidbody.velocity.x = (move * rigidbody.acceleration.x + contact.gameObject.getComponent<RigidBody2D>().velocity.x);
         }
         if (contact.contact_normal.x != 0) {
             rigidbody.velocity.x = (contact.gameObject.getComponent<RigidBody2D>().velocity.x);
@@ -604,13 +606,6 @@ void Player::OnCollision(Collision contact) {
         frutasRecogidas += 1;
     }
 
-    /*
-    if (contact.gameObject.tag != "Stalactite") {
-        last_tag = contact.gameObject.tag;
-        hasCollisioned = true;
-    }
-    */
-
     last_tag = contact.gameObject.tag;
     hasCollisioned = true;
 }
@@ -655,8 +650,7 @@ void Player::Update() {
                             animator["Walk"];
                         }
                     } else {
-                        //rigidbody.velocity.x += move * rigidbody.acceleration.x/1.3 * deltaTime;
-                        rigidbody.velocity.x += move * rigidbody.acceleration.x/4 * deltaTime;
+                        rigidbody.velocity.x += move * rigidbody.acceleration.x/1.3 * deltaTime;
                         if (rigidbody.velocity.x < -rigidbody.max_velocity.x) {
                             rigidbody.velocity.x = -rigidbody.max_velocity.x;
                         } else if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
