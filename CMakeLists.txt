@@ -40,10 +40,17 @@ if(BUILD_GAME)
         Libraries/raylib
     )
 
+    add_custom_command(
+        OUTPUT iceclimber.rc
+        COMMAND echo iceclimber_icon ICON "iceclimber.ico" > iceclimber.rc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS iceclimber.ico
+    )
+
     add_executable(iceclimber main.cpp)
 
     target_link_libraries(
-        main
+        iceclimber
         engine
         raylib
         opengl32
@@ -51,14 +58,15 @@ if(BUILD_GAME)
         winmm
     )
 
-    target_sources(main PRIVATE
+    target_sources(iceclimber PRIVATE
         Assets/Scripts/Player.cpp
         Assets/Scripts/Controllers.cpp
         Assets/Scripts/Cloud.cpp
+        iceclimber.rc
     )
 
     # Configurar opciones de compilación
-    target_compile_options(main PRIVATE
+    target_compile_options(iceclimber PRIVATE
         -Wall
         -Wno-missing-braces
     )

@@ -15,7 +15,8 @@ g++ -c ${SCRIPTS}/Controllers.cpp -Wall -Wno-missing-braces -std=c++17 -I${SCRIP
 g++ -c ${SCRIPTS}/Cloud.cpp -Wall -Wno-missing-braces -std=c++17 -I${SCRIPTS} -I${ENGINE} -L${ENGINE} -lengine -I${RAYLIB} -L${RAYLIB} -lraylib -lopengl32 -lgdi32 -lwinmm -o ${SCRIPTS}/Cloud.o
 g++ -c ${SCRIPTS}/Player.cpp -Wall -Wno-missing-braces -std=c++17 -I${SCRIPTS} -I${ENGINE} -L${ENGINE} -lengine -I${RAYLIB} -L${RAYLIB} -lraylib -lopengl32 -lgdi32 -lwinmm -o ${SCRIPTS}/Player.o
 
+echo iceclimber_icon ICON "iceclimber.ico" > iceclimber.rc
+windres iceclimber.rc iceclimber_icon.o
 g++ main.cpp -Wall -Wno-missing-braces -std=c++17 -I${SCRIPTS} -I${ENGINE} -L${ENGINE} -lengine -I${RAYLIB} -L${RAYLIB} -lraylib -lopengl32 -lgdi32 -lwinmm \
-    ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o -o iceclimber
-rm ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o 
-./iceclimber
+    ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o iceclimber_icon.o -o iceclimber
+rm ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o iceclimber_icon.o iceclimber.rc
