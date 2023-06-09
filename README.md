@@ -1,6 +1,8 @@
 # (The) Ice Climber(s) (NES)
 Repositorio de la asignatura de Videojuegos de la Universidad de Zaragoza del año 2022-23.
 
+https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/2d1dffcc-1f24-4489-86a6-c82eb7176307
+
 El objetivo de la asignatura es recrear e incluso mejorar aspectos de un videojuego antigüo a nuestra elección a bajo nivel, es decir, sin el uso de un motor de videojuegos que abstraiga toda la gestión interna de un juego, siendo nosotros quienés hagan la misma. En este repositorio se detalla el progreso y se guarda el código fuente del proyecto.
 
 ## 1. La selección del juego
@@ -109,5 +111,11 @@ El Dengine es un motor de videojuegos 2D en miniatura que implementa las funcion
 El objetivo de este motor era el de poder separar la lógica del juego y que se pudiese construir sobre un gestor de videojuegos, y además, poder crear un gestor de interfaces que pudiese dibujar y re-escalar sus elementos de manera eficiente.
 
 ## 4. Impementación y ejecución
-No se describirá en detalle la implementación, ya que ya existe el [Game Document Design]() que lo desglosa y detalla en profundidad. Para poder jugar el juego, sigue los siguientes pasos:
-```bash
+No se describirá en detalle la implementación, ya que ya existe el [Game Document Design]() que lo desglosa y detalla en profundidad.
+
+Para poder jugar el juego, sigue los siguientes pasos:
+A. A la vieja usanza, compilandolo por ti mismo:
+  1. Clona el repositorio en tu almancenamiento local:
+  ```bash
+  git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
+  ```
