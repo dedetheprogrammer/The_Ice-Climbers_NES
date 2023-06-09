@@ -1,9 +1,13 @@
 # (The) Ice Climber(s) (NES)
 Repositorio de la asignatura de Videojuegos de la Universidad de Zaragoza del año 2022-23.
 
-https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/2d1dffcc-1f24-4489-86a6-c82eb7176307
+![image6](https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/c64bd4d9-285f-42bc-adcc-3264d58da399)
 
 El objetivo de la asignatura es recrear e incluso mejorar aspectos de un videojuego antigüo a nuestra elección a bajo nivel, es decir, sin el uso de un motor de videojuegos que abstraiga toda la gestión interna de un juego, siendo nosotros quienés hagan la misma. En este repositorio se detalla el progreso y se guarda el código fuente del proyecto.
+
+https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/2d1dffcc-1f24-4489-86a6-c82eb7176307
+
+
 
 ## 1. La selección del juego
 El primer paso para recrear el juego es elegirlo, y de todos los juegos del mundo, siete fueron los que se pusieron sobre la mesa para recrear (detallados posteriormente) y a su vez, de estos, fue el ***Ice Climber*** la elección por consenso entre los miembros del equipo.
