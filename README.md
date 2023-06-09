@@ -123,30 +123,49 @@ Para poder jugar el juego, sigue los siguientes pasos:
 git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
 ```
 
-2. El código fuente ya contiene las librerias de Raylib y Dengine compiladas, por lo que no son necesario descargarlas. Descarga el entorno de ejecución [MinGW-w64](https://www.mingw-w64.org), necesario para compilar el juego en Windows:
+2. El código fuente ya contiene las librerias de Raylib y Dengine compiladas, por lo que no son necesario descargarlas. Descarga el entorno de ejecución [MinGW-w64]([https://www.mingw-w64.org](https://github.com/skeeto/w64devkit)), necesario para compilar el juego en Windows:
+
 ```bash
 wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.19.0.zip
 ```
 
 3. Descomprime el fichero recién descargado, guardalo en la carpeta que más rabia te de y añade el entorno al PATH de Windows:
     
-    1. En la barra de búsqueda de Windows, busca "*Editar las variables de entorno del sistema*":
+    1. En la barra de búsqueda de Windows, busca "*Editar las variables de entorno del sistema*".
     
     2. Dale al botón "Variables de entorno":
 
+    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/a29db177-3064-45ef-bbea-b9f7e7642464"/>
+
+
     3. Doble click a la entrada "Path":
+
+    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/9239904c-2318-4e58-9856-087b24211b90"/>
 
     4. Dale al botón "Nuevo":
 
+    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/69531a00-ec4c-488a-a173-0b0c7fcc50f9"/>
+
+
     5. Pega la ruta completa de la carpeta de `w64devkit/bin` y dale al botón "Aceptar":
+
+    <img width="400px" src="https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/ce243c3c-e684-4fb3-9eb4-ec90f37c6a7b"/>
 
     6. Ya podemos pasar a la terminal.
 
 4. Abre la terminal, es hora de compilarlo. En la carpeta raíz del repositorio clonado, puedes compilar el juego de dos maneras:
 
-    1. Con el archivo auto.sh, sin usar Cmake: `sh .\auto.sh`
+    1. Con el archivo auto.sh, sin usar Cmake:
+    
+    ```bash
+    sh .\auto.sh
+    ```
 
-    2. Con el archivo build.sh, usando Cmake: `sh .\build.sh`
+    2. Con el archivo build.sh, usando Cmake:
+    
+    ```bash
+    sh .\build.sh
+    ```
     
 5. Espera a que termine la compilación y dale al `.exe` generado.
 
