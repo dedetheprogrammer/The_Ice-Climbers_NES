@@ -79,7 +79,7 @@ Además de presentar un colorido apartado gráfico, en esta revisión para Game 
 
 Utiliza todo tipo de objetos y armamento, como las Botas de Pegaso y el gancho, para superar las intrincadas mazmorras y derrotar a los jefes más poderosos, y ayuda a nuestro héroe a encontrar los legendarios instrumentos de las sirenas.
 
-The Legend of Zelda: Link’s Awakening DX es una épica aventura que te cautivará desde el primer momento.
+[The Legend of Zelda: Link’s Awakening DX](https://www.nintendo.es/Juegos/Game-Boy-Color/The-Legend-of-Zelda-Link-s-Awakening-DX--275946.html) es una épica aventura que te cautivará desde el primer momento.
 
 ### **Q\*Bert**
 [Q\*bert](https://es.wikipedia.org/wiki/Q*bert) es un videojuego de arcade desarrollado y publicado por Gottlieb en 1982. 
@@ -117,7 +117,9 @@ No se describirá en detalle la implementación, ya que ya existe el [Game Docum
 
 ## 5. Jugar
 
-Para poder jugar el juego, sigue los siguientes pasos:
+Existen tres métodos diferentes para jugar el juego, cuál te parezca más cómodo dependerá de tí.
+
+> ⚠ ***Nota imporante***: El juego solo es compatible con Windows.
 
 ### Compilar el código fuente
 1. Clona el repositorio en tu almacenamiento local:
@@ -131,7 +133,7 @@ git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
 wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.19.0.zip
 ```
 
-3. Descomprime el fichero recién descargado, guardalo en la carpeta que más rabia te de y añade el entorno al PATH de Windows:
+3. Descomprime el fichero recién descargado, guardalo en la carpeta que más rabia te de y añade el entorno al `PATH` de Windows:
     
     1. En la barra de búsqueda de Windows, busca "*Editar las variables de entorno del sistema*".
     
@@ -171,8 +173,6 @@ wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.1
 5. Espera a que termine la compilación y dale al `.exe` generado.
 
 6. Juega!
-
-\****Nota imporante***: El juego solo es jugable en Windows.
 
 ### Descargar el juego directamente
 Descargar la release que voy a subir en un rato.
