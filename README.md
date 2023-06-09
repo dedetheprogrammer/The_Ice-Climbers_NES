@@ -112,8 +112,10 @@ El Dengine es un motor de videojuegos 2D en miniatura que implementa las funcion
 
 El objetivo de este motor era el de poder separar la lógica del juego y que se pudiese construir sobre un gestor de videojuegos, y además, poder crear un gestor de interfaces que pudiese dibujar y re-escalar sus elementos de manera eficiente.
 
-## 4. Impementación y ejecución
+## 4. Impementación
 No se describirá en detalle la implementación, ya que ya existe el [Game Document Design]() que lo desglosa y detalla en profundidad.
+
+## 5. Jugar
 
 Para poder jugar el juego, sigue los siguientes pasos:
 
@@ -161,7 +163,7 @@ wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.1
     ```
 
     2. Con el archivo build.sh, usando Cmake:
-    
+
     ```bash
     sh .\build.sh
     ```
@@ -171,3 +173,9 @@ wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.1
 6. Juega!
 
 \****Nota imporante***: El juego solo es jugable en Windows.
+
+### Descargar el juego directamente
+Descargar la release que voy a subir en un rato.
+
+### Juega desde tu navegador
+En la página que voy a poner en un rato.
