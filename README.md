@@ -1,7 +1,7 @@
 # (The) Ice Climber(s) (NES)
 Repositorio de la asignatura de Videojuegos de la Universidad de Zaragoza del año 2022-23.
 
-![image6](https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/c64bd4d9-285f-42bc-adcc-3264d58da399)
+![cover](https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/83870c83-eb75-4621-801f-b6d1ed88f05a)
 
 El objetivo de la asignatura es recrear e incluso mejorar aspectos de un videojuego antigüo a nuestra elección a bajo nivel, es decir, sin el uso de un motor de videojuegos que abstraiga toda la gestión interna de un juego, siendo nosotros quienés hagan la misma. En este repositorio se detalla el progreso y se guarda el código fuente del proyecto.
 
@@ -123,3 +123,16 @@ A. A la vieja usanza, compilandolo por ti mismo:
   ```bash
   git clone https://github.com/dedetheprogrammer/The_Ice-Climbers-NES
   ```
+  2. Descarga 
+  3. Compilalo, mediante dos posibles métodos:
+    a. Con el archivo auto.sh, sin usar Cmake:
+    ```bash
+    sh .\auto.sh
+    ```
+    b. Con el archivo build.sh, usando Cmake:
+    ```bash
+    sh .\build.sh
+    ```
+  4. Juega!
+
+\****Nota imporante***: El juego solo es jugable en Windows.
