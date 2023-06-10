@@ -11,8 +11,6 @@
 #include "Player.h"
 
 /* TODO:
- - Fusionar ambas ramas.
- - Añadir un icono al ejecutable.
  - Añadir mas sonidos.
  - Arreglar bug de que si muere popo todos se van.
  - Limpiar lo inecesario 
@@ -20,7 +18,6 @@
  - Rehacer el sistema de controles.
  - Meter el brawl.
  - Arreglar las colisiones.
- - Arreglar el reescalado de la pagina de rankings.
  - Meter reescalado in-game?
  */
 
