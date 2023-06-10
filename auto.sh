@@ -20,3 +20,4 @@ windres iceclimber.rc iceclimber_icon.o
 g++ main.cpp -Wall -Wno-missing-braces -std=c++17 -I${SCRIPTS} -I${ENGINE} -L${ENGINE} -lengine -I${RAYLIB} -L${RAYLIB} -lraylib -lopengl32 -lgdi32 -lwinmm \
     ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o iceclimber_icon.o -o iceclimber
 rm ${SCRIPTS}/Controllers.o ${SCRIPTS}/Cloud.o ${SCRIPTS}/Player.o iceclimber_icon.o iceclimber.rc
+./iceclimber

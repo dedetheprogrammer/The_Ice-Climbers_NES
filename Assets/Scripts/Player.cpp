@@ -113,6 +113,7 @@ bool BlockBehavior::spawn_stalactite() {
 }
 
 BlockBehavior::BlockBehavior(GameObject& gameObject) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     sprite(gameObject.getComponent<Sprite>()),
     transform(gameObject.getComponent<Transform2D>()),
     spawning_cooldown(8.0f),
@@ -121,6 +122,7 @@ BlockBehavior::BlockBehavior(GameObject& gameObject) : Script(gameObject),
     E(0,100) {}
 
 BlockBehavior::BlockBehavior(GameObject& gameObject, BlockBehavior& behavior) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     sprite(gameObject.getComponent<Sprite>()),
     transform(gameObject.getComponent<Transform2D>()),
     spawning_cooldown(8.0f),
@@ -137,6 +139,7 @@ Component* BlockBehavior::Clone(GameObject& gameObject) {
 void BlockBehavior::OnCollision(Collision contact) {
     if (contact.gameObject.tag == "Player") {
         if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, Player>().brokeBlock) {
+            audioplayer["Break"];
             contact.gameObject.getComponent<Script, Player>().brokeBlock = true;
             contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
             GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
@@ -161,14 +164,16 @@ void BlockBehavior::Update() {
 
 // ============================================================================
 SlidingBlockBehavior::SlidingBlockBehavior(GameObject& gameObject) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     sprite(gameObject.getComponent<Sprite>()),
-    transform(gameObject.getComponent<Transform2D>()),
-    rigidbody(gameObject.getComponent<RigidBody2D>()) {}
+    rigidbody(gameObject.getComponent<RigidBody2D>()),
+    transform(gameObject.getComponent<Transform2D>()) {}
 
 SlidingBlockBehavior::SlidingBlockBehavior(GameObject& gameObject, SlidingBlockBehavior& behavior) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     sprite(gameObject.getComponent<Sprite>()),
-    transform(gameObject.getComponent<Transform2D>()),
     rigidbody(gameObject.getComponent<RigidBody2D>()),
+    transform(gameObject.getComponent<Transform2D>()),
     hole(behavior.hole) {}
 
 Component* SlidingBlockBehavior::Clone(GameObject& gameObject) {
@@ -178,6 +183,7 @@ Component* SlidingBlockBehavior::Clone(GameObject& gameObject) {
 void SlidingBlockBehavior::OnCollision(Collision contact) {
     if (contact.gameObject.tag == "Player") {
         if (contact.contact_normal.y < 0 && !contact.gameObject.getComponent<Script, Player>().brokeBlock) {
+            audioplayer["Break"];
             contact.gameObject.getComponent<Script, Player>().brokeBlock = true;
             contact.gameObject.getComponent<RigidBody2D>().velocity.y = 0;
             GameSystem::Instantiate(*hole, GameObjectOptions{.position = transform.position});
@@ -271,7 +277,7 @@ Player::Player(GameObject& gameObject, Player& behavior) : Script(gameObject),
     frutasRecogidas     = behavior.frutasRecogidas;
     nutpickerGolpeados  = behavior.nutpickerGolpeados;
     icicleDestruido     = behavior.icicleDestruido;
-    bonusLevel          = false;
+    bonusLevel          = behavior.bonusLevel;
     timeDead            = behavior.timeDead;
     timeStunned         = behavior.timeStunned;
     lastMove            = behavior.lastMove;
@@ -302,7 +308,7 @@ void Player::OnCollision(Collision contact) {
                     floor_level = contact.gameObject.getComponent<Script, FloorBehavior>().floor_level;
                 }
                 if (isJumping || isBraking) {
-                    if (contact.gameObject.name.find("Bonus") != std::string::npos) {
+                    if (!bonusLevel && floor_level == 9) {
                         bonusLevel = true;
                     }
                     isBraking = true;

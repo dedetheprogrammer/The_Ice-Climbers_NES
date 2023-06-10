@@ -45,6 +45,7 @@ public:
 
 class BlockBehavior : public Script {
 private:
+    AudioPlayer& audioplayer;
     Sprite& sprite;
     Transform2D& transform;
     float spawning_cooldown;
@@ -69,9 +70,10 @@ public:
 
 class SlidingBlockBehavior : public Script {
 private:
+    AudioPlayer& audioplayer;
     Sprite& sprite;
-    Transform2D& transform;
     RigidBody2D& rigidbody;
+    Transform2D& transform;
 public:
     GameObject* hole;
     int *current_blocks = nullptr;
@@ -135,7 +137,6 @@ public:
     Vector2 collider_offset;
     Vector2 last_collider_pos;
 
-    static void setFinal(bool b);
     // ¿Que usa Popo? Guardamos las referencias de sus componentes ya que es más
     // eficiente que acceder una y otra vez a los componentes cada vez que
     // necesitamos hacer algo con uno de ellos.

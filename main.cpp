@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "Dengine.h"
 #include "DengineUI.h"
 #include "raylibx.h"
@@ -23,6 +25,12 @@
  */
 
 Font NES;
+
+std::string fill_string(std::string s, int width) {
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(width) << s;
+    return oss.str();
+}
 
 void Game(int numPlayers, int level, bool speed_run) {
 
@@ -76,15 +84,23 @@ void Game(int numPlayers, int level, bool speed_run) {
     BaseFloor.addComponent<Collider2D>(&BaseFloor.getComponent<Transform2D>().position, Vector2{GAME_WIDTH * 1.5f, 8.0f*vertical_scale*2.0f}, PINK);
     BaseFloor.addComponent<Script, FloorBehavior>();
 
+    GameObject Stalactite("Stalactite", "Stalactite", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
+
     // Bloque de hierba
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
+    GrassBlock.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject GrassBlockThin("Thin Grass Block", "Floor", {"Block"});
+    GrassBlockThin.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject GrassHole("Grass Hole", "Hole");
-    GameObject Stalactite("Stalactite", "Stalactite", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
+
+
 
     // Me llevo arriba la definición del sprite para tener a mano las variables de abajo
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
-    // es decir.... ESTAS
     float block_width = GrassBlock.getComponent<Sprite>().GetViewDimensions().x;
     float block_height = GrassBlock.getComponent<Sprite>().GetViewDimensions().y;
     float collider_width  = block_width-5.0f;
@@ -124,9 +140,15 @@ void Game(int numPlayers, int level, bool speed_run) {
     GrassHole.addComponent<Script, HoleBehavior>();
     GrassHole.getComponent<Script, HoleBehavior>().original_block = &GrassBlock;
 
-    // Bloque de tierra
+    // ==== Bloque de tierra ====
     GameObject DirtBlock("Dirt Block", "Floor", {"Block"});
+    DirtBlock.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject DirtBlockThin("Thin Dirt Block", "Floor", {"Block"});
+    DirtBlockThin.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject DirtHole("Dirt Hole", "Hole");
 
     DirtBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Dirt_block_large.png", horizontal_scale, vertical_scale);
@@ -147,8 +169,17 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     // Bloque de hielo
     GameObject IceBlock("Ice Block", "Floor", {"Ice","Block"});
+    IceBlock.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject IceBlockThin("Thin Ice Block", "Floor", {"Ice","Block"});
+    IceBlockThin.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject IceSlidingBlock("Ice Sliding Block", "SlidingFloor", {"Ice","Block"});
+    IceSlidingBlock.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
+    });
     GameObject IceHole("Ice Hole", "Hole");
     GameObject IceSlidingHole("Ice Sliding Hole", "Hole");
 
@@ -262,25 +293,22 @@ void Game(int numPlayers, int level, bool speed_run) {
     // si no, dará error.
     Popo.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Popo/00_Idle.png", 16, 24, scale, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk.png", 16, 24, scale, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake.png", 16, 24, scale, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump.png", 20, 25, scale, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack.png", 21, 25, scale, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 21, scale, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall.png", 21, 25, scale, 0.3, false)},
-        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch.png", 16, 24, scale, 0.75, true)},
+        {"IdleBonus", Animation("Assets/Sprites/Popo/00_Idle_Bonus.png", 16, 24, scale, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Popo/01_Walk.png", 16, 24, scale, 0.135, true)},
+        {"WalkBonus", Animation("Assets/Sprites/Popo/01_Walk_Bonus.png", 16, 24, scale, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Popo/02_Brake.png", 16, 24, scale, 0.3, true)},
+        {"BrakeBonus", Animation("Assets/Sprites/Popo/02_Brake_Bonus.png", 16, 24, scale, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Popo/03_Jump.png", 20, 25, scale, 0.5, false)},
+        {"JumpBonus", Animation("Assets/Sprites/Popo/03_Jump_Bonus.png", 20, 25, scale, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Popo/04_Attack.png", 21, 25, scale, 0.3, false)},
+        {"AttackBonus", Animation("Assets/Sprites/Popo/04_Attack_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Popo/05_Stunned.png", 16, 21, scale, 0.5, true)},
+        {"StunnedBonus", Animation("Assets/Sprites/Popo/05_Stunned.png", 16, 24, scale, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Popo/06_Fall.png", 21, 25, scale, 0.3, false)},
+        {"FallBonus", Animation("Assets/Sprites/Popo/06_Fall_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Crouch", Animation("Assets/Sprites/Popo/07_Crouch.png", 16, 24, scale, 0.75, true)},
+        {"CrouchBonus", Animation("Assets/Sprites/Popo/07_Crouch_Bonus.png", 16, 24, scale, 0.75, true)},
     });
-
-    auto PopoBonusAnimator = std::unordered_map<std::string, Animation> {
-        {"Idle", Animation("Assets/Sprites/Popo/00_Idle_Bonus.png", 16, 24, scale, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Popo/02_Walk_Bonus.png", 16, 24, scale, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Popo/03_Brake_Bonus.png", 16, 24, scale, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Popo/04_Jump_Bonus.png", 20, 25, scale, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Popo/05_Attack_Bonus.png", 21, 25, scale, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Popo/06_Stunned.png", 16, 24, scale, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Popo/07_Fall_Bonus.png", 21, 25, scale, 0.3, false)},
-        {"Crouch", Animation("Assets/Sprites/Popo/08_Crouch_Bonus.png", 16, 24, scale, 0.75, true)},
-    };
 
     Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, scale, 0.75, true)},
@@ -1085,6 +1113,7 @@ void Game(int numPlayers, int level, bool speed_run) {
         GameSystem::Instantiate(LevelFloor_2, GameObjectOptions{.position{block_width * 19.0f, levels[3]}});
     }
 
+    bool exit_game = false;
     float timeToShowScores = 0.0f;
     bool finished = false;
     bool play_music = true;
@@ -1102,48 +1131,73 @@ void Game(int numPlayers, int level, bool speed_run) {
     UISprite Hammer("Assets/Sprites/UI_Old_Hammer.png", {ContinueText.pos.x - 50, ContinueText.pos.y}, 4.0f, 4.0f, UIObject::UP_RIGHT);
     int OPTION = 0, OPTIONS = 2; // HammerView
 
-    UISprite BigFrame1("Assets/Sprites/Record-frame1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
-    UIText Player1Text(NES, "Player 1", 40, 1, {GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
-    UIText Player1Status(NES, "YOU LOOSE!", 40, 1, {GetScreenWidth()/4.0f, Player1Text.pos.y + 60}, UIObject::CENTER);
-    UISprite Icicler1("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth()/8.0f, Player1Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Monster1("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth()/8.0f, Icicler1.dst.y + Icicler1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Vegetabler1("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth()/8.0f, Monster1.dst.y + Monster1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Block1("Assets/Sprites/Ranking-block.png", {GetScreenWidth()/8.0f, Vegetabler1.dst.y + Vegetabler1.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite SmallFrame1("Assets/Sprites/Record-frames1.png", {GetScreenWidth()/4.0f, Block1.dst.y + Block1.dst.height + 80}, 3.5f, 3.5f, UIObject::CENTER);
-    UIText Icicler1Text(NES, "400x", 40, 1, {GetScreenWidth()/4.0f, Icicler1.dst.y + Icicler1.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Monster1Text(NES, "800x", 40, 1, {GetScreenWidth()/4.0f, Monster1.dst.y + Monster1.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Vegetabler1Text(NES, "300x", 40, 1, {GetScreenWidth()/4.0f, Vegetabler1.dst.y + Vegetabler1.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Block1Text(NES, "10x", 40, 1, {GetScreenWidth()/4.0f, Block1.dst.y + Block1.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Icicler1N(NES, "00", 40, 1, {Icicler1Text.pos.x + Icicler1Text.size.x + 10, Icicler1Text.pos.y});
-    UIText Monster1N(NES, "00", 40, 1, {Monster1Text.pos.x + Monster1Text.size.x + 10, Monster1Text.pos.y});
-    UIText Vegetabler1N(NES, "00", 40, 1, {Vegetabler1Text.pos.x + Vegetabler1Text.size.x + 10, Vegetabler1Text.pos.y});
-    UIText Block1N(NES, "00", 40, 1, {Block1Text.pos.x + Block1Text.size.x + 10, Block1Text.pos.y});
-    UIText Total1(NES, "000000", 40, 1, {GetScreenWidth()/4.0f, SmallFrame1.dst.y + 10}, UIObject::UP_CENTER);
+    // Ranking of player 1
+    UISprite BigFrame1("Assets/Sprites/Record-frame1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 50, GetScreenHeight() - 40.0f}, UIObject::CENTER);
+    UIText Player1Text(NES, "Player 1", 40, 1, {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f - 200}, UIObject::DOWN_CENTER);
+    UISprite Player1Cry("Assets/Sprites/Popo/08_Cry_Single.png", {GetScreenWidth()/8.0f + 20, GetScreenHeight()/2.0f - 123}, 3.5f, 3.5f, UIObject::DOWN_CENTER);
+    UISprite Player1Cel("Assets/Sprites/Popo/09_Celebrate_Single.png", {GetScreenWidth()/8.0f + 30, GetScreenHeight()/2.0f - 123}, 3.3f, 3.3f, UIObject::DOWN_CENTER);
+    UIText Player1StatusA(NES, "YOU", 37, 1, {GetScreenWidth() * (1/4.0f + 1/12.0f) - 30, GetScreenHeight()/2.0f - 150}, UIObject::DOWN_CENTER);
+    UIText Player1StatusB(NES, "LOOSE!", 37, 1, {GetScreenWidth() * (1/4.0f + 1/12.0f) - 20, GetScreenHeight()/2.0f - 125}, UIObject::DOWN_CENTER);
+    // - Number of destroyed icicles
+    UISprite Icicler1("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f - 80}, 3.7f, 3.7f, UIObject::CENTER);
+    UIText Icicler1Text(NES, "400x", 40, 1, {GetScreenWidth()/4.0f + 70, Icicler1.dst.y + Icicler1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler1N(NES, "00", 40, 1, {Icicler1Text.pos.x + Icicler1Text.size.x + 1, Icicler1Text.pos.y});
+    // - Number of defeated nutpickers
+    UISprite Monster1("Assets/Sprites/Ranking-nutpicker.png", Vector2{GetScreenWidth()/8.0f, GetScreenHeight()/2.0f - 20}, 3.0f, 3.0f, UIObject::CENTER);
+    UIText Monster1Text(NES, "800x", 40, 1, {GetScreenWidth()/4.0f + 70, Monster1.dst.y + Monster1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster1N(NES, "00", 40, 1, {Monster1Text.pos.x + Monster1Text.size.x + 1, Monster1Text.pos.y});
+    // - Number of collected vegetables
+    UISprite Vegetabler1("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f + 40}, 3.4f, 3.4f, UIObject::CENTER);
+    UIText Vegetabler1Text(NES, "300x", 40, 1, {GetScreenWidth()/4.0f + 70, Vegetabler1.dst.y + Vegetabler1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Vegetabler1N(NES, "00", 40, 1, {Vegetabler1Text.pos.x + Vegetabler1Text.size.x + 1, Vegetabler1Text.pos.y});
+    // - Number of destroyed blocks
+    UISprite Block1("Assets/Sprites/Ranking-block.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f + 100}, 4.2f, 4.2f, UIObject::CENTER);
+    UIText Block1Text(NES, "10x", 40, 1, {GetScreenWidth()/4.0f + 70, Block1.dst.y + Block1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block1N(NES, "00", 40, 1, {Block1Text.pos.x + Block1Text.size.x + 1, Block1Text.pos.y});
+    // - Total of player 1
+    UIText TotalTitle1(NES, "TOTAL", 40, 0, {GetScreenWidth() * (1/4.0f - 1/24.0f), GetScreenHeight()/2.0f + 135}, UIObject::UP_CENTER);
+    UISprite SmallFrame1("Assets/Sprites/Record-frames1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f + 170}, 4.0f, 3.5f, UIObject::UP_CENTER);
+    UIText Total1(NES, "000000", 40, 1, {GetScreenWidth()/4.0f, (GetScreenHeight() + SmallFrame1.dst.height)/2.0f + 170}, UIObject::CENTER);
 
-    UISprite BigFrame2("Assets/Sprites/Record-frame2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 100, GetScreenHeight() - 40.0f}, UIObject::CENTER);
-    UIText Player2Text(NES, "Player 2", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, 100}, UIObject::CENTER);
-    UIText Player2Status(NES, "YOU LOOSE!", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Player2Text.pos.y + 60}, UIObject::CENTER);
-    UISprite Icicler2("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Player2Text.pos.y + 150}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Monster2("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Icicler2.dst.y + Icicler2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Vegetabler2("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Monster2.dst.y + Monster2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite Block2("Assets/Sprites/Ranking-block.png", {GetScreenWidth() - 3*GetScreenWidth()/8.0f, Vegetabler2.dst.y + Vegetabler2.dst.height + 60}, 4.0f, 4.0f, UIObject::CENTER);
-    UISprite SmallFrame2("Assets/Sprites/Record-frames2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, Block2.dst.y + Block2.dst.height + 80}, 3.5f, 3.5f, UIObject::CENTER);
-    UIText Icicler2Text(NES, "400x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Icicler2.dst.y + Icicler2.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Monster2Text(NES, "800x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Monster2.dst.y + Monster2.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Vegetabler2Text(NES, "300x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Vegetabler2.dst.y + Vegetabler2.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Block2Text(NES, "10x", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, Block2.dst.y + Block2.dst.height/2}, UIObject::CENTER_RIGHT);
-    UIText Icicler2N(NES, "00", 40, 1, {Icicler2Text.pos.x + Icicler2Text.size.x + 10, Icicler2Text.pos.y});
-    UIText Monster2N(NES, "00", 40, 1, {Monster2Text.pos.x + Monster2Text.size.x + 10, Monster2Text.pos.y});
-    UIText Vegetabler2N(NES, "00", 40, 1, {Vegetabler2Text.pos.x + Vegetabler2Text.size.x + 10, Vegetabler2Text.pos.y});
-    UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 10, Block2Text.pos.y});
-    
-    UIText Total2(NES, "000000", 40, 1, {GetScreenWidth() - GetScreenWidth()/4.0f, SmallFrame2.dst.y + 10}, UIObject::UP_CENTER);
+    // Ranking of player 2
+    UISprite BigFrame2("Assets/Sprites/Record-frame2.png", {GetScreenWidth() - GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 50, GetScreenHeight() - 40.0f}, UIObject::CENTER);
+    UIText Player2Text(NES, "Player 2", 40, 1, {GetScreenWidth() * (1 - 1/4.0f), GetScreenHeight()/2.0f - 200}, UIObject::DOWN_CENTER);
+    UISprite Player2Cry("Assets/Sprites/Nana/08_Cry_Single.png", {GetScreenWidth() * (1 - 1/4.0f - 1/8.0f) + 20, GetScreenHeight()/2.0f - 123}, 3.5f, 3.5f, UIObject::DOWN_CENTER);
+    UISprite Player2Cel("Assets/Sprites/Nana/09_Celebrate_Single.png", {GetScreenWidth() * (1 - 1/4.0f - 1/8.0f) + 30, GetScreenHeight()/2.0f - 123}, 3.3f, 3.3f, UIObject::DOWN_CENTER);
+    UIText Player2StatusA(NES, "YOU", 37, 1, {GetScreenWidth() * (1 - 1/4.0f + 1/12.0f) - 30, GetScreenHeight()/2.0f - 150}, UIObject::DOWN_CENTER);
+    UIText Player2StatusB(NES, "LOOSE!", 37, 1, {GetScreenWidth() * (1 - 1/4.0f + 1/12.0f) - 20, GetScreenHeight()/2.0f - 125}, UIObject::DOWN_CENTER);
+    // - Number of destroyed icicles
+    UISprite Icicler2("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f - 80}, 3.7f, 3.7f, UIObject::CENTER);
+    UIText Icicler2Text(NES, "400x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Icicler2.dst.y + Icicler2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler2N(NES, "00", 40, 1, {Icicler2Text.pos.x + Icicler2Text.size.x + 1, Icicler2Text.pos.y});
+    // - Number of defeated nutpickers
+    UISprite Monster2("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f - 20}, 3.0f, 3.0f, UIObject::CENTER);
+    UIText Monster2Text(NES, "800x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Monster2.dst.y + Monster2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster2N(NES, "00", 40, 1, {Monster2Text.pos.x + Monster2Text.size.x + 1, Monster2Text.pos.y});
+    // - Number of collected vegetables
+    UISprite Vegetabler2("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f + 40}, 3.4f, 3.4f, UIObject::CENTER);
+    UIText Vegetabler2Text(NES, "300x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Vegetabler2.dst.y + Vegetabler2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Vegetabler2N(NES, "00", 40, 1, {Vegetabler2Text.pos.x + Vegetabler2Text.size.x + 1, Vegetabler2Text.pos.y});
+    // - Number of destroyed blocks
+    UISprite Block2("Assets/Sprites/Ranking-block.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f + 100}, 4.2f, 4.2f, UIObject::CENTER);
+    UIText Block2Text(NES, "10x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Block2.dst.y + Block2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 1, Block2Text.pos.y});
+    // - Total of player 2
+    UIText TotalTitle2(NES, "TOTAL", 40, 0, {GetScreenWidth() * (1 - 1/4.0f - 1/24.0f), GetScreenHeight()/2.0f + 135}, UIObject::UP_CENTER);
+    UISprite SmallFrame2("Assets/Sprites/Record-frames2.png", {GetScreenWidth() * (1 - 1/4.0f), GetScreenHeight()/2.0f + 170}, 4.0f, 3.5f, UIObject::UP_CENTER);
+    UIText Total2(NES,"000000", 40, 1, {GetScreenWidth() * (1-1/4.0f), (GetScreenHeight() + SmallFrame2.dst.height)/2.0f + 170}, UIObject::CENTER);
 
     enum GAME_MENU {GAME, PAUSED, RANKING};
     GAME_MENU CURRENT_MENU = GAME;
 
+    //UISystem::Reescale();
     GameSystem::Start();
     while(!finished) {
+        // Condition to close the window directly
+        if (WindowShouldClose()) {
+            finished = exit_game = true;
+        }
+        // Screen buffer refresh loop
         BeginDrawing();
         ClearBackground(BLACK);
         if (CURRENT_MENU == RANKING) {
@@ -1162,68 +1216,78 @@ void Game(int numPlayers, int level, bool speed_run) {
                     Player1Text.Draw();
                     auto pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas * 300 + Player_1->getComponent<Script, Player>().bloquesDestruidos *10;
                     if (Player_1->getComponent<Script, Player>().victory) {
-                        Player1Status.SetText("YOU WIN!", false);
+                        Player1Cel.Draw();
+                        Player1StatusB.SetText("WON!", false);
                         pts1 += 3000;
+                    } else {
+                        Player1Cry.Draw();
                     }
-                    Player1Status.Draw();
+                    Player1StatusA.Draw();
+                    Player1StatusB.Draw();
                     // Carambanos destruidos
                     Icicler1.Draw();
                     Icicler1Text.Draw();
-                    Icicler1N.SetText(std::to_string(Player_1->getComponent<Script,Player>().icicleDestruido), false);
+                    Icicler1N.SetText(fill_string(std::to_string(Player_1->getComponent<Script,Player>().icicleDestruido),2), false);
                     Icicler1N.Draw();
                     // Numero de enemigos derrotados
                     Monster1.Draw();
                     Monster1Text.Draw();
-                    Monster1N.SetText(std::to_string(Player_1->getComponent<Script, Player>().nutpickerGolpeados), false);
+                    Monster1N.SetText(fill_string(std::to_string(Player_1->getComponent<Script, Player>().nutpickerGolpeados),2), false);
                     Monster1N.Draw();
                     // Verduras cogidas
                     Vegetabler1.Draw();
                     Vegetabler1Text.Draw();
-                    Vegetabler1N.SetText(std::to_string(Player_1->getComponent<Script, Player>().frutasRecogidas), false);
+                    Vegetabler1N.SetText(fill_string(std::to_string(Player_1->getComponent<Script, Player>().frutasRecogidas),2), false);
                     Vegetabler1N.Draw();
                     // Bloques destruidos
-                    Block1N.SetText(std::to_string(Player_1->getComponent<Script, Player>().bloquesDestruidos), false);
+                    Block1N.SetText(fill_string(std::to_string(Player_1->getComponent<Script, Player>().bloquesDestruidos),2), false);
                     Block1.Draw();
                     Block1Text.Draw();
                     Block1N.Draw();
                     // Puntos totales del jugador 1
+                    TotalTitle1.Draw();
                     SmallFrame1.Draw();
-                    Total1.SetText(std::to_string(pts1), false);
+                    Total1.SetText(fill_string(std::to_string(pts1), 6), false);
                     Total1.Draw();
 
                     if (Player_2 != nullptr) {
                         BigFrame2.Draw();
                         // Victoria o derrota del jugador 2
                         Player2Text.Draw();
-                        auto pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas * 300 + Player_2->getComponent<Script, Player>().bloquesDestruidos *10;
-                        if (Player_2->getComponent<Script, Player>().victory) {
-                            Player2Status.SetText("YOU WIN!", false);
-                            pts2+=3000;
+                        auto pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas * 300 + Player_2->getComponent<Script, Player>().bloquesDestruidos*10;
+                        if (Player_1->getComponent<Script, Player>().victory) {
+                            Player2Cel.Draw();
+                            Player2StatusB.SetText("WON!", false);
+                            pts2 += 3000;
+                        } else {
+                            Player2Cry.Draw();
                         }
-                        Player2Status.Draw();
+                        Player2StatusA.Draw();
+                        Player2StatusB.Draw();
                         // Carambanos destruidos
                         Icicler2.Draw();
                         Icicler2Text.Draw();
-                        Icicler2N.SetText(std::to_string(Player_2->getComponent<Script,Player>().icicleDestruido), false);
+                        Icicler2N.SetText(fill_string(std::to_string(Player_2->getComponent<Script,Player>().icicleDestruido),2), false);
                         Icicler2N.Draw();
                         // Numero de enemigos derrotados
                         Monster2.Draw();
                         Monster2Text.Draw();
-                        Monster2N.SetText(std::to_string(Player_2->getComponent<Script, Player>().nutpickerGolpeados), false);
+                        Monster2N.SetText(fill_string(std::to_string(Player_2->getComponent<Script, Player>().nutpickerGolpeados),2), false);
                         Monster2N.Draw();
                         // Verduras cogidas
                         Vegetabler2.Draw();
                         Vegetabler2Text.Draw();
-                        Vegetabler2N.SetText(std::to_string(Player_2->getComponent<Script, Player>().frutasRecogidas));
+                        Vegetabler2N.SetText(fill_string(std::to_string(Player_2->getComponent<Script, Player>().frutasRecogidas),2), false);
                         Vegetabler2N.Draw();
                         // Bloques destruidos
                         Block2.Draw();
-                        Block2N.SetText(std::to_string(Player_2->getComponent<Script, Player>().bloquesDestruidos));
+                        Block2N.SetText(fill_string(std::to_string(Player_2->getComponent<Script, Player>().bloquesDestruidos),2), false);
                         Block2N.Draw();
                         Block2Text.Draw();
                         // Puntos totales del jugador 2
+                        TotalTitle2.Draw();
                         SmallFrame2.Draw();
-                        Total2.SetText(std::to_string(pts2), false);
+                        Total2.SetText(fill_string(std::to_string(pts2),6), false);
                         Total2.Draw();
                     }
                     if(KeyboardDetected() || GamepadDetected(0)){
@@ -1282,7 +1346,6 @@ void Game(int numPlayers, int level, bool speed_run) {
                         onBonus = true;
                         moving_camera = true;
                         GameSystem::DestroyByTag("Enemy");
-                        //PopoBehavior::setFinal(true);
                     }
 
                     if(Player_1->getComponent<Script, Player>().lifes > 0)
@@ -1428,6 +1491,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     GameSystem::DestroyAll();
     BGM.Unload();
     BGM2.Unload();
+    if (exit_game) {
+        std::cout << "Hola\n";
+        exit(0);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -2134,7 +2201,9 @@ int main() {
                         if (IsKeyPressed(KEY_SPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) || IsGamepadButtonPressed(1, GAMEPAD_BUTTON_MIDDLE_RIGHT) ) {
                             p1current_time = p2current_time = 0;
                             p1show = p2show = false;
-                            nplayers++;
+                            if (nplayers < 2) {
+                                nplayers++;
+                            }
                         } else if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
                                 if (nplayers > 0) {
