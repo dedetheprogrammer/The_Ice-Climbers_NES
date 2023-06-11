@@ -43,6 +43,10 @@ std::unordered_map<std::string, std::string> types {
 };
 // -- GAMEPLAY
 const bool DEFAULT_ADVANCED_AI     = false;
+int P1_TOTAL_PTS                   = 0;
+int P1_TOTAL_SEC                   = 0;
+int P2_TOTAL_PTS                   = 0;
+int P2_TOTAL_SEC                   = 0;
 // -- GRAPHICS
 const bool DEFAULT_OLD_STYLE       = false;
 // ---- DISPLAY MODE
@@ -328,6 +332,28 @@ void controller_save_config(int controller, std::ofstream& os) {
         << "\nKB_Attack="       << std::get<int>(ini[controllerSection]["KB_Attack"])<< std::endl;
 }
 
+void save_sav() {
+    std::ofstream os("iceclimber.sav");
+    if (os.is_open()) {
+        os << "P1_TOTAL_PTS=" << P1_TOTAL_PTS
+           << "\nP1_TOTAL_SEC=" << P1_TOTAL_SEC
+           << "\nP2_TOTAL_PTS=" << P2_TOTAL_PTS
+           << "\nP2_TOTAL_SEC=" << P2_TOTAL_SEC;
+        os.close();
+    }
+}
+
+void backup_sav() {
+    std::ofstream os("iceclimber.sav.old");
+    if (os.is_open()) {
+        os << "P1_TOTAL_PTS=" << P1_TOTAL_PTS
+           << "\nP1_TOTAL_SEC=" << P1_TOTAL_SEC
+           << "\nP2_TOTAL_PTS=" << P2_TOTAL_PTS
+           << "\nP2_TOTAL_SEC=" << P2_TOTAL_SEC;
+        os.close();
+    }
+}
+
 void save_config() {
     std::ofstream os("settings.ini");
     os << "; Probando probando...\n";
@@ -368,12 +394,67 @@ void controller_init_config(Controller& controller, int controllerNumber, std::i
     controller.gp_controls[Controller::ATTACK] = std::get<int>(ini[controllerSection]["GP_Attack"]);
 }
 
+void init_sav() {
+    std::ifstream in("iceclimber.sav");
+    if (in.is_open()) {
+        std::streamsize buffersize = 1024 * 1024; // 1MB.
+        std::vector<char> buffer(buffersize);
+        in.rdbuf()->pubsetbuf(buffer.data(), buffersize);
+
+        int i = 0;
+        for (std::string line; std::getline(in, line); i++) {
+            std::istringstream iss(line);
+            std::string key, value;
+            if (std::getline(iss >> std::ws, key, '=') && std::getline(iss >> std::ws, value)) {
+                if (i == 0) {
+                    if (key == "P1_TOTAL_PTS") {
+                        P1_TOTAL_PTS = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                } else if (i == 1) {
+                    if (key == "P1_TOTAL_SEC") {
+                        P1_TOTAL_SEC = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                } else if (i == 2) {
+                    if (key == "P2_TOTAL_PTS") {
+                        P2_TOTAL_PTS = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                } else {
+                    if (key == "P2_TOTAL_SEC") {
+                        P2_TOTAL_SEC = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                }
+            }
+        }
+        in.close();
+    }
+}
+
 void init_config() {
     std::ifstream in("settings.ini");
     if (!in.is_open()) {
         default_config();
         save_config();
+        save_sav();
     } else {
+        // Init save data:
+        init_sav();
+        // Init config:
         std::streamsize buffersize = 1024 * 1024; // 1MB.
         std::vector<char> buffer(buffersize);
         in.rdbuf()->pubsetbuf(buffer.data(), buffersize);
@@ -396,6 +477,9 @@ void init_config() {
     }
     //-- Graphics
     InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "(THE) ICE CLIMBER(S)");
+    Image icon = LoadImage("Assets/Sprites/iceclimber.png");
+    SetWindowIcon(icon);
+    UnloadImage(icon);
     int aux_0 = std::get<int>(ini["Graphics"]["ScreenWidth"]);
     int aux_1 = std::get<int>(ini["Graphics"]["ScreenHeight"]);
     //---- Screen size
@@ -405,6 +489,7 @@ void init_config() {
             break;
         }
     }
+    SetConfigFlags(FLAG_VSYNC_HINT);
     //---- FPS limit
     aux_0 = std::get<int>(ini["Graphics"]["FPSLimit"]);
     SetTargetFPS(aux_0);
@@ -415,6 +500,7 @@ void init_config() {
         }
     }
     //---- Controller Settings
+    init_input_textures();
     controller_init_config(Controller_0, 0, in);
     controller_init_config(Controller_1, 1, in);
     controller_init_config(Controller_2, 2, in);

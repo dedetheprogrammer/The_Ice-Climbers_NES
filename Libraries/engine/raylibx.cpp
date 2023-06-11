@@ -66,6 +66,9 @@ Vector2 reflect(Vector2 wi, Vector2 n) {
   return wi - 2.f * dot(wi, n) * n;
 }
 
+// ----------------------------------------------------------------------------
+// Time extension
+// ----------------------------------------------------------------------------
 std::string millis_to_time(int millis) {
     int seconds = millis/1000;      millis %= 1000;
     int minutes = seconds/60;       seconds %= 60;
@@ -78,11 +81,29 @@ std::string millis_to_time(int millis) {
 }
 
 std::string seconds_to_time(int seconds) {
-    int minutes = seconds/60;       seconds %= 60;
-    int hours = minutes/60;         minutes %= 60;
+    int minutes = seconds/60;
+    seconds %= 60;
+    int hours = minutes/60;
+    minutes %= 60;
 
-    std::string time_string = std::to_string(seconds);
-    if (minutes > 0) time_string = std::to_string(minutes) + ":" + time_string;
-    if (hours > 0) time_string = std::to_string(hours) + ":" + time_string;
-    return "Tiempo: " + time_string;
+    std::string time_string;
+    std::ostringstream oss;
+    oss.fill('0');
+
+    // Agregar horas, minutos y segundos
+    oss << std::setw(2) << hours << ":";
+    oss << std::setw(2) << minutes << ":";
+    oss << std::setw(2) << seconds;
+
+    time_string = oss.str();
+    return time_string;
+}
+
+// ----------------------------------------------------------------------------
+// String treatment
+// ----------------------------------------------------------------------------
+std::string fill_string(std::string s, int width) {
+    std::ostringstream oss;
+    oss << std::setfill('0') << std::setw(width) << s;
+    return oss.str();
 }

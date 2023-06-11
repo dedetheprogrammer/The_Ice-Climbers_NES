@@ -1,5 +1,7 @@
 #include "Controllers.h"
 
+std::unordered_map<KeyboardKey, Texture2D> key_textures = {};
+std::unordered_map<GamepadButton, Texture2D> button_textures = {};
 std::unordered_map<int, bool> validKeys = {
     {KEY_NULL, false},
     // Alphanumeric keys
@@ -52,21 +54,21 @@ std::unordered_map<int, bool> validKeys = {
     // Function keys
     {KEY_SPACE, true},
     {KEY_ESCAPE, false},
-    {KEY_ENTER, false},
+    {KEY_ENTER, true},
     {KEY_TAB, true},
     {KEY_BACKSPACE, true},
     {KEY_RIGHT, true},
     {KEY_LEFT, true},
     {KEY_DOWN, true},
     {KEY_UP, true},
-    {KEY_PAGE_UP, true},
-    {KEY_PAGE_DOWN, true},
-    {KEY_HOME, true},
-    {KEY_END, true},
+    {KEY_PAGE_UP, false},
+    {KEY_PAGE_DOWN, false},
+    {KEY_HOME, false},
+    {KEY_END, false},
     {KEY_CAPS_LOCK, true},
-    {KEY_SCROLL_LOCK, true},
-    {KEY_NUM_LOCK, true},
-    {KEY_PRINT_SCREEN, true},
+    {KEY_SCROLL_LOCK, false},
+    {KEY_NUM_LOCK, false},
+    {KEY_PRINT_SCREEN, false},
     {KEY_PAUSE, false},
     {KEY_F1, false},
     {KEY_F2, false},
@@ -83,11 +85,11 @@ std::unordered_map<int, bool> validKeys = {
     {KEY_LEFT_SHIFT, true},
     {KEY_LEFT_CONTROL, true},
     {KEY_LEFT_ALT, true},
-    {KEY_LEFT_SUPER, true},
+    {KEY_LEFT_SUPER, false},
     {KEY_RIGHT_SHIFT, true},
-    {KEY_RIGHT_CONTROL, true},
+    {KEY_RIGHT_CONTROL, false},
     {KEY_RIGHT_ALT, true},
-    {KEY_RIGHT_SUPER, true},
+    {KEY_RIGHT_SUPER, false},
     {KEY_KB_MENU, false},
     // Keypad keys
     {KEY_KP_0, true},
@@ -220,11 +222,6 @@ std::unordered_map<int, std::string> code2key = {
     {KEY_KP_ADD, "KP_ADD"},
     {KEY_KP_ENTER, "KP_ENTER"},
     {KEY_KP_EQUAL, "KP_EQUAL"},
-    // Android key buttons
-    {KEY_BACK, "BACK"},
-    {KEY_MENU, "MENU"},
-    {KEY_VOLUME_UP, "VOLUME_UP"},
-    {KEY_VOLUME_DOWN, "VOLUME_DOWN"}
 };
 std::unordered_map<int, std::string> code2joy = {
     {GAMEPAD_BUTTON_UNKNOWN, "UNKNOWN"},
@@ -286,8 +283,7 @@ bool Controller::isPressed(Control c) {
         else return IsGamepadButtonPressed(type, gp_controls[c]);
 
     } else return false;
-}
-    
+}  
 bool Controller::isDown(Control c) {
 
     if (c == NO_CONTROL) return false;
@@ -307,7 +303,12 @@ bool Controller::isDown(Control c) {
 
     } else return false;
 }
-std::string Controller::getActionBind(Control c) { return (type == Type::KEYBOARD) ? code2key[kb_controls[c]] : code2joy[gp_controls[c]]; }
+std::string Controller::getActionBind(Control c) { 
+    return (type == Type::KEYBOARD) ? code2key[kb_controls[c]] : code2joy[gp_controls[c]]; 
+}
+Texture2D Controller::getActionTexture(Control c) {
+    return (type == Type::KEYBOARD) ? key_textures[(KeyboardKey)kb_controls[c]] : button_textures[(GamepadButton)gp_controls[c]];
+}
 void Controller::printAll() {
     std::cout << "Keyboard bindings:" << std::endl;
     for (auto kv : kb_controls) {
@@ -334,6 +335,87 @@ void Controller::printKey(Type t, Control c) {
     }
 
     std::cout << "Controller: " << controllerName << ", Control: " << c << " , Keybind: " << keybind << " , Active: " << isActive << std::endl;
+}
+
+void init_input_textures() {
+    key_textures[KEY_COMMA] = LoadTexture("Assets/Sprites/Keys/,.png");
+    key_textures[KEY_MINUS] = LoadTexture("Assets/Sprites/Keys/-.png");
+    key_textures[KEY_ZERO] = LoadTexture("Assets/Sprites/Keys/0.png");
+    key_textures[KEY_ONE] = LoadTexture("Assets/Sprites/Keys/1.png");
+    key_textures[KEY_TWO] = LoadTexture("Assets/Sprites/Keys/2.png");
+    key_textures[KEY_THREE] = LoadTexture("Assets/Sprites/Keys/3.png");
+    key_textures[KEY_FOUR] = LoadTexture("Assets/Sprites/Keys/4.png");
+    key_textures[KEY_FIVE] = LoadTexture("Assets/Sprites/Keys/5.png");
+    key_textures[KEY_SIX] = LoadTexture("Assets/Sprites/Keys/6.png");
+    key_textures[KEY_SEVEN] = LoadTexture("Assets/Sprites/Keys/7.png");
+    key_textures[KEY_EIGHT] = LoadTexture("Assets/Sprites/Keys/8.png");
+    key_textures[KEY_NINE] = LoadTexture("Assets/Sprites/Keys/9.png");
+    key_textures[KEY_A] = LoadTexture("Assets/Sprites/Keys/a.png");
+    key_textures[KEY_B] = LoadTexture("Assets/Sprites/Keys/b.png");
+    key_textures[KEY_C] = LoadTexture("Assets/Sprites/Keys/c.png");
+    key_textures[KEY_D] = LoadTexture("Assets/Sprites/Keys/d.png");
+    key_textures[KEY_E] = LoadTexture("Assets/Sprites/Keys/e.png");
+    key_textures[KEY_F] = LoadTexture("Assets/Sprites/Keys/f.png");
+    key_textures[KEY_G] = LoadTexture("Assets/Sprites/Keys/g.png");
+    key_textures[KEY_H] = LoadTexture("Assets/Sprites/Keys/h.png");
+    key_textures[KEY_I] = LoadTexture("Assets/Sprites/Keys/i.png");
+    key_textures[KEY_J] = LoadTexture("Assets/Sprites/Keys/j.png");
+    key_textures[KEY_K] = LoadTexture("Assets/Sprites/Keys/k.png");
+    key_textures[KEY_L] = LoadTexture("Assets/Sprites/Keys/l.png");
+    key_textures[KEY_M] = LoadTexture("Assets/Sprites/Keys/m.png");
+    key_textures[KEY_N] = LoadTexture("Assets/Sprites/Keys/n.png");
+    key_textures[KEY_O] = LoadTexture("Assets/Sprites/Keys/o.png");
+    key_textures[KEY_P] = LoadTexture("Assets/Sprites/Keys/p.png");
+    key_textures[KEY_Q] = LoadTexture("Assets/Sprites/Keys/q.png");
+    key_textures[KEY_R] = LoadTexture("Assets/Sprites/Keys/r.png");
+    key_textures[KEY_S] = LoadTexture("Assets/Sprites/Keys/s.png");
+    key_textures[KEY_T] = LoadTexture("Assets/Sprites/Keys/t.png");
+    key_textures[KEY_U] = LoadTexture("Assets/Sprites/Keys/u.png");
+    key_textures[KEY_V] = LoadTexture("Assets/Sprites/Keys/v.png");
+    key_textures[KEY_W] = LoadTexture("Assets/Sprites/Keys/w.png");
+    key_textures[KEY_X] = LoadTexture("Assets/Sprites/Keys/x.png");
+    key_textures[KEY_Y] = LoadTexture("Assets/Sprites/Keys/y.png");
+    key_textures[KEY_Z] = LoadTexture("Assets/Sprites/Keys/z.png");
+    key_textures[KEY_SPACE] = LoadTexture("Assets/Sprites/Keys/space.png");
+    key_textures[KEY_TAB] = LoadTexture("Assets/Sprites/Keys/tab.png");
+    key_textures[KEY_BACKSPACE] = LoadTexture("Assets/Sprites/Keys/backspace.png");
+    key_textures[KEY_RIGHT] = LoadTexture("Assets/Sprites/Keys/pader.png");
+    key_textures[KEY_LEFT] = LoadTexture("Assets/Sprites/Keys/paizq.png");
+    key_textures[KEY_DOWN] = LoadTexture("Assets/Sprites/Keys/pabajo.png");
+    key_textures[KEY_UP] = LoadTexture("Assets/Sprites/Keys/parriba.png");
+    key_textures[KEY_CAPS_LOCK] = LoadTexture("Assets/Sprites/Keys/bloqmayus.png");
+    key_textures[KEY_LEFT_SHIFT] = LoadTexture("Assets/Sprites/Keys/leftshift.png");
+    key_textures[KEY_LEFT_CONTROL] = LoadTexture("Assets/Sprites/Keys/leftctrl.png");
+    key_textures[KEY_LEFT_ALT] = LoadTexture("Assets/Sprites/Keys/alt.png");
+    key_textures[KEY_RIGHT_SHIFT] = LoadTexture("Assets/Sprites/Keys/rightshift.png");
+    key_textures[KEY_RIGHT_ALT] = LoadTexture("Assets/Sprites/Keys/altgr.png");
+    key_textures[KEY_KP_0] = LoadTexture("Assets/Sprites/Keys/kp0.png");
+    key_textures[KEY_KP_1] = LoadTexture("Assets/Sprites/Keys/kp1.png");
+    key_textures[KEY_KP_2] = LoadTexture("Assets/Sprites/Keys/kp2.png");
+    key_textures[KEY_KP_3] = LoadTexture("Assets/Sprites/Keys/kp3.png");
+    key_textures[KEY_KP_4] = LoadTexture("Assets/Sprites/Keys/kp4.png");
+    key_textures[KEY_KP_5] = LoadTexture("Assets/Sprites/Keys/kp5.png");
+    key_textures[KEY_KP_6] = LoadTexture("Assets/Sprites/Keys/kp6.png");
+    key_textures[KEY_KP_7] = LoadTexture("Assets/Sprites/Keys/kp7.png");
+    key_textures[KEY_KP_8] = LoadTexture("Assets/Sprites/Keys/kp8.png");
+    key_textures[KEY_KP_9] = LoadTexture("Assets/Sprites/Keys/kp9.png");
+    key_textures[KEY_KP_ENTER] = LoadTexture("Assets/Sprites/Keys/enter.png");
+    button_textures[GAMEPAD_BUTTON_LEFT_FACE_UP] = LoadTexture("Assets/Sprites/Buttons/LFUp(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_FACE_RIGHT] = LoadTexture("Assets/Sprites/Buttons/LFRight(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_FACE_DOWN] = LoadTexture("Assets/Sprites/Buttons/LFDown(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_FACE_LEFT] = LoadTexture("Assets/Sprites/Buttons/LFLeft(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_FACE_UP] = LoadTexture("Assets/Sprites/Buttons/RFUp(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_FACE_RIGHT] = LoadTexture("Assets/Sprites/Buttons/RFRight(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_FACE_DOWN] = LoadTexture("Assets/Sprites/Buttons/RFDown(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_FACE_LEFT] = LoadTexture("Assets/Sprites/Buttons/RFLeft(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_TRIGGER_1] = LoadTexture("Assets/Sprites/Buttons/LT1(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_TRIGGER_2] = LoadTexture("Assets/Sprites/Buttons/LT2(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_TRIGGER_1] = LoadTexture("Assets/Sprites/Buttons/RT1(PS4).png");
+    button_textures[GAMEPAD_BUTTON_RIGHT_TRIGGER_2] = LoadTexture("Assets/Sprites/Buttons/RT2(PS4).png");
+    button_textures[GAMEPAD_BUTTON_MIDDLE_LEFT] = LoadTexture("Assets/Sprites/Buttons/ML(PS4).png");
+    button_textures[GAMEPAD_BUTTON_MIDDLE] = LoadTexture("Assets/Sprites/Buttons/M(PS4).png");
+    button_textures[GAMEPAD_BUTTON_MIDDLE_RIGHT] = LoadTexture("Assets/Sprites/Buttons/MR(PS4).png");
+    button_textures[GAMEPAD_BUTTON_LEFT_THUMB] = LoadTexture("Assets/Sprites/Buttons/LTh(PS4).png");
 }
 
 std::string to_string(Controller::Type type) {

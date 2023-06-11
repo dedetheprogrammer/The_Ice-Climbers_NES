@@ -3,11 +3,14 @@
 #define RAYLIB_EXT_H
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include "raylib.h"
 
 #define COYOTEBROWN CLITERAL(Color){ 186, 143, 80, 255 }
+#define DEEPSAFFRON CLITERAL(Color){ 252, 152, 56, 255}
 #define JELLYFISH CLITERAL(Color){ 91, 191, 222, 255 }
 #define JELLYBEANBLUE CLITERAL(Color){ 66, 117, 133, 255 }
 
@@ -61,4 +64,8 @@ std::ostream& operator<<(std::ostream& os, Vector2 v);
 std::string millis_to_time(int millis);
 std::string seconds_to_time(int seconds);
 
+// ----------------------------------------------------------------------------
+// String treatment
+// ----------------------------------------------------------------------------
+std::string fill_string(std::string s, int width);
 #endif

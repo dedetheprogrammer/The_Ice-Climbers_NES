@@ -41,6 +41,7 @@ UISprite::UISprite(const char* fileName, Vector2 pos, float scale_x, float scale
 {
     fullscreen   = false;
     sprite       = LoadTexture(fileName);
+    scale        = {scale_x, scale_y};
     src          = {0, 0, (float)sprite.width, (float)sprite.height};
     Vector2 size{src.width * scale_x, src.height * scale_y};
     if (pivot == UP_LEFT) {
@@ -75,6 +76,7 @@ UISprite::UISprite(const char* fileName, Vector2 pos, Vector2 size, PIVOT pivot,
         fullscreen = false;
     }
     sprite       = LoadTexture(fileName);
+    scale        = {size.x/sprite.width, size.y/sprite.height};
     src          = {0, 0, (float)sprite.width, (float)sprite.height};
     if (pivot == UP_LEFT) {
         dst = {pos.x, pos.y, size.x, size.y};
@@ -104,6 +106,7 @@ UISprite::UISprite(Texture2D sprite, Vector2 pos, float scale_x, float scale_y, 
     : UIObject(pivot, hidden, scale_factor) 
 {
     this->sprite = sprite;
+    this->scale  = {scale_x, scale_y};
     src = {0, 0, (float)sprite.width, (float)sprite.height};
     //dst = {pos.x, pos.y, src.width * scale_x, src.height * scale_y};
     Vector2 size{src.width * scale_x, src.height * scale_y};
@@ -192,14 +195,15 @@ void UISprite::Reescale() {
         float scale = fmaxf(GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 
             GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
         if (fullscreen) {
-            dst.width  = ref.width  * scale;
-            dst.height = ref.height * scale;
+            dst.width  = GetScreenWidth();
+            dst.height = GetScreenHeight();
+            dst.x = dst.y = 0;
         } else {
             dst.width  = ref.width  * scale * scale_factor;
             dst.height = ref.height * scale * scale_factor;
+            dst.x = ref.x * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF;
+            dst.y = ref.y * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
         }
-        dst.x = ref.x * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF;
-        dst.y = ref.y * GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF;
     }
 
     if (pivot == UIObject::UP_CENTER) {
@@ -222,6 +226,42 @@ void UISprite::Reescale() {
     } else if (pivot == UIObject::DOWN_RIGHT) {
         dst.x -= dst.width;
         dst.y -= dst.height;
+    }
+}
+
+void UISprite::SetTexture(Texture2D sprite, Vector2 new_scale, bool rescale) {
+    this->sprite = sprite;
+    if (new_scale.x != -1 && new_scale.y != -1) {
+        scale = new_scale;
+    }
+    float scale_x = scale.x, scale_y = scale.y;
+    Vector2 pos = {ref.x, ref.y};
+    src = {0, 0, (float)sprite.width, (float)sprite.height};
+    Vector2 size{src.width * scale_x, src.height * scale_y};
+    if (pivot == UP_LEFT) {
+        dst = {pos.x, pos.y, size.x, size.y};
+    } else if (pivot == UP_CENTER) {
+        dst = {pos.x - size.x/2, pos.y, size.x, size.y};
+    } else if (pivot == UP_RIGHT) {
+        dst = {pos.x - size.x, pos.y, size.x, size.y};
+    } else if (pivot == CENTER_LEFT) {
+        dst = {pos.x, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == CENTER) {
+        dst = {pos.x - size.x/2, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == CENTER_RIGHT) {
+        dst = {pos.x - size.x, pos.y - size.y/2, size.x, size.y};
+    } else if (pivot == DOWN_LEFT) {
+        dst = {pos.x, pos.y - size.y, size.x, size.y};
+    } else if (pivot == DOWN_CENTER) {
+        dst = {pos.x - size.x/2, pos.y - size.y, size.x, size.y};
+    } else if (pivot == DOWN_RIGHT) {
+        dst = {pos.x - size.x, pos.y - size.y, size.x, size.y};
+    }
+    ref.width  = size.x;
+    ref.height = size.y;
+    //ref = {pos.x, pos.y, dst.width, dst.height};
+    if (rescale) {
+        Reescale();
     }
 }
 

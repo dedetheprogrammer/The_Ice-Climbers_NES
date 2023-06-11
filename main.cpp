@@ -10,26 +10,9 @@
 #include "Fruit.h"
 #include "Player.h"
 
-/* TODO:
- - Añadir mas sonidos.
- - Arreglar bug de que si muere popo todos se van.
- - Limpiar lo inecesario 
- - Meter sprites a los botones.
- - Rehacer el sistema de controles.
- - Meter el brawl.
- - Arreglar las colisiones.
- - Meter reescalado in-game?
- */
-
 Font NES;
 
-std::string fill_string(std::string s, int width) {
-    std::ostringstream oss;
-    oss << std::setfill('0') << std::setw(width) << s;
-    return oss.str();
-}
-
-void Game(int numPlayers, int level, bool speed_run) {
+void Game(int numPlayers, int level, int run_time) {
 
     SetExitKey(KEY_NULL);
     Texture2D mountain_sprite = LoadTexture("Assets/Sprites/00_Mountain.png");
@@ -52,10 +35,14 @@ void Game(int numPlayers, int level, bool speed_run) {
     Vector2 scale = {horizontal_scale, vertical_scale};
 
     int level_phase = 0;
+    int pts1 = 0, pts2 = 0;
 
-    MusicSource BGM("Assets/Sounds/03-Play-BGM.mp3",true);
+    MusicSource BGM("Assets/Sounds/03-Play-BGM.mp3", true);
+    MusicSource BGMBonus("Assets/Sounds/01-Main-Title.mp3", true);
     MusicSource BGM2("Assets/Sounds/Mick Gordon - The Only Thing They Fear Is You.mp3", true);
     //MusicSource BGM3("Assets/NES - Ice Climber - Sound Effects/Go Go Go - Nightcore.mp3", true);
+    SoundSource PauseSound("Assets/Sounds/08-Pause.wav");
+    SoundSource Fly("Assets/Sounds/17-Fly.wav");
 
     auto BackGrounds = std::vector<Canvas>{
         Canvas("Assets/Sprites/00_Mountain.png", {0.0f, GAME_HEIGHT - GAME_WIDTH*2.3f}, {GAME_WIDTH, GAME_WIDTH*2.3f}),
@@ -63,18 +50,12 @@ void Game(int numPlayers, int level, bool speed_run) {
         Canvas("Assets/Sprites/02_Brawl.png", {0.0f, GAME_HEIGHT - GAME_WIDTH}, {GAME_WIDTH, GAME_HEIGHT})
     };
 
-    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {8.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {16.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {24.0f * horizontal_scale, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {8.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {16.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {24.0f * horizontal_scale, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam1("Assets/Sprites/Amam/Life.png", {8.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam2("Assets/Sprites/Amam/Life.png", {16.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeAmam3("Assets/Sprites/Amam/Life.png", {24.0f * horizontal_scale, 34.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili1("Assets/Sprites/Lili/Life.png", {8.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili2("Assets/Sprites/Lili/Life.png", {16.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
-    Canvas LifeLili3("Assets/Sprites/Lili/Life.png", {24.0f * horizontal_scale, 43.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo1("Assets/Sprites/Popo/Life.png", {GetScreenWidth() - 150.0f, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo2("Assets/Sprites/Popo/Life.png", {GetScreenWidth() - 120.0f, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifePopo3("Assets/Sprites/Popo/Life.png", {GetScreenWidth() -  90.0f, 16.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana1("Assets/Sprites/Nana/Life.png", {GetScreenWidth() - 150.0f, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana2("Assets/Sprites/Nana/Life.png", {GetScreenWidth() - 120.0f, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
+    Canvas LifeNana3("Assets/Sprites/Nana/Life.png", {GetScreenWidth() -  90.0f, 25.0f * vertical_scale}, {8.0f * horizontal_scale, 8.0f * vertical_scale});
 
     // Suelo base
     GameObject BaseFloor("Base Floor", "Floor");
@@ -82,7 +63,9 @@ void Game(int numPlayers, int level, bool speed_run) {
     BaseFloor.addComponent<Script, FloorBehavior>();
 
     GameObject Stalactite("Stalactite", "Stalactite", {"Stalactite"}, {"Floor", "SlidingFloor", "Player", "Wall", "Cloud"});
-
+    Stalactite.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Fall", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/15-Icicle-Falling.wav"))},
+    });
     // Bloque de hierba
     GameObject GrassBlock("Grass Block", "Floor", {"Block"});
     GrassBlock.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
@@ -93,8 +76,6 @@ void Game(int numPlayers, int level, bool speed_run) {
         {"Break", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Block_Break.wav"))},
     });
     GameObject GrassHole("Grass Hole", "Hole");
-
-
 
     // Me llevo arriba la definición del sprite para tener a mano las variables de abajo
     GrassBlock.addComponent<Sprite>("Assets/Sprites/Blocks/Grass_block_large.png", horizontal_scale, vertical_scale);
@@ -309,13 +290,21 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     Nana.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
         {"Idle", Animation("Assets/Sprites/Nana/00_Idle.png", 16, 24, scale, 0.75, true)},
-        {"Walk", Animation("Assets/Sprites/Nana/02_Walk.png", 16, 24, scale, 0.135, true)},
-        {"Brake", Animation("Assets/Sprites/Nana/03_Brake.png", 16, 24, scale, 0.3, true)},
-        {"Jump", Animation("Assets/Sprites/Nana/04_Jump.png", 20, 25, scale, 0.5, false)},
-        {"Attack", Animation("Assets/Sprites/Nana/05_Attack.png", 21, 25, scale, 0.3, false)},
-        {"Stunned", Animation("Assets/Sprites/Nana/06_Stunned.png", 16, 24, scale, 0.5, true)},
-        {"Fall", Animation("Assets/Sprites/Nana/07_Fall.png", 21, 25, scale, 0.3, false)},
-        {"Crouch", Animation("Assets/Sprites/Nana/08_Crouch.png", 16, 24, scale, 0.75, true)},
+        {"IdleBonus", Animation("Assets/Sprites/Nana/00_Idle_Bonus.png", 16, 24, scale, 0.75, true)},
+        {"Walk", Animation("Assets/Sprites/Nana/01_Walk.png", 16, 24, scale, 0.135, true)},
+        {"WalkBonus", Animation("Assets/Sprites/Nana/01_Walk_Bonus.png", 16, 24, scale, 0.135, true)},
+        {"Brake", Animation("Assets/Sprites/Nana/02_Brake.png", 16, 24, scale, 0.3, true)},
+        {"BrakeBonus", Animation("Assets/Sprites/Nana/02_Brake_Bonus.png", 16, 24, scale, 0.3, true)},
+        {"Jump", Animation("Assets/Sprites/Nana/03_Jump.png", 20, 25, scale, 0.5, false)},
+        {"JumpBonus", Animation("Assets/Sprites/Nana/03_Jump_Bonus.png", 20, 25, scale, 0.5, false)},
+        {"Attack", Animation("Assets/Sprites/Nana/04_Attack.png", 21, 25, scale, 0.3, false)},
+        {"AttackBonus", Animation("Assets/Sprites/Nana/04_Attack_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Stunned", Animation("Assets/Sprites/Nana/05_Stunned.png", 16, 21, scale, 0.5, true)},
+        {"StunnedBonus", Animation("Assets/Sprites/Nana/05_Stunned.png", 16, 24, scale, 0.5, true)},
+        {"Fall", Animation("Assets/Sprites/Nana/06_Fall.png", 21, 25, scale, 0.3, false)},
+        {"FallBonus", Animation("Assets/Sprites/Nana/06_Fall_Bonus.png", 21, 25, scale, 0.3, false)},
+        {"Crouch", Animation("Assets/Sprites/Nana/07_Crouch.png", 16, 24, scale, 0.75, true)},
+        {"CrouchBonus", Animation("Assets/Sprites/Nana/07_Crouch_Bonus.png", 16, 24, scale, 0.75, true)},
     });
 
     Amam.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
@@ -342,9 +331,13 @@ void Game(int numPlayers, int level, bool speed_run) {
     // 3. Añadimos el componente de Audio:
     Popo.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+        {"Victory", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Victory.mp3"))},
+        {"Hit", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/10-Player-Hit.wav"))}
     });
     Nana.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
+        {"Victory", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/04-Victory.mp3"))},
+        {"Hit", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/10-Player-Hit.wav"))}
     });
     Amam.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
         {"Jump", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/09-Jump.wav"))},
@@ -401,6 +394,9 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     // Icicle
     GameObject Icicle("Icicle", "Icicle", {}, {"Hole", "Player", "Floor"});
+    Icicle.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Rebuild", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/05-Rebuild.wav"))},
+    });
     Icicle.addComponent<Sprite>("Assets/Sprites/Icicle.png", horizontal_scale, vertical_scale);
     Icicle.addComponent<Collider2D>(&Icicle.getComponent<Transform2D>().position, Icicle.getComponent<Sprite>().GetViewDimensions());
     Icicle.addComponent<RigidBody2D>(1, 98, Vector2{0,0}, Vector2{0,0});
@@ -408,6 +404,9 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     // Frutas
     GameObject Eggplant("Fruit", "Fruit");
+    Eggplant.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Pick", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/03-Pick-Vegetable.wav"))},
+    });
     Eggplant.addComponent<Sprite>("Assets/Sprites/Fruit_Eggplant.png", horizontal_scale, vertical_scale);
     Eggplant.addComponent<Collider2D>(&Eggplant.getComponent<Transform2D>().position, Eggplant.getComponent<Sprite>().GetViewDimensions(), ORANGE);
     Eggplant.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
@@ -415,6 +414,9 @@ void Game(int numPlayers, int level, bool speed_run) {
     float eggplant_height = Eggplant.getComponent<Sprite>().GetViewDimensions().y;
 
     GameObject Lettuce("Fruit", "Fruit");
+    Lettuce.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Pick", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/03-Pick-Vegetable.wav"))},
+    });
     Lettuce.addComponent<Sprite>("Assets/Sprites/Fruit_Lettuce.png", horizontal_scale, vertical_scale);
     Lettuce.addComponent<Collider2D>(&Lettuce.getComponent<Transform2D>().position, Lettuce.getComponent<Sprite>().GetViewDimensions(), ORANGE);
     Lettuce.addComponent<RigidBody2D>(1, 0, Vector2{0,0}, Vector2{100, 0});
@@ -423,6 +425,9 @@ void Game(int numPlayers, int level, bool speed_run) {
 
     // Enemies
     GameObject Topi("Topi", "Enemy", {"Topi"}, {"Floor", "SlidingFloor", "Hole", "Player", "Icicle", "Wall"});
+    Topi.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Hit", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/02-Topi-Hit.wav"))},
+    });
     Topi.addComponent<Animator>("Walk", std::unordered_map<std::string, Animation> {
             {"Walk", Animation("Assets/Sprites/Topi/01_Walk.png", 16, 16, scale, 0.3, true)},
             {"Stunned", Animation("Assets/Sprites/Topi/02_Stunned.png", 16, 16, scale, 0.5, true)},
@@ -446,6 +451,9 @@ void Game(int numPlayers, int level, bool speed_run) {
     Joseph.addComponent<Script, JosephBehavior>();
 
     GameObject Nutpicker("Nutpicker", "Enemy", {}, {"Player", "Floor", "Wall"});
+    Nutpicker.addComponent<AudioPlayer>(std::unordered_map<std::string, std::shared_ptr<AudioSource>> {
+        {"Hit", std::make_shared<SoundSource>(SoundSource("Assets/Sounds/14-Nutpicker-Hit.wav"))},
+    });
     Nutpicker.addComponent<Animator>("Idle", std::unordered_map<std::string, Animation> {
             {"Idle", Animation("Assets/Sprites/Nutpicker_Idle.png", 16, 16, scale, 0.5, true)},
             {"Walk", Animation("Assets/Sprites/Nutpicker - Spritesheet 01 - Fly.png", 16, 16, scale, 0.3, true)},
@@ -1118,15 +1126,20 @@ void Game(int numPlayers, int level, bool speed_run) {
     float objects_offset = 6.0f * block_height, current_objects_offset = 0;
     float old_offset = objects_offset;
     float chrono_time = 0.0f;
-    float time_limit = 120.0f;
+    float time_limit = run_time;
+    float current_time = 0.0f;
     bool onBonus = false;
     BGM.Init();
+    BGMBonus.Init();
     BGM2.Init();
 
     UIText ContinueText(NES, "CONTINUE", 40, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f - 30}, UIObject::CENTER);
     UIText ExitText(NES, "EXIT", 40, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 30}, UIObject::CENTER);
     UISprite Hammer("Assets/Sprites/UI_Old_Hammer.png", {ContinueText.pos.x - 50, ContinueText.pos.y}, 4.0f, 4.0f, UIObject::UP_RIGHT);
     int OPTION = 0, OPTIONS = 2; // HammerView
+
+    UISprite TimerBox("Assets/Sprites/timer.png", {20, 20}, 3.5f, 3.5f);
+    UIText TimerCount(NES, "0:00", 41, 1, {TimerBox.dst.x + TimerBox.dst.width/2.0f, 60}, UIObject::UP_CENTER);
 
     // Ranking of player 1
     UISprite BigFrame1("Assets/Sprites/Record-frame1.png", {GetScreenWidth()/4.0f, GetScreenHeight()/2.0f}, {GetScreenWidth()/2.0f - 50, GetScreenHeight() - 40.0f}, UIObject::CENTER);
@@ -1183,11 +1196,10 @@ void Game(int numPlayers, int level, bool speed_run) {
     UIText TotalTitle2(NES, "TOTAL", 40, 0, {GetScreenWidth() * (1 - 1/4.0f - 1/24.0f), GetScreenHeight()/2.0f + 135}, UIObject::UP_CENTER);
     UISprite SmallFrame2("Assets/Sprites/Record-frames2.png", {GetScreenWidth() * (1 - 1/4.0f), GetScreenHeight()/2.0f + 170}, 4.0f, 3.5f, UIObject::UP_CENTER);
     UIText Total2(NES,"000000", 40, 1, {GetScreenWidth() * (1-1/4.0f), (GetScreenHeight() + SmallFrame2.dst.height)/2.0f + 170}, UIObject::CENTER);
+    float transition_time = 6.0f; bool play_first = true;
 
     enum GAME_MENU {GAME, PAUSED, RANKING};
     GAME_MENU CURRENT_MENU = GAME;
-
-    //UISystem::Reescale();
     GameSystem::Start();
     while(!finished) {
         // Condition to close the window directly
@@ -1200,10 +1212,19 @@ void Game(int numPlayers, int level, bool speed_run) {
         if (CURRENT_MENU == RANKING) {
             if (current_objects_offset <= objects_offset) {
                 BackGrounds[level].Draw();
-                float shift = block_height * 6.0f * GetFrameTime();
-                current_objects_offset += shift;
-                GameSystem::Move({0,shift});
-                BackGrounds[level].Move({0,shift});
+                if (transition_time > 0.0f && Player_1->getComponent<Script, Player>().victory) {
+                    GameSystem::Render();
+                    transition_time -= GetFrameTime();
+                } else {
+                    if (play_first) {
+                        Fly.Play();
+                        play_first = false;
+                    }
+                    float shift = block_height * 6.0f * GetFrameTime();
+                    current_objects_offset += shift;
+                    GameSystem::Move({0,shift});
+                    BackGrounds[level].Move({0,shift});
+                }
             } else {
                 if (timeToShowScores < 3.0) {
                     timeToShowScores += GetFrameTime();
@@ -1211,7 +1232,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                     BigFrame1.Draw();
                     // Victoria o derrota del jugador 1
                     Player1Text.Draw();
-                    auto pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas * 300 + Player_1->getComponent<Script, Player>().bloquesDestruidos *10;
+                    pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas * 300 + Player_1->getComponent<Script, Player>().bloquesDestruidos *10;
                     if (Player_1->getComponent<Script, Player>().victory) {
                         Player1Cel.Draw();
                         Player1StatusB.SetText("WON!", false);
@@ -1251,7 +1272,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                         BigFrame2.Draw();
                         // Victoria o derrota del jugador 2
                         Player2Text.Draw();
-                        auto pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas * 300 + Player_2->getComponent<Script, Player>().bloquesDestruidos*10;
+                        pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas * 300 + Player_2->getComponent<Script, Player>().bloquesDestruidos*10;
                         if (Player_1->getComponent<Script, Player>().victory) {
                             Player2Cel.Draw();
                             Player2StatusB.SetText("WON!", false);
@@ -1297,7 +1318,11 @@ void Game(int numPlayers, int level, bool speed_run) {
                 play_music = !play_music;
             }
             if (play_music) {
-                BGM.Play();
+                if (!onBonus) {
+                    BGM.Play();
+                } else {
+                    BGMBonus.Play();
+                }
             } else {
                 BGM2.Play();
             }
@@ -1307,6 +1332,7 @@ void Game(int numPlayers, int level, bool speed_run) {
                 if (CURRENT_MENU == PAUSED) {
                     CURRENT_MENU = GAME;
                 } else if (CURRENT_MENU == GAME) {
+                    PauseSound.Play();
                     CURRENT_MENU = PAUSED;
                 }
             }
@@ -1319,14 +1345,6 @@ void Game(int numPlayers, int level, bool speed_run) {
             if (CURRENT_MENU == GAME) {
                 float delta_time = GetFrameTime();
                 chrono_time += delta_time;
-
-                if (speed_run) {
-                    time_limit = time_limit - delta_time;
-                    if (time_limit < 0) {
-                        time_limit = 0;
-                        CURRENT_MENU = RANKING;
-                    }
-                }
 
                 if (!onBonus) {
                     for (auto JosephInstance : Josephs) {
@@ -1343,21 +1361,6 @@ void Game(int numPlayers, int level, bool speed_run) {
                         onBonus = true;
                         moving_camera = true;
                         GameSystem::DestroyByTag("Enemy");
-                    }
-
-                    if(Player_1->getComponent<Script, Player>().lifes > 0)
-                        LifePopo1.Draw();
-                    if(Player_1->getComponent<Script, Player>().lifes > 1)
-                        LifePopo2.Draw();
-                    if(Player_1->getComponent<Script, Player>().lifes > 2)
-                        LifePopo3.Draw();
-                    if(numPlayers > 1) {
-                        if(Player_2->getComponent<Script, Player>().lifes > 0)
-                            LifeNana1.Draw();
-                        if(Player_2->getComponent<Script, Player>().lifes > 1)
-                            LifeNana2.Draw();
-                        if(Player_2->getComponent<Script, Player>().lifes > 2)
-                            LifeNana3.Draw();
                     }
                 }
 
@@ -1409,17 +1412,42 @@ void Game(int numPlayers, int level, bool speed_run) {
                     GameSystem::Render();
                 }
 
-                if (speed_run) {
-                    std::string speedrun_string = seconds_to_time(chrono_time);
-                    auto dimensions = MeasureTextEx(NES, speedrun_string.c_str(), 35, 2);
-                    DrawTextPro(NES, speedrun_string.c_str(), {GAME_WIDTH-dimensions.x-2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
-                    std::string time_limit_string = seconds_to_time(time_limit);
-                    dimensions = MeasureTextEx(NES, time_limit_string.c_str(), 35, 2);
-                    DrawTextPro(NES, time_limit_string.c_str(), {2.0f, 2.0f}, {0,0}, 0, 30, 2, WHITE);
-                }
-
                 if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyDown(KEY_LEFT_SHIFT) && IsKeyPressed(KEY_R)) {
                     Player_1->getComponent<Transform2D>().position = Vector2{600,70};
+                }
+
+                if (run_time > 0) {
+                    time_limit = time_limit - delta_time;
+                    if (time_limit < 0) {
+                        time_limit = 0;
+                        CURRENT_MENU = RANKING;
+                    } else {
+                        TimerBox.Draw();
+                        TimerCount.SetText(seconds_to_time(time_limit));
+                        TimerCount.Draw((time_limit < 30) ? RED : WHITE);
+                    }
+                } else if (run_time == 0) {
+                    current_time += delta_time;
+                    TimerBox.Draw();
+                    TimerCount.SetText(seconds_to_time(current_time));
+                    TimerCount.Draw();
+                }
+
+                if (!onBonus) {
+                    if(Player_1->getComponent<Script, Player>().lifes > 0)
+                        LifePopo1.Draw();
+                    if(Player_1->getComponent<Script, Player>().lifes > 1)
+                        LifePopo2.Draw();
+                    if(Player_1->getComponent<Script, Player>().lifes > 2)
+                        LifePopo3.Draw();
+                    if(numPlayers > 1) {
+                        if(Player_2->getComponent<Script, Player>().lifes > 0)
+                            LifeNana1.Draw();
+                        if(Player_2->getComponent<Script, Player>().lifes > 1)
+                            LifeNana2.Draw();
+                        if(Player_2->getComponent<Script, Player>().lifes > 2)
+                            LifeNana3.Draw();
+                    }
                 }
 
             } else if (CURRENT_MENU == PAUSED) {
@@ -1489,24 +1517,30 @@ void Game(int numPlayers, int level, bool speed_run) {
     BGM.Unload();
     BGM2.Unload();
     if (exit_game) {
-        std::cout << "Hola\n";
         exit(0);
+    } else {
+        if (Player_2 == nullptr) {
+            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && (P1_TOTAL_SEC == 0 || P1_TOTAL_SEC > current_time)) {
+                P1_TOTAL_SEC = current_time;
+            }
+        } else {
+            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && Player_2->getComponent<Script, Player>().victory && (P2_TOTAL_SEC == 0 || P2_TOTAL_SEC > current_time)) {
+                P2_TOTAL_SEC = current_time;
+            }
+        }
+        if (P1_TOTAL_PTS == 0 || P1_TOTAL_PTS < pts1) {
+            P1_TOTAL_PTS = pts1;
+        }
+        if (Player_2 != nullptr && (P2_TOTAL_PTS == 0 || P2_TOTAL_PTS < pts2)) {
+            P2_TOTAL_PTS = pts2;
+        }
+        save_sav();
     }
 }
 
 //-----------------------------------------------------------------------------
 // Menus
 // ----------------------------------------------------------------------------
-enum MENU_NAVIGATION { 
-    MAIN_MENU,
-    NEW_GAME,
-    NORMAL_GAME,
-    SETTINGS,
-    VIDEO_SETTINGS,
-    AUDIO_SETTINGS,
-    CONTROL_SETTINGS
-};
-
 int main() {
 
     std::random_device rd;
@@ -1516,17 +1550,20 @@ int main() {
     init_config();
     UISystem::init_UI_system(900, 600);
 
-    //MusicSource Main_title_music("Assets/Sounds/02-Main-Title.wav", true);
     Music MainTitleOST = LoadMusicStream("Assets/Sounds/02-Main-Title.mp3");
     MainTitleOST.looping = true; 
+    Music OldMainTitleOst = LoadMusicStream("Assets/Sounds/01-Main-Title.mp3");
+    OldMainTitleOst.looping = true;
     NES = LoadFont("Assets/Fonts/Pixel_NES.otf");
 
     UISprite Sign("Assets/Sprites/Titlescreen/06_Sign.png", {GetScreenWidth()/2.0f, 20}, 2.7f, 2.7f, UIObject::UP_CENTER, false, 0.8);
+    UISprite OldSign("Assets/Sprites/Titlescreen/Old_03_Sign.png", {GetScreenWidth()/2.0f, 20}, 2.7f, 2.7f, UIObject::UP_CENTER, false, 0.8);
     UISprite Copy("Assets/Sprites/Titlescreen/07_Copyright.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()-20.0f}, 2.2f, 2.2f, UIObject::DOWN_CENTER);
     
     int background = I(e2);
     UISprite Background("Assets/Sprites/bg00.png", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
     UISprite Background1("Assets/Sprites/bg01.png", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
+    UISprite OldBackground("Assets/Sprites/Titlescreen/Old_background.png", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
     UISprite Transparent("Assets/Sprites/UI_Transparent.png", {0,0}, {(float)GetScreenWidth(), (float)GetScreenHeight()});
 
     int mscroll_s = -5;
@@ -1538,7 +1575,7 @@ int main() {
     int mpparallax_s = 7;
     UISprite MidPines("Assets/Sprites/Titlescreen/02_Mid_Pines.png", Vector2{GetScreenWidth()/2.0f, GetScreenHeight()+10.0f}, {(float)GetScreenWidth(), 200}, UIObject::DOWN_CENTER);
 
-    enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SELECT_LEVEL, SETTINGS, CONTROL_SETTINGS };
+    enum MENU_ENUM { INTRO, MAIN_MENU, NEW_GAME, NORMAL_GAME, SELECT_LEVEL, SETTINGS, CONTROL_SETTINGS, RANKINGS, ARE_YOU_SURE };
     // INTRO:
     int intro_state = 0;
     // - Nintendo logo:
@@ -1558,12 +1595,13 @@ int main() {
     bool psshow = true;
     float pscurrent_time = 0;
     float pschange_time = 1;
-    UIText PressStartText(NES, "Press <ANY KEY> to start", 30, 1, {GetScreenWidth()/2.0f, GetScreenHeight()-60.0f}, UIObject::DOWN_CENTER);
+    UISprite PressStart("Assets/Sprites/press_key.png", {GetScreenWidth()/2.0f, GetScreenHeight()-140.0f}, 0.5f, 0.5f, UIObject::DOWN_CENTER);
 
     // MAIN MENU:
-    UIText NewGameText(NES, "NEW GAME", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 45.0f}, UIObject::DOWN_CENTER);
-    UIText SettingsText(NES, "SETTINGS", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 105.0f}, UIObject::DOWN_CENTER);
-    UIText ExitText(NES, "EXIT", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 165.0f}, UIObject::DOWN_CENTER);
+    UIText NewGameText(NES, "NEW GAME", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 25}, UIObject::DOWN_CENTER);
+    UIText Rankings(NES, "RANKINGS", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 85}, UIObject::DOWN_CENTER);
+    UIText SettingsText(NES, "SETTINGS", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 145}, UIObject::DOWN_CENTER);
+    UIText ExitText(NES, "EXIT", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 205}, UIObject::DOWN_CENTER);
     // NEW GAME MENU:
     UIText NormalModeText(NES, "NORMAL GAME", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 45.0f}, UIObject::DOWN_CENTER);
     UIText BrawlModeText(NES, "BRAWL!", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 105.0f}, UIObject::DOWN_CENTER);
@@ -1595,7 +1633,9 @@ int main() {
 
     // SELECT LEVEL:
     Texture2D cross = LoadTexture("Assets/Sprites/UI_Cross.png");
-    bool CONFIGURE_MATCH = false, fuego_amigo = false, speed_run = false;
+    Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
+
+    bool CONFIGURE_MATCH = false;
     int selected_level = 0;
     UISprite Level1("Assets/Sprites/Level1_preview.png", {GetScreenWidth()/2.0f, 100}, 2.3f, 2.3f, UIObject::UP_CENTER);
     UIText Level1Text(NES, "LEVEL 1: BASICS", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
@@ -1606,16 +1646,40 @@ int main() {
     UIText Level4Text(NES, "LEVEL 4: A NEW CHALLENGER", 33, 1, {GetScreenWidth()/2.0f, 50}, UIObject::UP_CENTER);
     UIText Level4WIP(NES, "NO TIME FOR THIS LEVEL :(", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, UIObject::CENTER);
 
-    UIText StartText(NES, "START!", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 50}, UIObject::CENTER_LEFT);
-    UIText SpeedRunText(NES, "SPEED RUN?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 100}, UIObject::CENTER_LEFT);
-    UISprite SpeedRunCheck(cross, {GetScreenWidth() - 78.0f, SpeedRunText.pos.y - 1}, 2.0f, 2.0f);
-    UIText FriendlyFireText(NES, "FRIEND FIRE?", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 150}, UIObject::CENTER_LEFT);
-    UISprite FriendlyFireCheck(cross, {GetScreenWidth() - 78.0f, FriendlyFireText.pos.y - 1}, 2.0f, 2.0f);
-    UIText BindigsText(NES, "SETTINGS", 27, 1, {GetScreenWidth()/2.0f + 120, GetScreenHeight()/2.0f + 200}, UIObject::CENTER_LEFT);
+    int selected_mod = 0, sudden_death_time = 0;
+    std::vector<std::string> mods { "NO MOD", "SUDDEN DEATH", "SPEED RUN" };
+    UIText StartText(NES, "START!", 27, 1, {GetScreenWidth()/2.0f + 100, GetScreenHeight()/2.0f + 50}, UIObject::CENTER_LEFT);
+    UIText ModsText(NES, "NO MODS", 27, 1, {GetScreenWidth()/2.0f + 100, GetScreenHeight()/2.0f + 100}, UIObject::CENTER_LEFT);
+    UIText ModsConfig(NES, "NO CONFIG NEEDED", 20, 1, {GetScreenWidth()/2.0f + 150, GetScreenHeight()/2.0f + 150}, UIObject::CENTER_LEFT);
+    UIText BindigsText(NES, "SETTINGS", 27, 1, {GetScreenWidth()/2.0f + 100, GetScreenHeight()/2.0f + 200}, UIObject::CENTER_LEFT);
+    bool show_error = false;
+    UIText SuddenDeathError(NES, "SUDDENT DEATH NEEDS A TIME ABOVE ZERO...", 30, 1, {GetScreenWidth()/2.0f, 20}, UIObject::UP_CENTER);
+
+    // RANKINGS MENU:
+    // 1st player rankings:
+    UIText RankingsDeleteText(NES, "DELETE RANKINGS", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 145}, UIObject::DOWN_CENTER);
+    UIText RankingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 205}, UIObject::DOWN_CENTER);
+    UIText RankingsP1(NES, "P1", 33, 1, {GetScreenWidth()/4.0f + 50, GetScreenHeight()/8.0f + 20}, UIObject::DOWN_CENTER);
+    UISprite RankingP1Ch("Assets/Sprites/Popo/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 60, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
+    UIText RankingsP1Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f + 20, RankingsP1.pos.y + RankingsP1.size.y/2.0f}, UIObject::UP_CENTER);
+    UIText RankingsP1NPts(NES, fill_string(std::to_string(P1_TOTAL_PTS), 6), 35, 4, {GetScreenWidth()/2.0f + 50, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25}, UIObject::UP_CENTER);
+    UIText RankingsP1PtsText(NES, "PTS", 35, 1, {RankingsP1NPts.pos.x + RankingsP1NPts.size.x + 10, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25});
+    UIText RankingsP1SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP1Total.pos.x, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 60});
+    UIText RankingsP1NTime(NES, seconds_to_time(P1_TOTAL_SEC), 35, 1, {GetScreenWidth()/2.0f + 50, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 85}, UIObject::UP_CENTER);
+    // 2nd player rankings:
+    UIText RankingsP2(NES, "P2", 33, 1, {GetScreenWidth()/4.0f + 50, GetScreenHeight() * (1/4.0f + 1/8.0f)}, UIObject::UP_CENTER);
+    UISprite RankingP2Ch("Assets/Sprites/Nana/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 60, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
+    UIText RankingsP2Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f + 20, RankingsP2.pos.y + RankingsP2.size.y/2.0f}, UIObject::UP_CENTER);
+    UIText RankingsP2NPts(NES, fill_string(std::to_string(P2_TOTAL_PTS), 6), 35, 4, {GetScreenWidth()/2.0f + 50, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25}, UIObject::UP_CENTER);
+    UIText RankingsP2PtsText(NES, "PTS", 35, 1, {RankingsP2NPts.pos.x + RankingsP2NPts.size.x + 10, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25});
+    UIText RankingsP2SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP2Total.pos.x, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 60});
+    UIText RankingsP2NTime(NES, seconds_to_time(P2_TOTAL_SEC), 35, 1, {GetScreenWidth()/2.0f + 50, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 85}, UIObject::UP_CENTER);
+    // ARE YOU SURE MENU:
+    UIText AreYouSureText(NES, "ARE YOU SURE?!", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f - 20}, UIObject::DOWN_CENTER);
+    UIText AreYouSureYes(NES, "YES", 40, 1, {GetScreenWidth()/2.0f - 60, GetScreenHeight()/2.0f + 10}, UIObject::UP_CENTER);
+    UIText AreYouSureNo(NES, "NO", 40, 1, {GetScreenWidth()/2.0f + 60, GetScreenHeight()/2.0f + 10}, UIObject::UP_CENTER);
 
     // SETTINGS MENU:
-    Texture2D LArrow = LoadTexture("Assets/Sprites/UI_Arrow_left.png"), RArrow = LoadTexture("Assets/Sprites/UI_Arrow_right.png");
-    
     UIText AdvancedAIText(NES, "ADVANCED AI", 33, 1, {200, GetScreenHeight()/2.0f - 196}, UIObject::CENTER_LEFT);
     UISprite AdvancedAICheck(cross, {GetScreenWidth()/2.0f + 157, AdvancedAIText.pos.y - 3}, 2.0f, 2.0f);
 
@@ -1659,29 +1723,24 @@ int main() {
     UISprite ControllerRArrow(RArrow, {GetScreenWidth()/2.0f + 240, ControllerText.pos.y}, 1.0f, 1.0f);
     
     UIText LeftActionText(NES, to_string(Controller::LEFT), 27, 1, {250, GetScreenHeight()/2.0f - 65}, UIObject::CENTER_LEFT);
-    //UISprite LeftActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, LeftActionText.pos.y}, 1.0f, 1.0f);
-    UIText LeftActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::LEFT), 25, 1, {GetScreenWidth()/2.0f + 130, LeftActionText.pos.y}, UIObject::UP_CENTER);
-    //UISprite LeftActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, LeftActionText.pos.y}, 1.0f, 1.0f);
+    //UIText LeftActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::LEFT), 25, 1, {GetScreenWidth()/2.0f + 130, LeftActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite LeftActionKeybind(controllers[PLAYER]->getActionTexture(Controller::LEFT), {GetScreenWidth()/2.0f + 130, LeftActionText.pos.y + LeftActionText.size.y/2.0f}, 1.3f, 1.3f, UIObject::CENTER);
 
     UIText RightActionText(NES, to_string(Controller::RIGHT), 27, 1, {250, GetScreenHeight()/2.0f - 5}, UIObject::CENTER_LEFT);
-    //UISprite RightActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, RightActionText.pos.y}, 1.0f, 1.0f);
-    UIText RightActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::RIGHT), 25, 1, {GetScreenWidth()/2.0f + 130, RightActionText.pos.y}, UIObject::UP_CENTER);
-    //UISprite RightActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, RightActionText.pos.y}, 1.0f, 1.0f);
+    //UIText RightActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::RIGHT), 25, 1, {GetScreenWidth()/2.0f + 130, RightActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite RightActionKeybind(controllers[PLAYER]->getActionTexture(Controller::RIGHT), {GetScreenWidth()/2.0f + 130, RightActionText.pos.y + RightActionText.size.y/2.0f}, 1.3f, 1.3f, UIObject::CENTER);
 
     UIText DownActionText(NES, to_string(Controller::DOWN), 27, 1, {250, GetScreenHeight()/2.0f + 55}, UIObject::CENTER_LEFT);
-    //UISprite DownActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, DownActionText.pos.y}, 1.0f, 1.0f);
-    UIText DownActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::DOWN), 25, 1, {GetScreenWidth()/2.0f + 130, DownActionText.pos.y}, UIObject::UP_CENTER);
-    //UISprite DownActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, DownActionText.pos.y}, 1.0f, 1.0f);
+    //UIText DownActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::DOWN), 25, 1, {GetScreenWidth()/2.0f + 130, DownActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite DownActionKeybind(controllers[PLAYER]->getActionTexture(Controller::DOWN), {GetScreenWidth()/2.0f + 130, DownActionText.pos.y + DownActionText.size.y/2.0f}, 1.3f, 1.3f, UIObject::CENTER);
 
     UIText UpActionText(NES, to_string(Controller::JUMP), 27, 1, {250, GetScreenHeight()/2.0f + 115}, UIObject::CENTER_LEFT);
-    //UISprite UpActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, UpActionText.pos.y}, 1.0f, 1.0f);
-    UIText UpActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::JUMP), 25, 1, {GetScreenWidth()/2.0f + 130, UpActionText.pos.y}, UIObject::UP_CENTER);
-    //UISprite UpActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, UpActionText.pos.y}, 1.0f, 1.0f);
+    //UIText UpActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::JUMP), 25, 1, {GetScreenWidth()/2.0f + 130, UpActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite UpActionKeybind(controllers[PLAYER]->getActionTexture(Controller::JUMP), {GetScreenWidth()/2.0f + 130, UpActionText.pos.y + UpActionText.size.y/2.0f}, 1.3f, 1.3f, UIObject::CENTER);
 
     UIText AttackActionText(NES, to_string(Controller::ATTACK), 27, 1, {250, GetScreenHeight()/2.0f + 175}, UIObject::CENTER_LEFT);
-    //UISprite AttackActionLArrow(LArrow, {GetScreenWidth()/2.0f + 80, AttackActionText.pos.y}, 1.0f, 1.0f);
-    UIText AttackActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::ATTACK), 25, 1, {GetScreenWidth()/2.0f + 130, AttackActionText.pos.y}, UIObject::UP_CENTER);
-    //UISprite AttackActionRArrow(RArrow, {GetScreenWidth()/2.0f + 400, AttackActionText.pos.y}, 1.0f, 1.0f);
+    //UIText AttackActionKeybind(NES, controllers[PLAYER]->getActionBind(Controller::ATTACK), 25, 1, {GetScreenWidth()/2.0f + 130, AttackActionText.pos.y}, UIObject::UP_CENTER);
+    UISprite AttackActionKeybind(controllers[PLAYER]->getActionTexture(Controller::ATTACK), {GetScreenWidth()/2.0f + 130, AttackActionText.pos.y + AttackActionText.size.y/2.0f}, 1.3f, 1.3f, UIObject::CENTER);
 
     UIText BindingErrorText(NES, "Binding conflict with (PLAYER: -1, CONTROL: NO_CONTROL)", 20, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 250}, UIObject::DOWN_CENTER);
 
@@ -1718,14 +1777,14 @@ int main() {
             {(ContinueText.pos.x-70)*1680/900, ContinueText.pos.y*1050/600 - 5},
             {(ContinueText.pos.x-70)*1920/900, ContinueText.pos.y*1080/600 - 15}
         }}, {3, {
-            {(StartText.pos.x-70)*640/900, StartText.pos.y*480/600},
-            {(StartText.pos.x-70)*800/900, StartText.pos.y},
-            {(StartText.pos.x-70), StartText.pos.y}, 
-            {(StartText.pos.x-70)*1024/900, StartText.pos.y*768/600},
-            {(StartText.pos.x-70)*1280/900, StartText.pos.y*720/600 - 5},
-            {(StartText.pos.x-70)*1366/900, StartText.pos.y*768/600 - 5},
-            {(StartText.pos.x-70)*1680/900, StartText.pos.y*1050/600 - 5},
-            {(StartText.pos.x-70)*1920/900, StartText.pos.y*1080/600 - 15}
+            {(StartText.pos.x-50)*640/900, StartText.pos.y*480/600},
+            {(StartText.pos.x-50)*800/900, StartText.pos.y},
+            {(StartText.pos.x-50), StartText.pos.y}, 
+            {(StartText.pos.x-50)*1024/900, StartText.pos.y*768/600},
+            {(StartText.pos.x-50)*1280/900, StartText.pos.y*720/600 - 5},
+            {(StartText.pos.x-50)*1366/900, StartText.pos.y*768/600 - 5},
+            {(StartText.pos.x-50)*1680/900, StartText.pos.y*1050/600 - 5},
+            {(StartText.pos.x-50)*1920/900, StartText.pos.y*1080/600 - 15}
         }}, {4, {
             {(AdvancedAIText.pos.x-70)*640/900, (AdvancedAIText.pos.y+2)*480/600},
             {(AdvancedAIText.pos.x-70)*800/900, (AdvancedAIText.pos.y+2)},
@@ -1735,8 +1794,45 @@ int main() {
             {(AdvancedAIText.pos.x-70)*1366/900, (AdvancedAIText.pos.y+2)*768/600 - 5},
             {(AdvancedAIText.pos.x-70)*1680/900, (AdvancedAIText.pos.y+2)*1050/600 - 5},
             {(AdvancedAIText.pos.x-70)*1920/900, (AdvancedAIText.pos.y+2)*1080/600 - 15}
+        }}, {5, {
+            {(RankingsDeleteText.pos.x-70)*640/900, (RankingsDeleteText.pos.y+2)*480/600},
+            {(RankingsDeleteText.pos.x-70)*800/900, (RankingsDeleteText.pos.y+2)},
+            {(RankingsDeleteText.pos.x-70), (RankingsDeleteText.pos.y+2)}, 
+            {(RankingsDeleteText.pos.x-70)*1024/900, (RankingsDeleteText.pos.y+2)*768/600},
+            {(RankingsDeleteText.pos.x-70)*1280/900, (RankingsDeleteText.pos.y+2)*720/600 - 5},
+            {(RankingsDeleteText.pos.x-70)*1366/900, (RankingsDeleteText.pos.y+2)*768/600 - 5},
+            {(RankingsDeleteText.pos.x-70)*1680/900, (RankingsDeleteText.pos.y+2)*1050/600 - 5},
+            {(RankingsDeleteText.pos.x-70)*1920/900, (RankingsDeleteText.pos.y+2)*1080/600 - 15}
+        }}, {6, {
+            {(NormalModeText.pos.x-70)*640/900, (NormalModeText.pos.y+2)*480/600},
+            {(NormalModeText.pos.x-70)*800/900, (NormalModeText.pos.y+2)},
+            {(NormalModeText.pos.x-70), (NormalModeText.pos.y+2)}, 
+            {(NormalModeText.pos.x-70)*1024/900, (NormalModeText.pos.y+2)*768/600},
+            {(NormalModeText.pos.x-70)*1280/900, (NormalModeText.pos.y+2)*720/600 - 5},
+            {(NormalModeText.pos.x-70)*1366/900, (NormalModeText.pos.y+2)*768/600 - 5},
+            {(NormalModeText.pos.x-70)*1680/900, (NormalModeText.pos.y+2)*1050/600 - 5},
+            {(NormalModeText.pos.x-70)*1920/900, (NormalModeText.pos.y+2)*1080/600 - 15}
+        }}, {7, {
+            {(AreYouSureYes.pos.x-60)*640/900, (AreYouSureYes.pos.y+2)*480/600},
+            {(AreYouSureYes.pos.x-60)*800/900, (AreYouSureYes.pos.y+2)},
+            {(AreYouSureYes.pos.x-60), (AreYouSureYes.pos.y+2)}, 
+            {(AreYouSureYes.pos.x-60)*1024/900, (AreYouSureYes.pos.y+2)*768/600},
+            {(AreYouSureYes.pos.x-60)*1280/900, (AreYouSureYes.pos.y+2)*720/600 - 5},
+            {(AreYouSureYes.pos.x-60)*1366/900, (AreYouSureYes.pos.y+2)*768/600 - 5},
+            {(AreYouSureYes.pos.x-60)*1680/900, (AreYouSureYes.pos.y+2)*1050/600 - 5},
+            {(AreYouSureYes.pos.x-60)*1920/900, (AreYouSureYes.pos.y+2)*1080/600 - 15}
         }}
     };
+
+    // Hammer offsets:
+    // 0: MAIN MENU
+    // 1: SETTINGS
+    // 2:
+    // 3:
+    std::vector<int> HammerOffsets {
+        60, 60, 60, 50, 56, 60, 60, 273
+    };
+
     // KEYS (KEYBOARD):
     bool keyboard = true;
 
@@ -1756,6 +1852,9 @@ int main() {
     UIText MoveTextNormal(NES, "MOVE", 15, 1, {EnterKey.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite UpKeyNormal(UpKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
     UISprite DownKeyNormal(DownKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    UISprite RightKeyAreYouSure(RightKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite LeftKeyAreYouSure(LeftKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
 
     UIText MoveTextSettings(NES, "MOVE", 15, 1, {LeftKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite UpKeySettings(UpKey, {MoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
@@ -1788,6 +1887,9 @@ int main() {
     UISprite DpadUpNormal(DpadUp, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
     UISprite DpadDownNormal(DpadDown, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
  
+    UISprite DpadRightAreYouSure(DpadRight, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadLeftAreYouSure(DpadLeft, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
     UIText DpadMoveTextSettings(NES, "MOVE", 15, 1, {DpadLeftSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite DpadUpSettings(DpadUp, {DpadMoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
     UISprite DpadDownSettings(DpadDown, {DpadUpSettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
@@ -1799,18 +1901,9 @@ int main() {
     UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
 
-    // Hammer offsets:
-    // 0: MAIN MENU
-    // 1: SETTINGS
-    // 2:
-    // 3:
-    std::vector<int> HammerOffsets {
-        60, 60, 60, 50, 56
-    };
-
     // /*** Main Loop ***/ //
     int OPTION  = 0;
-    int OPTIONS = 3;
+    int OPTIONS = 4;
     MENU_ENUM CURRENT_MENU = INTRO, OLD_MENU = INTRO;
     update_window();
     UISystem::Reescale();
@@ -1825,24 +1918,28 @@ int main() {
             keyboard = true;
         }
 
-        if (background == 0) {
-            Background.Draw();
-        } else {
-            Background1.Draw();
-        }
+        if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+            if (background == 0) {
+                Background.Draw();
+            } else {
+                Background1.Draw();
+            }
 
-        Mountain.Draw();
-        if (Mountain.dst.x + Mountain.dst.width >= 0) {
-            Mountain.dst.x += mscroll_s * GetFrameTime();
-        } else {
-            Mountain.dst.x = GetScreenWidth() + 100;
-        }
-        
-        MidPines.Draw();
-        MidPines.src.x += mpparallax_s * GetFrameTime();
+            Mountain.Draw();
+            if (Mountain.dst.x + Mountain.dst.width >= 0) {
+                Mountain.dst.x += mscroll_s * GetFrameTime();
+            } else {
+                Mountain.dst.x = GetScreenWidth() + 100;
+            }
+            
+            MidPines.Draw();
+            MidPines.src.x += mpparallax_s * GetFrameTime();
 
-        ForePines.Draw();
-        ForePines.src.x += fpparallax_s * GetFrameTime();
+            ForePines.Draw();
+            ForePines.src.x += fpparallax_s * GetFrameTime();
+        } else {
+            OldBackground.Draw();
+        }
 
         if (CURRENT_MENU == INTRO) {
             if (intro_state == 0) {
@@ -1877,7 +1974,11 @@ int main() {
                 }
             } else {
 
-                Sign.Draw();
+                if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                    Sign.Draw();
+                } else {
+                    OldSign.Draw();
+                }
                 Copy.Draw();
 
                 if (pscurrent_time < pschange_time) {
@@ -1887,22 +1988,37 @@ int main() {
                     psshow = !psshow;
                 }
                 if (psshow) {
-                    PressStartText.Draw(COYOTEBROWN);
+                    PressStart.Draw();
                 }
             }
             if (KeyboardDetected() || GamepadDetected(0)) {
                 if (intro_state++ == 2) {
                     CURRENT_MENU = MAIN_MENU;
-                    PlayMusicStream(MainTitleOST);
+                    if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                        PlayMusicStream(MainTitleOST);
+                    } else {
+                        PlayMusicStream(OldMainTitleOst);
+                    }
                 }
             }
 
         } else {
-            UpdateMusicStream(MainTitleOST);
+            if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                PlayMusicStream(MainTitleOST);
+                UpdateMusicStream(MainTitleOST);
+            } else {
+                PlayMusicStream(OldMainTitleOst);
+                UpdateMusicStream(OldMainTitleOst);
+            }
 
             if (CURRENT_MENU == MAIN_MENU) {
-                Sign.Draw();
+                if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                    Sign.Draw();
+                } else {
+                    OldSign.Draw();
+                }
                 NewGameText.Draw();
+                Rankings.Draw();
                 SettingsText.Draw();
                 ExitText.Draw(BLUE);
 
@@ -1926,15 +2042,24 @@ int main() {
                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = NEW_GAME;
+                        OPTIONS = 3;
+                        HV = 6;
+                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                     } else {
                         if (OPTION == 1) {
+                            CURRENT_MENU = RANKINGS;
+                            OPTION = 0;
+                            OPTIONS = 2;
+                            HV = 5;
+                        }
+                        else if (OPTION == 2) {
                             CURRENT_MENU = SETTINGS;
+                            OPTION = 0;
                             OPTIONS = 8;
                             HV = 4;
-                        } else if (OPTION == 2) {
+                        } else if (OPTION == 3) {
                             break;
                         }
-                        OPTION = 0;
                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                     }
                 } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
@@ -1999,18 +2124,15 @@ int main() {
                         auto menuv_x = GetScreenWidth() - (20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF) - (400*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF);
                         auto menuv_y = GetScreenHeight()/2.0f;
                         DrawRectangleV({menuv_x,menuv_y}, {400*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 250*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, Fade(BLACK, 0.65));
-                        StartText.Draw(PINK);
-                        SpeedRunText.Draw();
-                        DrawRectangleV({GetScreenWidth() - (72*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), SpeedRunText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
-                        DrawRectangleV({GetScreenWidth() - (70*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), SpeedRunText.pos.y+(6*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
-                        if (speed_run) {
-                            SpeedRunCheck.Draw();
-                        }
-                        FriendlyFireText.Draw();
-                        DrawRectangleV({GetScreenWidth() - (72*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), FriendlyFireText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
-                        DrawRectangleV({GetScreenWidth() - (70*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), FriendlyFireText.pos.y+(6*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
-                        if (fuego_amigo) {
-                            FriendlyFireCheck.Draw();
+                        StartText.Draw((selected_mod == 1 && !sudden_death_time) ? GRAY : PINK);
+                        ModsText.SetText(mods[selected_mod]);
+                        ModsText.Draw();
+                        if (selected_mod == 1) {
+                            ModsConfig.SetText(seconds_to_time(sudden_death_time));
+                            ModsConfig.Draw();
+                        } else {
+                            ModsConfig.SetText("NO CONFIG NEEDED");
+                            ModsConfig.Draw(GRAY);
                         }
                         BindigsText.Draw(YELLOW);
 
@@ -2036,15 +2158,41 @@ int main() {
                             OButtonNormal.Draw();
                         }
 
+                        if (show_error) {
+                            SuddenDeathError.Draw(RED);
+                        }
 
                         if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                             if (OPTION == 0) {
-                                Game(nplayers, selected_level, speed_run);
+                                if (selected_mod == 1) {
+                                    if (sudden_death_time == 0) {
+                                        show_error = true;
+                                    } else {
+                                        show_error = false;
+                                        Game(nplayers, selected_level, sudden_death_time);
+                                        RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
+                                        RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
+                                        RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
+                                        RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                    }
+                                } else {
+                                    show_error = false;
+                                    Game(nplayers, selected_level, (selected_mod == 0) ? -1 : 0);
+                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
+                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
+                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
+                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                }
                             } else if (OPTION == 1) {
-                                speed_run = !speed_run;
+                                show_error = false;
+                                selected_mod = (selected_mod+1)%3;
                             } else if (OPTION == 2) {
-                                fuego_amigo = !fuego_amigo;
+                                if (selected_mod == 1 && sudden_death_time < 3600) {
+                                    show_error = false;
+                                    sudden_death_time += 5;
+                                }
                             } else if (OPTION == 3) {
+                                show_error = false;
                                 OLD_MENU = SELECT_LEVEL;
                                 CURRENT_MENU = SETTINGS;
                                 OPTION = 0;
@@ -2052,10 +2200,36 @@ int main() {
                                 HV = 4;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             }
+                        } else if (IsKeyPressed(KEY_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
+                            if (OPTION == 1) {
+                                show_error = false;
+                                selected_mod = (selected_mod+1)%3;
+                            } 
+                        } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
+                            if (OPTION == 1) {
+                                show_error = false;
+                                selected_mod = (selected_mod+2)%3;
+                            }
+                        } else if (IsKeyDown(KEY_RIGHT) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
+                            if (OPTION == 2) {
+                                if (selected_mod == 1 && sudden_death_time < 3600) {
+                                    show_error = false;
+                                    sudden_death_time += 5;
+                                }
+                            }
+                        } else if (IsKeyDown(KEY_LEFT) || IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
+                            if (OPTION == 2) {
+                                if (selected_mod == 1 && sudden_death_time > 0) {
+                                    show_error = false;
+                                    sudden_death_time -= 5;
+                                }
+                            }
                         } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+                            show_error = false;
                             BLOCK = true;
                             CONFIGURE_MATCH = false;
-                            speed_run = fuego_amigo = false;
+                            selected_mod = 0;
+                            sudden_death_time = 0;
                         }
                     }
                 } else {
@@ -2069,7 +2243,6 @@ int main() {
                         XText.Draw();
                         XButton.Draw();
                     }
-
 
                     if (CURRENT_MENU == NEW_GAME) {
 
@@ -2105,13 +2278,17 @@ int main() {
                                     std::cout << "NO REIMPLEMENTADO: BRAWL!\n";
                                 } else if (OPTION == 2) {
                                     CURRENT_MENU = MAIN_MENU;
+                                    OPTIONS = 4;
+                                    HV = 0;
                                 }
                                 OPTION = 0;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                             }
                         } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                             CURRENT_MENU = MAIN_MENU;
+                            OPTIONS = 4;
                             OPTION = 0;
+                            HV = 0;
                             Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y}); 
                         }
 
@@ -2215,7 +2392,7 @@ int main() {
                                 CURRENT_MENU = NEW_GAME;
                                 OPTION  = 0;
                                 OPTIONS = 3;
-                                HV = 0;
+                                HV = 6;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                                 p1show = p2show = false;
                                 nplayers = 0;
@@ -2227,12 +2404,116 @@ int main() {
                                 CURRENT_MENU = NEW_GAME;
                                 OPTION  = 0;
                                 OPTIONS = 3;
-                                HV = 0;
+                                HV = 6;
                                 BLOCK = false;
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
                             }
                             p1current_time = p2current_time = 0;
                             p1show = p2show = false;
+                        }
+                    } else if (CURRENT_MENU == RANKINGS || CURRENT_MENU == ARE_YOU_SURE) {
+
+                        // P1 Rankings:
+                        RankingsP1.Draw();
+                        RankingP1Ch.Draw();
+                        RankingsP1Total.Draw();
+                        RankingsP1NPts.Draw(DEEPSAFFRON);
+                        RankingsP1PtsText.Draw(DEEPSAFFRON);
+                        RankingsP1SpeedRun.Draw();
+                        RankingsP1NTime.Draw(DEEPSAFFRON);
+                        // P2 Rankings:
+                        RankingsP2.Draw();
+                        RankingP2Ch.Draw();
+                        RankingsP2Total.Draw();
+                        RankingsP2NPts.Draw(DEEPSAFFRON);
+                        RankingsP2PtsText.Draw(DEEPSAFFRON);
+                        RankingsP2SpeedRun.Draw();
+                        RankingsP2NTime.Draw(DEEPSAFFRON);
+                        // Menu options:
+                        RankingsDeleteText.Draw(RED);
+                        RankingsReturnText.Draw();
+
+                        if (CURRENT_MENU == RANKINGS) {
+
+                            if (keyboard) {
+                                MoveTextNormal.Draw();
+                                UpKeyNormal.Draw();
+                                DownKeyNormal.Draw();
+                                ReturnTextNormal.Draw();
+                                EscKeyNormal.Draw();
+                                ReturnKeyNormal.Draw();
+                            } else {
+                                DpadMoveTextNormal.Draw();
+                                DpadUpNormal.Draw();
+                                DpadDownNormal.Draw();
+                                OTextNormal.Draw();
+                                OButtonNormal.Draw();
+                            }
+
+                            if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) ) {
+                                if (OPTION == 0) {
+                                    CURRENT_MENU = ARE_YOU_SURE;
+                                    HV = 7;
+                                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y});
+                                } else {
+                                    CURRENT_MENU = MAIN_MENU;
+                                    OPTIONS = 4;
+                                    OPTION = 1;
+                                    HV = 0;
+                                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                                }
+                            } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+                                CURRENT_MENU = MAIN_MENU;
+                                OPTIONS = 4;
+                                OPTION = 1;
+                                HV = 0;
+                                Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                            }
+                        } else {
+                            if (keyboard) {
+                                MoveTextNormal.Draw();
+                                LeftKeyAreYouSure.Draw();
+                                RightKeyAreYouSure.Draw();
+
+                                ReturnTextNormal.Draw();
+                                EscKeyNormal.Draw();
+                                ReturnKeyNormal.Draw();
+                            } else {
+                                DpadMoveTextNormal.Draw();
+                                DpadLeftAreYouSure.Draw();
+                                DpadRightAreYouSure.Draw();
+                                OTextNormal.Draw();
+                                OButtonNormal.Draw();
+                            }
+
+                            DrawRectanglePro({GetScreenWidth()/2.0f - 190 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, GetScreenHeight()/2.0f - 90 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 380 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 180 * GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, {0,0}, 0, Fade(BLACK, 0.9));
+                            AreYouSureText.Draw();
+                            AreYouSureYes.Draw(RED);
+                            AreYouSureNo.Draw();
+
+                            if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) ) {
+                                if (OPTION == 0) {
+                                    CURRENT_MENU = RANKINGS;
+                                    HV = 5;
+                                    backup_sav();
+                                    P1_TOTAL_PTS = P1_TOTAL_SEC = P2_TOTAL_PTS = P2_TOTAL_SEC = 0;
+                                    save_sav();
+                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
+                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
+                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
+                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                } else {
+                                    CURRENT_MENU = RANKINGS;
+                                    OPTION = 0;
+                                    HV = 5;
+                                }
+                                Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
+                            } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ) {
+                                CURRENT_MENU = RANKINGS;
+                                OPTION = 0;
+                                HV = 5;
+                                Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
+                            }
                         }
                     } else if (CURRENT_MENU == SETTINGS) {
 
@@ -2270,11 +2551,12 @@ int main() {
                                 Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                             } else {
                                 CURRENT_MENU = MAIN_MENU;
-                                OPTION = 1;
-                                OPTIONS = 3;
+                                OPTION = 2;
+                                OPTIONS = 4;
                                 HV = 0;
-                                Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                                Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                             }
+                        	save_config();
                         } else {
                             if (OPTION == 0) {
                                 if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
@@ -2414,11 +2696,12 @@ int main() {
                                         Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF}); 
                                     } else {
                                         CURRENT_MENU = MAIN_MENU;
-                                        OPTION = 1;
-                                        OPTIONS = 3;
+                                        OPTION = 2;
+                                        OPTIONS = 4;
                                         HV = 0;
-                                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                     }
+                                	save_config();
                                 }
                             }
                         }
@@ -2432,8 +2715,8 @@ int main() {
                         }
 
                         // - OLD STYLE OPTION:
-                        OldStyleText.Draw(GRAY);
-                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, GRAY);
+                        OldStyleText.Draw();
+                        DrawRectangleV({ResolutionLArrow.dst.x + (100*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(2*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, WHITE);
                         DrawRectangleV({ResolutionLArrow.dst.x + (102*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF), OldStyleText.pos.y+(4*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)}, {15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, 15*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF}, BLACK);
                         if (std::get<bool>(ini["Graphics"]["OldFashioned"])) {
                             OldStyleCheck.Draw();
@@ -2510,41 +2793,41 @@ int main() {
                                 SelectedPlayer.SetText(std::to_string(PLAYER+1));
                                 CONTROLLER = controllers[PLAYER]->type;
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
-                                LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
-                                RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
-                                DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
-                                UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
-                                AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
+                                LeftActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::LEFT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                RightActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::RIGHT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                DownActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::DOWN), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                UpActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::JUMP), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                AttackActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::ATTACK), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
                             } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                 PLAYER = mod(PLAYER-1, 4);
                                 SelectedPlayer.SetText(std::to_string(PLAYER+1));
                                 CONTROLLER = controllers[PLAYER]->type;
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
-                                LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
-                                RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
-                                DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
-                                UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
-                                AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
+                                LeftActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::LEFT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                RightActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::RIGHT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                DownActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::DOWN), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                UpActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::JUMP), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                AttackActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::ATTACK), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
                             }
                         } else if (OPTION == 1) {
                             if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                                 CONTROLLER = mod(CONTROLLER+1,5);
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 controllers[PLAYER]->type = (Controller::Type)CONTROLLER;
-                                LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
-                                RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
-                                DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
-                                UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
-                                AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
+                                LeftActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::LEFT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                RightActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::RIGHT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                DownActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::DOWN), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                UpActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::JUMP), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                AttackActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::ATTACK), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
                             } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
                                 CONTROLLER = mod(CONTROLLER-1,5);
                                 SelectedController.SetText(to_string((Controller::Type)CONTROLLER));
                                 controllers[PLAYER]->type = (Controller::Type)CONTROLLER;
-                                LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
-                                RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
-                                DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
-                                UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
-                                AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
+                                LeftActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::LEFT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                RightActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::RIGHT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                DownActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::DOWN), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                UpActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::JUMP), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                AttackActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::ATTACK), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
                             }
                         } else {
                             if (!SELECTED) {
@@ -2599,11 +2882,11 @@ int main() {
                                     BLOCK    = false;
                                     SHOW_ERROR_MESSAGE = false;
                                 }
-                                LeftActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::LEFT));
-                                RightActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::RIGHT));
-                                DownActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::DOWN));
-                                UpActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::JUMP));
-                                AttackActionKeybind.SetText(controllers[PLAYER]->getActionBind(Controller::ATTACK));
+                                LeftActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::LEFT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                RightActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::RIGHT), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                DownActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::DOWN), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                UpActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::JUMP), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
+                                AttackActionKeybind.SetTexture(controllers[PLAYER]->getActionTexture(Controller::ATTACK), (controllers[PLAYER]->type == Controller::Type::KEYBOARD) ? Vector2{1.3f, 1.3f} : Vector2{2.0f, 2.0f});
                             }
                         }
 
@@ -2626,35 +2909,35 @@ int main() {
                             LeftActionText.Draw(RED);
                         } else {
                             LeftActionText.Draw(GREEN);
-                            LeftActionKeybind.Draw(JELLYFISH);
+                            LeftActionKeybind.Draw();
                         }
                         // Move Right:
                         if (SELECTED && currAction == 1) {
                             RightActionText.Draw(RED);
                         } else {
                             RightActionText.Draw(GREEN);
-                            RightActionKeybind.Draw(JELLYFISH);
+                            RightActionKeybind.Draw();
                         }
                         // Crouch:
                         if (SELECTED && currAction == 2) {
                             DownActionText.Draw(RED);
                         } else {
                             DownActionText.Draw(GREEN);
-                            DownActionKeybind.Draw(JELLYFISH);
+                            DownActionKeybind.Draw();
                         }
                         // Jump:
                         if (SELECTED && currAction == 3) {
                             UpActionText.Draw(RED);
                         } else {
                             UpActionText.Draw(GREEN);
-                            UpActionKeybind.Draw(JELLYFISH);
+                            UpActionKeybind.Draw();
                         }
                         // Attack:
                         if (SELECTED && currAction == 4) {
                             AttackActionText.Draw(RED);
                         } else {
                             AttackActionText.Draw(GREEN);
-                            AttackActionKeybind.Draw(JELLYFISH);
+                            AttackActionKeybind.Draw();
                         }
 
                         if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
@@ -2676,14 +2959,26 @@ int main() {
             // Hammer movement:
             if (!BLOCK) {
                 Hammer.Draw();
-                if (IsKeyPressed(KEY_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
-                    OPTION = mod(OPTION+1, OPTIONS);
-                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
-                }
-                if (IsKeyPressed(KEY_UP) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) {
-                    OPTION = mod(OPTION-1, OPTIONS);
-                    Hammer.Translate({Hammer.dst.x, Hammer.dst.y - 20});
-                    Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + (OPTIONS - (OPTIONS-OPTION))*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                if (CURRENT_MENU != ARE_YOU_SURE) {
+                    if (IsKeyPressed(KEY_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) {
+                        OPTION = mod(OPTION+1, OPTIONS);
+                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + OPTION*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                    }
+                    if (IsKeyPressed(KEY_UP) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) {
+                        OPTION = mod(OPTION-1, OPTIONS);
+                        Hammer.Translate({Hammer.dst.x, Hammer.dst.y - 20});
+                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + (OPTIONS - (OPTIONS-OPTION))*HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
+                    }
+                } else if (CURRENT_MENU == ARE_YOU_SURE) {
+                    if (IsKeyPressed(KEY_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
+                        OPTION = mod(OPTION+1, OPTIONS);
+                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x + OPTION*HammerOffsets[HV]*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, HammerRefs[HV][RESOLUTION_OPTION].y});
+                    }
+                    if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
+                        OPTION = mod(OPTION-1, OPTIONS);
+                        Hammer.Translate({Hammer.dst.x, Hammer.dst.y - 20});
+                        Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x + (OPTIONS - (OPTIONS-OPTION))*HammerOffsets[HV]*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF, HammerRefs[HV][RESOLUTION_OPTION].y});
+                    }
                 }
             }
         }

@@ -18,6 +18,7 @@ private:
     float timeCount;
 public:
     float spawning_ratio = 0.002;
+    AudioPlayer& audioplayer;
     Animator& animator;
     Collider2D& collider;
     RigidBody2D& rigidbody;
@@ -110,6 +111,8 @@ private:
     float momentum;
     std::string last_tag;
     bool hasCollisioned;
+    float current_invibility_time = 0.0f;
+    float invincibility = 6.0f;
 public:
     bool isBraking;
     int lifes;

@@ -67,6 +67,7 @@ public:
 class  UISprite : public UIObject {
 private:
     bool fullscreen;
+    Vector2 scale;
 public:
     Rectangle src; // What pixels of the sprite do I want to draw?
     Rectangle ref; // Default (window reference) position and size properties.
@@ -81,6 +82,7 @@ public:
     void Draw(Color color = WHITE) override;
     void Move(Vector2 translation) override;
     void Reescale() override;
+    void SetTexture(Texture2D sprite, Vector2 new_scale = {-1,-1}, bool reescale = true);
     void Translate(Vector2 translation);
     void Unload() override;
 };

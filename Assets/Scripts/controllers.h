@@ -15,6 +15,8 @@ typedef enum {
     GAMEPAD_EJE_GAT_DER
 } EjesGamepad;
 
+extern std::unordered_map<KeyboardKey, Texture2D> key_textures;
+extern std::unordered_map<GamepadButton, Texture2D> button_textures;
 extern std::unordered_map<int, bool> validKeys;
 extern std::unordered_map<int, std::string> code2key;
 extern std::unordered_map<int, std::string> code2joy;
@@ -36,9 +38,12 @@ public:
     bool isPressed(Control c);
     bool isDown(Control c);
     std::string getActionBind(Control c);
+    Texture2D getActionTexture(Control c);
     void printAll();
     void printKey(Type t, Control c);
 };
+
+void init_input_textures();
 
 std::string to_string(Controller::Type type);
 

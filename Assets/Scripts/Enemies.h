@@ -194,7 +194,6 @@ public:
         } else {
             // Extra check to see if joseph is falling
             if (trackTimer > 0.2f) {
-                //std::cout << "Check: " << transform.position.y << " vs " << lastTrackY << std::endl;
                 if (transform.position.y > lastTrackY + transform.size.y/4
                     && transform.position.y < lastTrackY + transform.size.y/2) {
                     animator["Falling"];
@@ -531,7 +530,6 @@ public:
                                 isRight = true;
                             }
                         } else if (random_val() < 1.45/3.0) {
-                            std::cout << "HUNT\n";
                             if (less_player->getComponent<Transform2D>().position.x <= transform.position.x && rigidbody.velocity.x > 0) {
                                 rigidbody.velocity.x *= -1;
                                 animator.Flip();
@@ -563,6 +561,7 @@ public:
 
 class IcicleBehavior : public Script {
 private:
+    AudioPlayer& audioplayer;
     RigidBody2D& rigidbody;
     Transform2D& transform;
 
@@ -596,10 +595,12 @@ public:
     std::vector<GameObject*> players;
 
     IcicleBehavior(GameObject& gameObject) : Script(gameObject),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>()) {}
 
     IcicleBehavior(GameObject& gameObject, IcicleBehavior& behavior) : Script(gameObject),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
         transform(gameObject.getComponent<Transform2D>()) {}
 
@@ -610,6 +611,7 @@ public:
     void OnCollision(Collision contact) override {
         if (contact.gameObject.tag == "Hole") {
             if (!ignore_hole) {
+                audioplayer["Rebuild"];
                 auto position = contact.gameObject.getComponent<Transform2D>().position;
                 auto a_block = &GameSystem::Instantiate(*contact.gameObject.getComponent<Script, HoleBehavior>().original_block, GameObjectOptions{.position=position});
                 if (current_blocks != nullptr) {
@@ -676,6 +678,7 @@ private:
     }
 
 public:
+    AudioPlayer& audioplayer;
     Animator& animator;
     Collider2D& collider;
     RigidBody2D& rigidbody;
@@ -687,6 +690,7 @@ public:
 
     TopiBehavior(GameObject& gameObject, GameObject& Icicle, std::vector<GameObject*>* blocks = {}) : Script(gameObject),
         Icicle(Icicle),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -709,6 +713,7 @@ public:
 
     TopiBehavior(GameObject& gameObject, TopiBehavior& behavior) : Script(gameObject),
         Icicle(behavior.Icicle),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -802,11 +807,13 @@ public:
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x *= -1;
+                    audioplayer["Hit"];
                 }
                 if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, Player>().isRight) {
                     animator["Stunned"];
                     isStunned = true;
                     rigidbody.velocity.x *= -1;
+                    audioplayer["Hit"];
                 }
             }
         }
@@ -870,8 +877,6 @@ public:
                             if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
                                 an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                 if (checkPlayers()) {
-                                    //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
-
                                     an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
                                     if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
                                         an_icicle->getComponent<RigidBody2D>().velocity.x = -350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -897,7 +902,6 @@ public:
                             // IF IA WAS ACTIVE
                             auto an_icicle = &GameSystem::Instantiate(Icicle, GameObjectOptions{.position{transform.position.x + (50 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF)), original_level + (animator.GetViewDimensions().y - icicle_size.y) + 2}});
                             an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
-                            std::cout << transform.position << ", " << an_icicle->getComponent<Transform2D>().position << "\n";
                             if (std::get<bool>(ini["Game"]["AdvancedAI"]) && current_blocks != nullptr) {
                                 an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                 if (checkPlayers()) {
@@ -933,8 +937,6 @@ public:
                                     an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
                                     an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                     if (checkPlayers()) {
-                                        //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
-
                                         an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
                                         if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
                                             an_icicle->getComponent<RigidBody2D>().velocity.x = -350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -965,8 +967,6 @@ public:
                                     an_icicle->getComponent<Script, IcicleBehavior>().floor_level = floor_level;
                                     an_icicle->getComponent<Script, IcicleBehavior>().players = players;
                                     if (checkPlayers()) {
-                                        //std::cout << "Probability of throw: " << (total_blocks - *current_blocks)/(double)total_blocks << "\n";
-
                                         an_icicle->getComponent<Script, IcicleBehavior>().current_blocks = current_blocks;
                                         if (random_val() > (total_blocks - *current_blocks)/(double)total_blocks) {
                                             an_icicle->getComponent<RigidBody2D>().velocity.x = 350 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -1035,6 +1035,7 @@ private:
     unsigned t0, t1;
 
 public:
+    AudioPlayer& audioplayer;
     Animator& animator;
     Collider2D& collider;
     RigidBody2D& rigidbody;
@@ -1046,6 +1047,7 @@ public:
     std::vector<float> floor_levels;
 
     NutpickerBehavior(GameObject& gameObject, GameObject& Icicle) : Script(gameObject),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -1062,6 +1064,7 @@ public:
     }
 
     NutpickerBehavior(GameObject& gameObject, NutpickerBehavior& behavior) : Script(gameObject),
+        audioplayer(gameObject.getComponent<AudioPlayer>()),
         animator(gameObject.getComponent<Animator>()),
         collider(gameObject.getComponent<Collider2D>()),
         rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -1090,6 +1093,7 @@ public:
             if (!isStunned && contact.gameObject.getComponent<Script, Player>().isAttacking) {
                 if (contact.contact_normal.x < 0 && !contact.gameObject.getComponent<Script, Player>().isRight) {
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                     rigidbody.velocity.y = 300 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -1097,6 +1101,7 @@ public:
                 }
                 if (contact.contact_normal.x > 0 && contact.gameObject.getComponent<Script, Player>().isRight) {
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                     rigidbody.velocity.y = 300 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);
@@ -1105,6 +1110,7 @@ public:
             }
             if(!isStunned && (!contact.gameObject.getComponent<Script, Player>().isGrounded) && (contact.contact_normal.y < 0)){
                 animator["Stunned"];
+                audioplayer["Hit"];
                 isStunned = true;
                 rigidbody.velocity.x = 0;
                 rigidbody.velocity.y = 300 * (GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF);

@@ -2,6 +2,7 @@
 
 // ============================================================================
 StalactiteBehavior::StalactiteBehavior(GameObject& gameObject) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     animator(gameObject.getComponent<Animator>()),
     collider(gameObject.getComponent<Collider2D>()),
     rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -18,6 +19,7 @@ StalactiteBehavior::StalactiteBehavior(GameObject& gameObject) : Script(gameObje
 }
 
 StalactiteBehavior::StalactiteBehavior(GameObject& gameObject, StalactiteBehavior& behavior) : Script(gameObject),
+    audioplayer(gameObject.getComponent<AudioPlayer>()),
     animator(gameObject.getComponent<Animator>()),
     collider(gameObject.getComponent<Collider2D>()),
     rigidbody(gameObject.getComponent<RigidBody2D>()),
@@ -79,7 +81,12 @@ void StalactiteBehavior::Update() {
             if (timeCount > timeToBig) { state = BIG; animator["BIG"]; timeCount = 0.0f; }
             break;
         case BIG:
-            if (timeCount > timeToFall) { state = FALLING; animator["FALLING"]; timeCount = 0.0f; }
+            if (timeCount > timeToFall) {
+                animator["FALLING"];
+                audioplayer["Fall"];
+                state = FALLING; 
+                timeCount = 0.0f;
+            }
             break;
         case FALLING:
             transform.position.y += rigidbody.velocity.y * deltaTime;
@@ -154,11 +161,12 @@ void BlockBehavior::OnCollision(Collision contact) {
 void BlockBehavior::Update() {
     float deltaTime = GetFrameTime();
     spawning_timer += deltaTime;
-    
-    if (spawning_timer > spawning_cooldown && spawn_stalactite()) {
-        Vector2 spawnPosition = transform.position + Vector2{0.0f, transform.size.y};
-        GameSystem::Instantiate(*stalactiteTemplate, GameObjectOptions{.position = spawnPosition});
-        spawning_timer = 0.0f;
+    if (transform.position.y < GetScreenHeight()) {
+        if (spawning_timer > spawning_cooldown && spawn_stalactite()) {
+            Vector2 spawnPosition = transform.position + Vector2{0.0f, transform.size.y};
+            GameSystem::Instantiate(*stalactiteTemplate, GameObjectOptions{.position = spawnPosition});
+            spawning_timer = 0.0f;
+        }
     }
 }
 
@@ -308,7 +316,7 @@ void Player::OnCollision(Collision contact) {
                     floor_level = contact.gameObject.getComponent<Script, FloorBehavior>().floor_level;
                 }
                 if (isJumping || isBraking) {
-                    if (!bonusLevel && floor_level == 9) {
+                    if (!bonusLevel && floor_level == 10) {
                         bonusLevel = true;
                     }
                     isBraking = true;
@@ -321,7 +329,7 @@ void Player::OnCollision(Collision contact) {
                         if (momentum < 0) {
                             momentum = 0;
                         }
-                        animator["Brake"];
+                        animator[(!bonusLevel) ? "Brake" : "BrakeBonus"];
                     } else if (rigidbody.velocity.x < 0) {
                         rigidbody.velocity.x += rigidbody.acceleration.x * deltaTime;
                         momentum += rigidbody.acceleration.x * deltaTime;
@@ -331,18 +339,18 @@ void Player::OnCollision(Collision contact) {
                         if (momentum > 0) {
                             momentum = 0;
                         }
-                        animator["Brake"];
+                        animator[(!bonusLevel) ? "Brake" : "BrakeBonus"];
                     } else {
                         isBraking = false;
                     }
                 } else {
                     if (!isStunned && !isAttacking && !move && !isCrouched) {
                         rigidbody.velocity.x = 0;
-                        animator["Idle"];
+                        animator[(!bonusLevel) ? "Idle" : "IdleBonus"];
                         collider.size = collider_size;
                         collider.offset = collider_offset;
                     } else if(!isStunned && !isAttacking && !move && isCrouched && !animator.InState("Crouch")) {
-                        animator["Crouch"];
+                        animator[(!bonusLevel) ? "Crouch" : "CrouchBonus"];
                         collider.size = animator.GetViewDimensions();
                         collider.size.y -= 45;
                         collider.offset.y += 45;
@@ -374,7 +382,7 @@ void Player::OnCollision(Collision contact) {
                         if(lastMove == -1) lastVelocity += sub;
                         else if( lastMove == 1) lastVelocity -= sub;
                         
-                        animator["Brake"];
+                        animator[(!bonusLevel) ? "Brake" : "BrakeBonus"];
                         transform.position.x += lastVelocity * deltaTime;
                         rigidbody.velocity.x += lastVelocity;
 
@@ -390,7 +398,7 @@ void Player::OnCollision(Collision contact) {
                 if(contact.gameObject.name[0] != 'L') {
                     bloquesDestruidos += 1;
                 }
-                animator["Fall"];
+                animator[(!bonusLevel) ? "Fall" : "FallBonus"];
                 rigidbody.velocity.y *= -0.7;
             }
         }
@@ -411,7 +419,7 @@ void Player::OnCollision(Collision contact) {
 
     if (contact.gameObject.tag == "Hole") {
         if (contact.contact_normal.y < 0 && !isGrounded) {
-            animator["Fall"];
+            animator[(!bonusLevel) ? "Fall" : "FallBonus"];
             isGrounded = false;
         }
     }
@@ -443,11 +451,11 @@ void Player::OnCollision(Collision contact) {
                 floor_level = contact.gameObject.getComponent<Script, SlidingBlockBehavior>().floor_level;
 
                 if (!move) {
-                    animator["Idle"];
+                    animator[(!bonusLevel) ? "Idle" : "IdleBonus"];
                     collider.size = collider_size;
                     collider.offset = collider_offset;
                 } else {
-                    animator["Walk"];
+                    animator[(!bonusLevel) ? "Walk" : "WalkBonus"];
                     if ((move > 0 && !isRight) || (move < 0 && isRight)) {
                         isRight = !isRight;
                         animator.Flip();
@@ -478,12 +486,12 @@ void Player::OnCollision(Collision contact) {
             isJumping  = false;
             onCloud = false;
             if (!move) {
-                animator["Idle"];
+                animator[(!bonusLevel) ? "Idle" : "IdleBonus"];
                 collider.size = collider_size;
                 collider.offset = collider_offset;
                 rigidbody.velocity.x = contact.gameObject.getComponent<RigidBody2D>().velocity.x;
             } else {
-                animator["Walk"];
+                animator[(!bonusLevel) ? "Walk" : "WalkBonus"];
                 if ((move > 0 && !isRight) || (move < 0 && isRight)) {
                     isRight = !isRight;
                     animator.Flip();
@@ -509,6 +517,7 @@ void Player::OnCollision(Collision contact) {
         {
             lifes--;
             animator["Stunned"];
+            audioplayer["Hit"];
             isStunned = true;
             rigidbody.velocity.x = 0;
         // Ha roto una estalactita
@@ -524,17 +533,20 @@ void Player::OnCollision(Collision contact) {
             if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
                 lifes--;
                 animator["Stunned"];
+            audioplayer["Hit"];
                 isStunned = true;
                 rigidbody.velocity.x = 0;
             }else if(contact.contact_normal.x){
                 if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 }
@@ -553,17 +565,20 @@ void Player::OnCollision(Collision contact) {
             if (!isAttacking && !(contact.gameObject.name == "Nutpicker" && !isGrounded && contact.contact_normal.y)) {
                 lifes--;
                 animator["Stunned"];
+                audioplayer["Hit"];
                 isStunned = true;
                 rigidbody.velocity.x = 0;
             }else if(contact.contact_normal.x){
                 if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 }
@@ -576,17 +591,20 @@ void Player::OnCollision(Collision contact) {
             if (!isAttacking) {
                 lifes--;
                 animator["Stunned"];
+                audioplayer["Hit"];
                 isStunned = true;
                 rigidbody.velocity.x = 0;
             } else if(isAttacking && contact.contact_normal.x){
                 if (contact.gameObject.getComponent<RigidBody2D>().velocity.x < 0 && !isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 } else if (contact.gameObject.getComponent<RigidBody2D>().velocity.x > 0 && isRight) {
                     lifes--;
                     animator["Stunned"];
+                    audioplayer["Hit"];
                     isStunned = true;
                     rigidbody.velocity.x = 0;
                 } else{
@@ -600,6 +618,7 @@ void Player::OnCollision(Collision contact) {
     if (contact.gameObject.tag == "Goal") {
         if (floor_level == last_level) {
             if (contact.contact_normal.y > 0) {
+                audioplayer["Victory"];
                 rigidbody.velocity = {0,0};
                 rigidbody.acceleration = {0,0};
                 rigidbody.gravity = 0;
@@ -653,7 +672,7 @@ void Player::Update() {
                         }
                         if (isGrounded) {
                             isJumping = false;
-                            animator["Walk"];
+                            animator[(!bonusLevel) ? "Walk" : "WalkBonus"];
                         }
                     } else {
                         rigidbody.velocity.x += move * rigidbody.acceleration.x/1.3 * deltaTime;
@@ -693,12 +712,12 @@ void Player::Update() {
                     }
 
                     rigidbody.velocity.y = -rigidbody.acceleration.y;
-                    animator["Jump"];
+                    animator[(!bonusLevel) ? "Jump" : "JumpBonus"];
                     audioplayer["Jump"];
                 } else if (controller.isDown(Controller::ATTACK) && !bonusLevel) {
                     isAttacking = true;
                     rigidbody.velocity.x = 0;
-                    animator["Attack"];
+                    animator[(!bonusLevel) ? "Attack" : "AttackBonus"];
                     collider.size.x = animator.GetViewDimensions().x;
                     collider.offset = {0,0};
                 }
@@ -706,11 +725,11 @@ void Player::Update() {
         } else if (animator.HasFinished("Attack")) {
             isAttacking = false;
             if(!isCrouched) {
-                animator["Idle"];
+                animator[(!bonusLevel) ? "Idle" : "IdleBonus"];
                 collider.size = collider_size;
                 collider.offset = collider_offset;
             } else if (!animator.InState("Crouch")) {
-                animator["Crouch"];
+                animator[(!bonusLevel) ? "Crouch" : "CrouchBonus"];
                 collider.size.y -= 45;
                 collider.offset.y += 45;
             }
@@ -719,15 +738,24 @@ void Player::Update() {
         // Colissions:
         transform.position.y += rigidbody.velocity.y * deltaTime;
         rigidbody.velocity.y += rigidbody.gravity * deltaTime;
-        if (transform.position.y > GetScreenHeight() && !victory) {
-            lifes--;
-            isJumping = false;
-            isGrounded = true;
-            rigidbody.velocity = {0,0};
-            transform.position = last_save_position;
-            transform.position.y -= 150;
-            animator["Fall"];
+        if (!victory) {
+            if (transform.position.y > GetScreenHeight()) {
+                if (bonusLevel) {
+                    lifes = 0;
+                    animator["FallBonus"];
+                } else {
+                    lifes--;
+                    isJumping = false;
+                    isGrounded = true;
+                    rigidbody.velocity = {0,0};
+                    transform.position = last_save_position;
+                    transform.position.y -= 150;
+                    animator["Fall"];
+                }
+
+            }
         }
+
 
         if (hasCollisioned) {
             hasCollisioned = false;
@@ -735,7 +763,7 @@ void Player::Update() {
             if (last_tag == "Floor") {
                 if (isGrounded) {
                     isGrounded = false;
-                    animator["Fall"];
+                    animator[(!bonusLevel) ? "Fall" : "FallBonus"];
                     rigidbody.velocity.x = momentum;
                     if (rigidbody.velocity.x > rigidbody.max_velocity.x) {
                         rigidbody.velocity.x = rigidbody.max_velocity.x;
