@@ -1150,11 +1150,11 @@ void Game(int numPlayers, int level, int run_time) {
     UIText Player1StatusB(NES, "LOOSE!", 37, 1, {GetScreenWidth() * (1/4.0f + 1/12.0f) - 20, GetScreenHeight()/2.0f - 125}, UIObject::DOWN_CENTER);
     // - Number of destroyed icicles
     UISprite Icicler1("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f - 80}, 3.7f, 3.7f, UIObject::CENTER);
-    UIText Icicler1Text(NES, "400x", 40, 1, {GetScreenWidth()/4.0f + 70, Icicler1.dst.y + Icicler1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler1Text(NES, "00x", 40, 1, {GetScreenWidth()/4.0f + 70, Icicler1.dst.y + Icicler1.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Icicler1N(NES, "00", 40, 1, {Icicler1Text.pos.x + Icicler1Text.size.x + 1, Icicler1Text.pos.y});
     // - Number of defeated nutpickers
     UISprite Monster1("Assets/Sprites/Ranking-nutpicker.png", Vector2{GetScreenWidth()/8.0f, GetScreenHeight()/2.0f - 20}, 3.0f, 3.0f, UIObject::CENTER);
-    UIText Monster1Text(NES, "800x", 40, 1, {GetScreenWidth()/4.0f + 70, Monster1.dst.y + Monster1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster1Text(NES, "-10x", 40, 1, {GetScreenWidth()/4.0f + 70, Monster1.dst.y + Monster1.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Monster1N(NES, "00", 40, 1, {Monster1Text.pos.x + Monster1Text.size.x + 1, Monster1Text.pos.y});
     // - Number of collected vegetables
     UISprite Vegetabler1("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f + 40}, 3.4f, 3.4f, UIObject::CENTER);
@@ -1162,7 +1162,7 @@ void Game(int numPlayers, int level, int run_time) {
     UIText Vegetabler1N(NES, "00", 40, 1, {Vegetabler1Text.pos.x + Vegetabler1Text.size.x + 1, Vegetabler1Text.pos.y});
     // - Number of destroyed blocks
     UISprite Block1("Assets/Sprites/Ranking-block.png", {GetScreenWidth()/8.0f, GetScreenHeight()/2.0f + 100}, 4.2f, 4.2f, UIObject::CENTER);
-    UIText Block1Text(NES, "10x", 40, 1, {GetScreenWidth()/4.0f + 70, Block1.dst.y + Block1.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block1Text(NES, (!level) ? "10x" : "20x", 40, 1, {GetScreenWidth()/4.0f + 70, Block1.dst.y + Block1.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Block1N(NES, "00", 40, 1, {Block1Text.pos.x + Block1Text.size.x + 1, Block1Text.pos.y});
     // - Total of player 1
     UIText TotalTitle1(NES, "TOTAL", 40, 0, {GetScreenWidth() * (1/4.0f - 1/24.0f), GetScreenHeight()/2.0f + 135}, UIObject::UP_CENTER);
@@ -1178,11 +1178,11 @@ void Game(int numPlayers, int level, int run_time) {
     UIText Player2StatusB(NES, "LOOSE!", 37, 1, {GetScreenWidth() * (1 - 1/4.0f + 1/12.0f) - 20, GetScreenHeight()/2.0f - 125}, UIObject::DOWN_CENTER);
     // - Number of destroyed icicles
     UISprite Icicler2("Assets/Sprites/Ranking-icicle.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f - 80}, 3.7f, 3.7f, UIObject::CENTER);
-    UIText Icicler2Text(NES, "400x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Icicler2.dst.y + Icicler2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Icicler2Text(NES, "00x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Icicler2.dst.y + Icicler2.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Icicler2N(NES, "00", 40, 1, {Icicler2Text.pos.x + Icicler2Text.size.x + 1, Icicler2Text.pos.y});
     // - Number of defeated nutpickers
     UISprite Monster2("Assets/Sprites/Ranking-nutpicker.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f - 20}, 3.0f, 3.0f, UIObject::CENTER);
-    UIText Monster2Text(NES, "800x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Monster2.dst.y + Monster2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Monster2Text(NES, "-10x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Monster2.dst.y + Monster2.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Monster2N(NES, "00", 40, 1, {Monster2Text.pos.x + Monster2Text.size.x + 1, Monster2Text.pos.y});
     // - Number of collected vegetables
     UISprite Vegetabler2("Assets/Sprites/Fruit_Lettuce.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f + 40}, 3.4f, 3.4f, UIObject::CENTER);
@@ -1190,7 +1190,7 @@ void Game(int numPlayers, int level, int run_time) {
     UIText Vegetabler2N(NES, "00", 40, 1, {Vegetabler2Text.pos.x + Vegetabler2Text.size.x + 1, Vegetabler2Text.pos.y});
     // - Number of destroyed blocks
     UISprite Block2("Assets/Sprites/Ranking-block.png", {GetScreenWidth() * (1-1/4.0f-1/8.0f), GetScreenHeight()/2.0f + 100}, 4.2f, 4.2f, UIObject::CENTER);
-    UIText Block2Text(NES, "10x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Block2.dst.y + Block2.dst.height/2}, UIObject::CENTER_RIGHT);
+    UIText Block2Text(NES, (!level) ? "10x" : "20x", 40, 1, {GetScreenWidth() * (1-1/4.0f) + 70, Block2.dst.y + Block2.dst.height/2}, UIObject::CENTER_RIGHT);
     UIText Block2N(NES, "00", 40, 1, {Block2Text.pos.x + Block2Text.size.x + 1, Block2Text.pos.y});
     // - Total of player 2
     UIText TotalTitle2(NES, "TOTAL", 40, 0, {GetScreenWidth() * (1 - 1/4.0f - 1/24.0f), GetScreenHeight()/2.0f + 135}, UIObject::UP_CENTER);
@@ -1232,12 +1232,43 @@ void Game(int numPlayers, int level, int run_time) {
                     BigFrame1.Draw();
                     // Victoria o derrota del jugador 1
                     Player1Text.Draw();
-                    pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas * 300 + Player_1->getComponent<Script, Player>().bloquesDestruidos *10;
                     if (Player_1->getComponent<Script, Player>().victory) {
+                        if (level == 0) {
+                            pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas*300
+                                 + Player_1->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                 + Player_1->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                            pts1 += 3000;
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                                pts1 *= 2;
+                            }
+                            Vegetabler1Text.SetText("300x", false);
+                        } else {
+                            pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas*500
+                                 + Player_1->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                 + Player_1->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                            pts1 += 7000;
+                            if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                                pts1 *= 3;
+                            }
+                            Vegetabler1Text.SetText("500x", false);
+                        }
+                        if (run_time > 0) {
+                            pts1 *= level + ((float)time_limit/run_time);
+                        }
                         Player1Cel.Draw();
                         Player1StatusB.SetText("WON!", false);
-                        pts1 += 3000;
                     } else {
+                        if (level == 0) {
+                            pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas*300
+                                 + Player_1->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                 + Player_1->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                            Vegetabler1Text.SetText("300x", false);
+                        } else {
+                            pts1 = Player_1->getComponent<Script, Player>().frutasRecogidas*500
+                                 + Player_1->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                 + Player_1->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                            Vegetabler1Text.SetText("500x", false);
+                        }
                         Player1Cry.Draw();
                     }
                     Player1StatusA.Draw();
@@ -1272,12 +1303,43 @@ void Game(int numPlayers, int level, int run_time) {
                         BigFrame2.Draw();
                         // Victoria o derrota del jugador 2
                         Player2Text.Draw();
-                        pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas * 300 + Player_2->getComponent<Script, Player>().bloquesDestruidos*10;
-                        if (Player_1->getComponent<Script, Player>().victory) {
+                        if (Player_1->getComponent<Script, Player>().victory || Player_2->getComponent<Script, Player>().victory) {
+                            if (level == 0) {
+                                pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas*300
+                                     + Player_2->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                     + Player_2->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                                pts2 += 3000;
+                                if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                                    pts2 *= 2;
+                                }
+                                Vegetabler2Text.SetText("300x");
+                            } else {
+                                pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas*500
+                                    + Player_2->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                    + Player_2->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                                pts2 += 7000;
+                                if (std::get<bool>(ini["Game"]["AdvancedAI"])) {
+                                    pts2 *= 3;
+                                }
+                                Vegetabler2Text.SetText("500x");
+                            }
+                            if (run_time > 0) {
+                                pts2 *= level + ((float)time_limit/run_time);
+                            }
                             Player2Cel.Draw();
-                            Player2StatusB.SetText("WON!", false);
-                            pts2 += 3000;
+                            Player2StatusB.SetText("WON!", false); 
                         } else {
+                            if (level == 0) {
+                                pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas*300 
+                                    + Player_2->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                    + Player_2->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                                Vegetabler2Text.SetText("300x");
+                            } else {
+                                pts2 = Player_2->getComponent<Script, Player>().frutasRecogidas*500
+                                     + Player_2->getComponent<Script, Player>().bloquesDestruidos*(level+1)*10
+                                     + Player_2->getComponent<Script, Player>().nutpickerGolpeados*-10;
+                                Vegetabler2Text.SetText("500x");
+                            }
                             Player2Cry.Draw();
                         }
                         Player2StatusA.Draw();
@@ -1423,13 +1485,13 @@ void Game(int numPlayers, int level, int run_time) {
                         CURRENT_MENU = RANKING;
                     } else {
                         TimerBox.Draw();
-                        TimerCount.SetText(seconds_to_time(time_limit));
-                        TimerCount.Draw((time_limit < 30) ? RED : WHITE);
+                        TimerCount.SetText(seconds_to_time(time_limit, true), false);
+                        TimerCount.Draw((time_limit < run_time*0.3) ? RED : WHITE);
                     }
                 } else if (run_time == 0) {
                     current_time += delta_time;
                     TimerBox.Draw();
-                    TimerCount.SetText(seconds_to_time(current_time));
+                    TimerCount.SetText(seconds_to_time(current_time, true), false);
                     TimerCount.Draw();
                 }
 
@@ -1462,7 +1524,7 @@ void Game(int numPlayers, int level, int run_time) {
                     OPTION = mod(OPTION-1, OPTIONS);
                     Hammer.Translate({ContinueText.pos.x - 70, ContinueText.pos.y + (OPTIONS - (OPTIONS-OPTION))*60*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                 }
-                if (IsKeyPressed(KEY_ENTER)) {
+                if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                     if (OPTION == 0) {
                         CURRENT_MENU = GAME;
                     } else {
@@ -1472,6 +1534,30 @@ void Game(int numPlayers, int level, int run_time) {
             }
         }
         EndDrawing();
+    }
+    if (!exit_game) {
+        if (Player_2 == nullptr) {
+            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && (P1_TOTAL_SEC[level] == 0 || P1_TOTAL_SEC[level] > current_time)) {
+                P1_TOTAL_SEC[level] = current_time;
+            }
+        } else {
+            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && Player_2->getComponent<Script, Player>().victory && (P2_TOTAL_SEC[level] == 0 || P2_TOTAL_SEC[level] > current_time)) {
+                P2_TOTAL_SEC[level] = current_time;
+            }
+        }
+        if (P1_TOTAL_PTS[level] == 0 || P1_TOTAL_PTS[level] < pts1) {
+            P1_TOTAL_PTS[level] = pts1;
+        }
+        if (Player_2 != nullptr && (P2_TOTAL_PTS[level] == 0 || P2_TOTAL_PTS[level] < pts2)) {
+            P2_TOTAL_PTS[level] = pts2;
+        }
+        if (Player_1->getComponent<Script, Player>().victory) {
+            P1_HAS_PASSED[level] = 1;
+        }
+        if (Player_2 != nullptr && Player_2->getComponent<Script, Player>().victory) {
+            P2_HAS_PASSED[level] = 2;
+        }
+        save_sav();
     }
     Popo.Destroy();
     Nana.Destroy();
@@ -1518,23 +1604,6 @@ void Game(int numPlayers, int level, int run_time) {
     BGM2.Unload();
     if (exit_game) {
         exit(0);
-    } else {
-        if (Player_2 == nullptr) {
-            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && (P1_TOTAL_SEC == 0 || P1_TOTAL_SEC > current_time)) {
-                P1_TOTAL_SEC = current_time;
-            }
-        } else {
-            if (run_time > 0 && Player_1->getComponent<Script, Player>().victory && Player_2->getComponent<Script, Player>().victory && (P2_TOTAL_SEC == 0 || P2_TOTAL_SEC > current_time)) {
-                P2_TOTAL_SEC = current_time;
-            }
-        }
-        if (P1_TOTAL_PTS == 0 || P1_TOTAL_PTS < pts1) {
-            P1_TOTAL_PTS = pts1;
-        }
-        if (Player_2 != nullptr && (P2_TOTAL_PTS == 0 || P2_TOTAL_PTS < pts2)) {
-            P2_TOTAL_PTS = pts2;
-        }
-        save_sav();
     }
 }
 
@@ -1656,24 +1725,47 @@ int main() {
     UIText SuddenDeathError(NES, "SUDDENT DEATH NEEDS A TIME ABOVE ZERO...", 30, 1, {GetScreenWidth()/2.0f, 20}, UIObject::UP_CENTER);
 
     // RANKINGS MENU:
-    // 1st player rankings:
+    Texture2D LevelClearedTexture = LoadTexture("Assets/Sprites/Cleared-stamp.png"), OldLevelClearedTexture = LoadTexture("Assets/Sprites/Old-Cleared-stamp.png");
+    int level_ranking = 0, levels = 4;
+    UIText Level1RankingTitle(NES, "LEVEL 1: BASICS", 33, 1, {GetScreenWidth()/2.0f, 30}, UIObject::CENTER);
+    UIText Level2RankingTitle(NES, "LEVEL 2: ADVANCED MECHANICS", 33, 1, {GetScreenWidth()/2.0f, 30}, UIObject::CENTER);
+    UIText Level3RankingTitle(NES, "LEVEL 3: TRYING TO SURVIVE", 33, 1, {GetScreenWidth()/2.0f, 30}, UIObject::CENTER);
+    UIText Level4RankingTitle(NES, "LEVEL 4: A NEW CHALLENGER", 33, 1, {GetScreenWidth()/2.0f, 30}, UIObject::CENTER);
+    UIText NoImplementedRanking(NES, "NO TIME FOR THIS ONE :(", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f}, UIObject::CENTER);
     UIText RankingsDeleteText(NES, "DELETE RANKINGS", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 145}, UIObject::DOWN_CENTER);
     UIText RankingsReturnText(NES, "RETURN", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f + 205}, UIObject::DOWN_CENTER);
-    UIText RankingsP1(NES, "P1", 33, 1, {GetScreenWidth()/4.0f + 50, GetScreenHeight()/8.0f + 20}, UIObject::DOWN_CENTER);
-    UISprite RankingP1Ch("Assets/Sprites/Popo/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 60, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
-    UIText RankingsP1Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f + 20, RankingsP1.pos.y + RankingsP1.size.y/2.0f}, UIObject::UP_CENTER);
-    UIText RankingsP1NPts(NES, fill_string(std::to_string(P1_TOTAL_PTS), 6), 35, 4, {GetScreenWidth()/2.0f + 50, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25}, UIObject::UP_CENTER);
-    UIText RankingsP1PtsText(NES, "PTS", 35, 1, {RankingsP1NPts.pos.x + RankingsP1NPts.size.x + 10, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25});
-    UIText RankingsP1SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP1Total.pos.x, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 60});
-    UIText RankingsP1NTime(NES, seconds_to_time(P1_TOTAL_SEC), 35, 1, {GetScreenWidth()/2.0f + 50, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 85}, UIObject::UP_CENTER);
+    
+    // 1st player rankings:
+    UIText RankingsP1(NES, "P1", 33, 1, {GetScreenWidth()/4.0f, GetScreenHeight()/8.0f + 20}, UIObject::DOWN_CENTER);
+    UISprite RankingP1Ch("Assets/Sprites/Popo/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 10, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
+    
+    UIText RankingsP1Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f - 50, RankingsP1.pos.y + RankingsP1.size.y/2.0f}, UIObject::UP_CENTER);
+    UIText RankingsP1NPts(NES, fill_string(std::to_string(P1_TOTAL_PTS[0]), 6), 35, 4, {GetScreenWidth()/2.0f - 10, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25}, UIObject::UP_CENTER);
+    UIText RankingsP1PtsText(NES, "PTS", 34, 1, {RankingsP1NPts.pos.x + RankingsP1NPts.size.x + 5, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 25});
+    
+    UIText RankingsP1SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP1Total.pos.x + 4, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 60});
+    UIText RankingsP1NTime(NES, seconds_to_time(P1_TOTAL_SEC[0]), 35, 1, {GetScreenWidth()/2.0f - 10, RankingsP1.pos.y + RankingsP1.size.y/2.0f + 85}, UIObject::UP_CENTER);
+    
+    UISprite LevelClearedP1(LevelClearedTexture, {RankingsP1SpeedRun.pos.x + RankingsP1SpeedRun.size.x + 30, RankingsP1SpeedRun.pos.y - 5}, 1.5f, 1.5f, UIObject::CENTER_LEFT);
+    UISprite OldLevelClearedP1(OldLevelClearedTexture, {RankingsP1SpeedRun.pos.x + RankingsP1SpeedRun.size.x + 30, RankingsP1SpeedRun.pos.y - 5}, 1.5f, 1.5f, UIObject::CENTER_LEFT);
+    UIText LevelClearedP1Text(NES, "CLEARED!", 26, 1, {LevelClearedP1.dst.x + LevelClearedP1.dst.width/2.0f, LevelClearedP1.dst.y + LevelClearedP1.dst.height/2.0f}, UIObject::UP_CENTER);
+
     // 2nd player rankings:
-    UIText RankingsP2(NES, "P2", 33, 1, {GetScreenWidth()/4.0f + 50, GetScreenHeight() * (1/4.0f + 1/8.0f)}, UIObject::UP_CENTER);
-    UISprite RankingP2Ch("Assets/Sprites/Nana/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 60, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
-    UIText RankingsP2Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f + 20, RankingsP2.pos.y + RankingsP2.size.y/2.0f}, UIObject::UP_CENTER);
-    UIText RankingsP2NPts(NES, fill_string(std::to_string(P2_TOTAL_PTS), 6), 35, 4, {GetScreenWidth()/2.0f + 50, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25}, UIObject::UP_CENTER);
-    UIText RankingsP2PtsText(NES, "PTS", 35, 1, {RankingsP2NPts.pos.x + RankingsP2NPts.size.x + 10, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25});
-    UIText RankingsP2SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP2Total.pos.x, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 60});
-    UIText RankingsP2NTime(NES, seconds_to_time(P2_TOTAL_SEC), 35, 1, {GetScreenWidth()/2.0f + 50, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 85}, UIObject::UP_CENTER);
+    UIText RankingsP2(NES, "P2", 33, 1, {GetScreenWidth()/4.0f, GetScreenHeight() * (1/4.0f + 1/8.0f)}, UIObject::UP_CENTER);
+    UISprite RankingP2Ch("Assets/Sprites/Nana/09_Celebrate_Single.png", {GetScreenWidth()/4.0f + 10, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 20}, 4.0f, 4.0f, UIObject::UP_CENTER);
+    
+    UIText RankingsP2Total(NES, "TOTAL POINTS", 26, 1, {GetScreenWidth()/2.0f - 50, RankingsP2.pos.y + RankingsP2.size.y/2.0f}, UIObject::UP_CENTER);
+    UIText RankingsP2NPts(NES, fill_string(std::to_string(P2_TOTAL_PTS[0]), 6), 35, 4, {GetScreenWidth()/2.0f - 10, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25}, UIObject::UP_CENTER);
+    UIText RankingsP2PtsText(NES, "PTS", 34, 1, {RankingsP2NPts.pos.x + RankingsP2NPts.size.x + 5, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 25});
+    
+    UIText RankingsP2SpeedRun(NES, "MIN SPEEDRUN TIME", 26, 1, {RankingsP2Total.pos.x + 4, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 60});
+    UIText RankingsP2NTime(NES, seconds_to_time(P2_TOTAL_SEC[0]), 35, 1, {GetScreenWidth()/2.0f - 10, RankingsP2.pos.y + RankingsP2.size.y/2.0f + 85}, UIObject::UP_CENTER);
+
+    UISprite LevelClearedP2(LevelClearedTexture, {RankingsP2SpeedRun.pos.x + RankingsP2SpeedRun.size.x + 30, RankingsP2SpeedRun.pos.y - 5}, 1.5f, 1.5f, UIObject::CENTER_LEFT);
+    UISprite OldLevelClearedP2(OldLevelClearedTexture, {RankingsP2SpeedRun.pos.x + RankingsP2SpeedRun.size.x + 30, RankingsP2SpeedRun.pos.y - 5}, 1.5f, 1.5f, UIObject::CENTER_LEFT);
+    UIText LevelClearedP2Text(NES, "CLEARED!", 26, 1, {LevelClearedP2.dst.x + LevelClearedP2.dst.width/2.0f, LevelClearedP2.dst.y + LevelClearedP2.dst.height/2.0f}, UIObject::UP_CENTER);
+
+
     // ARE YOU SURE MENU:
     UIText AreYouSureText(NES, "ARE YOU SURE?!", 33, 1, {GetScreenWidth()/2.0f, GetScreenHeight()/2.0f - 20}, UIObject::DOWN_CENTER);
     UIText AreYouSureYes(NES, "YES", 40, 1, {GetScreenWidth()/2.0f - 60, GetScreenHeight()/2.0f + 10}, UIObject::UP_CENTER);
@@ -1853,9 +1945,6 @@ int main() {
     UISprite UpKeyNormal(UpKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
     UISprite DownKeyNormal(DownKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
 
-    UISprite RightKeyAreYouSure(RightKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-    UISprite LeftKeyAreYouSure(LeftKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
-
     UIText MoveTextSettings(NES, "MOVE", 15, 1, {LeftKeySettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite UpKeySettings(UpKey, {MoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
     UISprite DownKeySettings(DownKey, {UpKeySettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
@@ -1887,9 +1976,6 @@ int main() {
     UISprite DpadUpNormal(DpadUp, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
     UISprite DpadDownNormal(DpadDown, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
  
-    UISprite DpadRightAreYouSure(DpadRight, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
-    UISprite DpadLeftAreYouSure(DpadLeft, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
-
     UIText DpadMoveTextSettings(NES, "MOVE", 15, 1, {DpadLeftSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite DpadUpSettings(DpadUp, {DpadMoveTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
     UISprite DpadDownSettings(DpadDown, {DpadUpSettings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
@@ -1900,6 +1986,28 @@ int main() {
     
     UIText OTextSettings(NES, "RETURN", 15, 1, {DpadDownSettings.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
     UISprite OButtonSettings(OButton, {OTextSettings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+    // RANKING MENU (again)
+    UIText SelectRankText(NES, "CHANGE RANKING", 15, 1, {DownKeyNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite RightKeySelectRank(RightKey, {SelectRankText.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite LeftKeySelectRank(LeftKey, {RightKeySelectRank.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UIText ReturnTextRankings(NES, "RETURN", 15, 1, {LeftKeySelectRank.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite EscKeyRankings(EscKey, {ReturnTextRankings.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite ReturnKeyRankings(ReturnKey, {EscKeyRankings.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+
+    UIText DpadSelectRankingText(NES, "CHANGE RANKING", 15, 1, {DpadDownNormal.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite DpadRightSelectRanking(DpadRight, {DpadSelectRankingText.pos.x - 10.0f, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadLeftSelectRanking(DpadLeft, {DpadRightSelectRanking.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UIText OTextRanking(NES, "RETURN", 15, 1, {DpadLeftSelectRanking.dst.x - 20, GetScreenHeight() - 22.0f}, UIObject::DOWN_RIGHT);
+    UISprite OButtonRanking(OButton, {OTextRanking.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    
+
+    UISprite RightKeyAreYouSure(RightKey, {MoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite LeftKeyAreYouSure(LeftKey, {UpKeyNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.0f, 1.0f, UIObject::DOWN_RIGHT);
+    UISprite DpadRightAreYouSure(DpadRight, {DpadMoveTextNormal.pos.x - 10, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+    UISprite DpadLeftAreYouSure(DpadLeft, {DpadUpNormal.dst.x - 5, GetScreenHeight() - 17.0f}, 1.7f, 1.7f, UIObject::DOWN_RIGHT);
+
+
 
     // /*** Main Loop ***/ //
     int OPTION  = 0;
@@ -2116,9 +2224,11 @@ int main() {
                         } else if (IsKeyPressed(KEY_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
                             selected_level = mod(selected_level+1, 4);
                         } else if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-                            OPTION  = 0;
-                            CONFIGURE_MATCH = true;
-                            BLOCK = false;
+                            if (selected_level < 2) {
+                                OPTION  = 0;
+                                CONFIGURE_MATCH = true;
+                                BLOCK = false;
+                            }
                         }
                     } else {
                         auto menuv_x = GetScreenWidth() - (20*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF) - (400*GetScreenWidth()/UISystem::WINDOW_WIDTH_REF);
@@ -2170,18 +2280,18 @@ int main() {
                                     } else {
                                         show_error = false;
                                         Game(nplayers, selected_level, sudden_death_time);
-                                        RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
-                                        RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
-                                        RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
-                                        RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                        RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS[level_ranking]),6));
+                                        RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS[level_ranking]),6));
+                                        RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC[level_ranking]));
+                                        RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC[level_ranking]));
                                     }
                                 } else {
                                     show_error = false;
                                     Game(nplayers, selected_level, (selected_mod == 0) ? -1 : 0);
-                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
-                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
-                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
-                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS[level_ranking]),6));
+                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS[level_ranking]),6));
+                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC[level_ranking]));
+                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC[level_ranking]));
                                 }
                             } else if (OPTION == 1) {
                                 show_error = false;
@@ -2413,25 +2523,57 @@ int main() {
                         }
                     } else if (CURRENT_MENU == RANKINGS || CURRENT_MENU == ARE_YOU_SURE) {
 
-                        // P1 Rankings:
-                        RankingsP1.Draw();
-                        RankingP1Ch.Draw();
-                        RankingsP1Total.Draw();
-                        RankingsP1NPts.Draw(DEEPSAFFRON);
-                        RankingsP1PtsText.Draw(DEEPSAFFRON);
-                        RankingsP1SpeedRun.Draw();
-                        RankingsP1NTime.Draw(DEEPSAFFRON);
-                        // P2 Rankings:
-                        RankingsP2.Draw();
-                        RankingP2Ch.Draw();
-                        RankingsP2Total.Draw();
-                        RankingsP2NPts.Draw(DEEPSAFFRON);
-                        RankingsP2PtsText.Draw(DEEPSAFFRON);
-                        RankingsP2SpeedRun.Draw();
-                        RankingsP2NTime.Draw(DEEPSAFFRON);
+                        if (level_ranking < 2) {
+                            if (!level_ranking) {
+                                Level1RankingTitle.Draw();
+                            } else {
+                                Level2RankingTitle.Draw();
+                            }
+                            // P1 Rankings:
+                            RankingsP1.Draw();
+                            RankingP1Ch.Draw();
+                            RankingsP1Total.Draw();
+                            RankingsP1NPts.Draw(DEEPSAFFRON);
+                            RankingsP1PtsText.Draw(DEEPSAFFRON);
+                            RankingsP1SpeedRun.Draw();
+                            RankingsP1NTime.Draw(DEEPSAFFRON);
+                            if (P1_HAS_PASSED[level_ranking]) {
+                                if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                                    LevelClearedP1.Draw();
+                                } else {
+                                    OldLevelClearedP1.Draw();
+                                }
+                                LevelClearedP1Text.Draw();
+                            }
+
+                            // P2 Rankings:
+                            RankingsP2.Draw();
+                            RankingP2Ch.Draw();
+                            RankingsP2Total.Draw();
+                            RankingsP2NPts.Draw(DEEPSAFFRON);
+                            RankingsP2PtsText.Draw(DEEPSAFFRON);
+                            RankingsP2SpeedRun.Draw();
+                            RankingsP2NTime.Draw(DEEPSAFFRON);
+                            if (P2_HAS_PASSED[level_ranking]) {
+                                if (!std::get<bool>(ini["Graphics"]["OldFashioned"])) {
+                                    LevelClearedP2.Draw();
+                                } else {
+                                    OldLevelClearedP2.Draw();
+                                }
+                                LevelClearedP2Text.Draw();
+                            }
+                        } else {
+                            if (level_ranking == 2) {
+                                Level3RankingTitle.Draw();
+                            } else {
+                                Level4RankingTitle.Draw();
+                            }
+                            NoImplementedRanking.Draw();
+                        }
+
                         // Menu options:
                         RankingsDeleteText.Draw(RED);
-                        RankingsReturnText.Draw();
+                        RankingsReturnText.Draw(BLUE);
 
                         if (CURRENT_MENU == RANKINGS) {
 
@@ -2439,15 +2581,21 @@ int main() {
                                 MoveTextNormal.Draw();
                                 UpKeyNormal.Draw();
                                 DownKeyNormal.Draw();
-                                ReturnTextNormal.Draw();
-                                EscKeyNormal.Draw();
-                                ReturnKeyNormal.Draw();
+                                SelectRankText.Draw();
+                                RightKeySelectRank.Draw();
+                                LeftKeySelectRank.Draw();
+                                ReturnTextRankings.Draw();
+                                EscKeyRankings.Draw();
+                                ReturnKeyRankings.Draw();
                             } else {
                                 DpadMoveTextNormal.Draw();
                                 DpadUpNormal.Draw();
                                 DpadDownNormal.Draw();
-                                OTextNormal.Draw();
-                                OButtonNormal.Draw();
+                                DpadSelectRankingText.Draw();
+                                DpadRightSelectRanking.Draw();
+                                DpadLeftSelectRanking.Draw();
+                                OTextRanking.Draw();
+                                OButtonRanking.Draw();
                             }
 
                             if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) ) {
@@ -2462,6 +2610,18 @@ int main() {
                                     HV = 0;
                                     Hammer.Translate({HammerRefs[HV][RESOLUTION_OPTION].x, HammerRefs[HV][RESOLUTION_OPTION].y + HammerOffsets[HV]*GetScreenHeight()/UISystem::WINDOW_HEIGHT_REF});
                                 }
+                            } else if (IsKeyPressed(KEY_LEFT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) {
+                                level_ranking = mod(level_ranking-1, levels);
+                                RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS[level_ranking]),6));
+                                RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS[level_ranking]),6));
+                                RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC[level_ranking]));
+                                RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC[level_ranking]));
+                            } else if (IsKeyPressed(KEY_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) {
+                                level_ranking = mod(level_ranking+1, levels);
+                                RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS[level_ranking]),6));
+                                RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS[level_ranking]),6));
+                                RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC[level_ranking]));
+                                RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC[level_ranking]));
                             } else if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
                                 CURRENT_MENU = MAIN_MENU;
                                 OPTIONS = 4;
@@ -2496,12 +2656,12 @@ int main() {
                                     CURRENT_MENU = RANKINGS;
                                     HV = 5;
                                     backup_sav();
-                                    P1_TOTAL_PTS = P1_TOTAL_SEC = P2_TOTAL_PTS = P2_TOTAL_SEC = 0;
+                                    P1_TOTAL_PTS = P1_TOTAL_SEC = P1_HAS_PASSED = P2_TOTAL_PTS = P2_TOTAL_SEC = P2_HAS_PASSED = {0,0,0,0};
                                     save_sav();
-                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS),6));
-                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS),6));
-                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC));
-                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC));
+                                    RankingsP1NPts.SetText(fill_string(std::to_string(P1_TOTAL_PTS[level_ranking]),6));
+                                    RankingsP2NPts.SetText(fill_string(std::to_string(P2_TOTAL_PTS[level_ranking]),6));
+                                    RankingsP1NTime.SetText(seconds_to_time(P1_TOTAL_SEC[level_ranking]));
+                                    RankingsP2NTime.SetText(seconds_to_time(P2_TOTAL_SEC[level_ranking]));
                                 } else {
                                     CURRENT_MENU = RANKINGS;
                                     OPTION = 0;

@@ -43,10 +43,12 @@ std::unordered_map<std::string, std::string> types {
 };
 // -- GAMEPLAY
 const bool DEFAULT_ADVANCED_AI     = false;
-int P1_TOTAL_PTS                   = 0;
-int P1_TOTAL_SEC                   = 0;
-int P2_TOTAL_PTS                   = 0;
-int P2_TOTAL_SEC                   = 0;
+std::vector<int> P1_TOTAL_PTS      = {0,0,0,0};
+std::vector<int> P1_TOTAL_SEC      = {0,0,0,0};
+std::vector<int> P1_HAS_PASSED     = {0,0,0,0}; 
+std::vector<int> P2_TOTAL_PTS      = {0,0,0,0};
+std::vector<int> P2_TOTAL_SEC      = {0,0,0,0};
+std::vector<int> P2_HAS_PASSED     = {0,0,0,0};
 // -- GRAPHICS
 const bool DEFAULT_OLD_STYLE       = false;
 // ---- DISPLAY MODE
@@ -335,10 +337,16 @@ void controller_save_config(int controller, std::ofstream& os) {
 void save_sav() {
     std::ofstream os("iceclimber.sav");
     if (os.is_open()) {
-        os << "P1_TOTAL_PTS=" << P1_TOTAL_PTS
-           << "\nP1_TOTAL_SEC=" << P1_TOTAL_SEC
-           << "\nP2_TOTAL_PTS=" << P2_TOTAL_PTS
-           << "\nP2_TOTAL_SEC=" << P2_TOTAL_SEC;
+        for (int i = 0; i < 4; i++) {
+            os << "[Mountain " << i+1 << "]"
+               << "\nP1_TOTAL_PTS="  << P1_TOTAL_PTS[i]
+               << "\nP1_TOTAL_SEC="  << P1_TOTAL_SEC[i]
+               << "\nP1_HAS_PASSED=" << P1_HAS_PASSED[i]
+               << "\nP2_TOTAL_PTS="  << P2_TOTAL_PTS[i]
+               << "\nP2_TOTAL_SEC="  << P2_TOTAL_SEC[i]
+               << "\nP2_HAS_PASSED=" << P2_HAS_PASSED[i]
+               << "\n";
+        }
         os.close();
     }
 }
@@ -346,10 +354,16 @@ void save_sav() {
 void backup_sav() {
     std::ofstream os("iceclimber.sav.old");
     if (os.is_open()) {
-        os << "P1_TOTAL_PTS=" << P1_TOTAL_PTS
-           << "\nP1_TOTAL_SEC=" << P1_TOTAL_SEC
-           << "\nP2_TOTAL_PTS=" << P2_TOTAL_PTS
-           << "\nP2_TOTAL_SEC=" << P2_TOTAL_SEC;
+        for (int i = 0; i < 4; i++) {
+            os << "[Mountain " << i+1 << "]"
+               << "\nP1_TOTAL_PTS="  << P1_TOTAL_PTS[i]
+               << "\nP1_TOTAL_SEC="  << P1_TOTAL_SEC[i]
+               << "\nP1_HAS_PASSED=" << P1_HAS_PASSED[i]
+               << "\nP2_TOTAL_PTS="  << P2_TOTAL_PTS[i]
+               << "\nP2_TOTAL_SEC="  << P2_TOTAL_SEC[i]
+               << "\nP2_HAS_PASSED=" << P2_HAS_PASSED[i]
+               << "\n";
+        }
         os.close();
     }
 }
@@ -401,14 +415,22 @@ void init_sav() {
         std::vector<char> buffer(buffersize);
         in.rdbuf()->pubsetbuf(buffer.data(), buffersize);
 
-        int i = 0;
-        for (std::string line; std::getline(in, line); i++) {
+        int level = 0, i = 0;
+        for (std::string line; std::getline(in, line); ) {
+            if (line.size() > 2 && line[0] == '[' && line.back() == ']') {
+                i = 0;
+                size_t level_pos = line.find_last_of(' ');
+                level = std::stoi(line.substr(level_pos, line.length()-level_pos-1))-1;
+                continue;
+            }
+
             std::istringstream iss(line);
             std::string key, value;
             if (std::getline(iss >> std::ws, key, '=') && std::getline(iss >> std::ws, value)) {
                 if (i == 0) {
                     if (key == "P1_TOTAL_PTS") {
-                        P1_TOTAL_PTS = std::stoi(value);
+                        i++;
+                        P1_TOTAL_PTS[level] = std::stoi(value);
                     } else {
                         in.close();
                         save_sav();
@@ -416,23 +438,44 @@ void init_sav() {
                     }
                 } else if (i == 1) {
                     if (key == "P1_TOTAL_SEC") {
-                        P1_TOTAL_SEC = std::stoi(value);
+                        i++;
+                        P1_TOTAL_SEC[level] = std::stoi(value);
                     } else {
                         in.close();
                         save_sav();
                         return;
                     }
                 } else if (i == 2) {
+                    if (key == "P1_HAS_PASSED") {
+                        i++;
+                        P1_HAS_PASSED[level] = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                } else if (i == 3) {
                     if (key == "P2_TOTAL_PTS") {
-                        P2_TOTAL_PTS = std::stoi(value);
+                        i++;
+                        P2_TOTAL_PTS[level] = std::stoi(value);
+                    } else {
+                        in.close();
+                        save_sav();
+                        return;
+                    }
+                } else if (i == 4) {
+                    if (key == "P2_TOTAL_SEC") {
+                        i++;
+                        P2_TOTAL_SEC[level] = std::stoi(value);
                     } else {
                         in.close();
                         save_sav();
                         return;
                     }
                 } else {
-                    if (key == "P2_TOTAL_SEC") {
-                        P2_TOTAL_SEC = std::stoi(value);
+                    if (key == "P2_HAS_PASSED") {
+                        i++;
+                        P2_HAS_PASSED[level] = std::stoi(value);
                     } else {
                         in.close();
                         save_sav();

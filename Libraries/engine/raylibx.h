@@ -62,7 +62,7 @@ std::ostream& operator<<(std::ostream& os, Vector2 v);
 // Time extension
 // ----------------------------------------------------------------------------
 std::string millis_to_time(int millis);
-std::string seconds_to_time(int seconds);
+std::string seconds_to_time(int seconds, bool no_hours = false);
 
 // ----------------------------------------------------------------------------
 // String treatment

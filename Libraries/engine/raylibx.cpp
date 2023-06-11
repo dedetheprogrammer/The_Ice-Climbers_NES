@@ -80,7 +80,7 @@ std::string millis_to_time(int millis) {
     return "Tiempo: " + time_string;
 }
 
-std::string seconds_to_time(int seconds) {
+std::string seconds_to_time(int seconds, bool no_hours) {
     int minutes = seconds/60;
     seconds %= 60;
     int hours = minutes/60;
@@ -91,7 +91,9 @@ std::string seconds_to_time(int seconds) {
     oss.fill('0');
 
     // Agregar horas, minutos y segundos
-    oss << std::setw(2) << hours << ":";
+    if (!no_hours) {
+        oss << std::setw(2) << hours << ":";
+    }
     oss << std::setw(2) << minutes << ":";
     oss << std::setw(2) << seconds;
 

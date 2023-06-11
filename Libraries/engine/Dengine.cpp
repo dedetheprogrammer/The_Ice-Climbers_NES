@@ -707,6 +707,12 @@ void GameSystem::Update() {
                 gameObject->Update();
                 // Collisions:
                 Collisions(*gameObject);
+                // Draw:
+                if (gameObject->hasComponent<Animator>()) {
+                    gameObject->getComponent<Animator>().Play();
+                } else if (gameObject->hasComponent<Sprite>()) {
+                    gameObject->getComponent<Sprite>().Draw();
+                }
                 if (DEBUG) {
                     if (gameObject->hasComponent<Collider2D>()) {
                         gameObject->getComponent<Collider2D>().Draw();
@@ -714,12 +720,6 @@ void GameSystem::Update() {
                     if (gameObject->hasComponent<RigidBody2D>()) {
                         gameObject->getComponent<RigidBody2D>().Draw();
                     }
-                }
-                // Draw:
-                if (gameObject->hasComponent<Animator>()) {
-                    gameObject->getComponent<Animator>().Play();
-                } else if (gameObject->hasComponent<Sprite>()) {
-                    gameObject->getComponent<Sprite>().Draw();
                 }
             }
         }
@@ -732,6 +732,7 @@ void GameSystem::DestroyAll() {
             gameObject->Destroy();
         }
     }
+    GameObjects = {};
 }
 
 void GameSystem::DestroyByTag(std::string tag) {
