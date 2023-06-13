@@ -7,6 +7,8 @@ El objetivo de la asignatura es recrear e incluso mejorar aspectos de un videoju
 
 https://github.com/dedetheprogrammer/The_Ice-Climbers-NES/assets/111243030/2d1dffcc-1f24-4489-86a6-c82eb7176307
 
+https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/assets/111243030/231a848b-7bbf-4364-b633-e7647cc033a8
+
 ## 1. La selección del juego
 El primer paso para recrear el juego es elegirlo, y de todos los juegos del mundo, siete fueron los que se pusieron sobre la mesa para recrear (detallados posteriormente) y a su vez, de estos, fue el ***Ice Climber*** la elección por consenso entre los miembros del equipo.
 
@@ -113,7 +115,7 @@ El Dengine es un motor de videojuegos 2D en miniatura que implementa las funcion
 El objetivo de este motor era el de poder separar la lógica del juego y que se pudiese construir sobre un gestor de videojuegos, y además, poder crear un gestor de interfaces que pudiese dibujar y re-escalar sus elementos de manera eficiente.
 
 ## 4. Impementación
-No se describirá en detalle la implementación, ya que ya existe el [Game Document Design]() que lo desglosa y detalla en profundidad.
+No se describirá en detalle la implementación, ya que ya existe el [Game Document Design](https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/blob/main/(The)%20Ice%20Climber(s)%20(NES)%20-%20TDD%20-%20Versi%C3%B3n%20Final.pdf) que lo desglosa y detalla en profundidad.
 
 ## 5. Jugar
 
@@ -169,13 +171,14 @@ wget https://github.com/skeeto/w64devkit/releases/download/v1.19.0/w64devkit-1.1
     ```bash
     sh .\build.sh
     ```
-    
+
 5. Espera a que termine la compilación y dale al `.exe` generado.
 
 6. Juega!
 
 ### Descargar el juego directamente
-Descargar la release que voy a subir en un rato.
+Simplemente [descarga el juego](https://github.com/dedetheprogrammer/The_Ice-Climbers_NES/releases/tag/v1.1.0), descomprime el `.zip` donde quieras y juega!.
 
 ### Juega desde tu navegador
-En la página que voy a poner en un rato.
+`Work in progress...`
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0/100%
